@@ -1,0 +1,20 @@
+---
+title: "Generative architectures"
+format:
+    revealjs: 
+        theme: default
+        slide-number: true
+---
+
+## Generative models
+
+We have samples from a random variable X, and we are interested in learning (approximating) it's probability distribution $p_x(X)$.
+
+Uses:
+
+- Evaluate the density $p_x(X)$
+- Sample new data from the distribution, $X \sim p_x(X)$
+
+## Generative models
+
+- Mixture models
