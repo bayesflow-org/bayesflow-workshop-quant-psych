@@ -1,0 +1,8 @@
+---
+title: "Amortized inference"
+format:
+    revealjs: 
+        theme: default
+        slide-number: true
+        html-math-method: mathjax
+---

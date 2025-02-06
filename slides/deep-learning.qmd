@@ -1,0 +1,123 @@
+---
+title: "Deep Learning"
+format:
+    revealjs: 
+        theme: default
+        slide-number: true
+        html-math-method: mathjax
+        highlight-style: github
+---
+
+## What is "Deep Learning"?
+
+# Python frameworks
+
+- [`PyTorch`](https://pytorch.org/)
+- [`TensorFlow`](https://www.tensorflow.org/)
+- [`JAX`](https://jax.readthedocs.io/en/latest/index.html)
+- [`keras`](https://keras.io/)
+
+## [`PyTorch`](https://pytorch.org/)
+
+- created by Meta (formerly Facebook) 
+- easy to learn
+- focus on research prototypes
+- models are not compiled
+
+
+## [`TensorFlow`](https://www.tensorflow.org/)
+
+- created by Google
+- easy to learn
+- focus on production
+- models are compiled
+
+
+## [`JAX`](https://jax.readthedocs.io/en/latest/index.html)
+
+- created by Google
+- pure, functional approach 
+- JIT compiled
+- fastest in runtime
+- most difficult to learn
+
+## [`keras`](https://keras.io/)
+
+- created by Google
+- API library
+- Uses `PyTorch`, `TensorFlow`, or `jax` as a backend
+
+```{.python filename="Python"}
+import os
+os.environ["KERAS_BACKEND"] = "jax" # torch, tensorflow
+import keras
+```
+
+## [`keras`](https://keras.io/)
+
+- created by Google
+- API library
+- Uses `PyTorch`, `TensorFlow`, or `jax` as a backend
+
+```{.bash filename="Terminal"}
+conda env config vars set KERAS_BACKEND=jax
+```
+
+<br>
+
+```{.python filename="Python"}
+import keras
+```
+
+
+## Tensors
+
+- All of Deep Learning revolves around "Tensors"
+- Similar to multidimensional arrays in `numpy`
+- Additional features:
+  - Stores values and gradients
+  - Can be stored on GPUs (optional)
+
+## Tensors
+
+```{.python filename="Python"}
+import torch
+
+x = torch.zeros((16, 2))
+
+x.shape        # torch.Size([16, 2])
+str(x.device)  # 'cpu'
+x.grad is None # True
+```
+
+# Neural networks
+
+## A network
+
+```{dot}
+digraph {
+  rotate=90;
+  x1 [label="" shape="circle" style="filled" fillcolor="coral1"]
+  x2 [label="" shape="circle" style="filled" fillcolor="coral1"]
+  
+  z11 [label="" shape="circle" style="filled" fillcolor="lightgray"]
+  z12 [label="" shape="circle" style="filled" fillcolor="lightgray"]
+  z13 [label="" shape="circle" style="filled" fillcolor="lightgray"]
+  
+  z21 [label="" shape="circle" style="filled" fillcolor="lightgray"]
+  z22 [label="" shape="circle" style="filled" fillcolor="lightgray"]
+  z23 [label="" shape="circle" style="filled" fillcolor="lightgray"]
+  
+  y1 [label="" shape="circle" style="filled" fillcolor="lightblue"]
+  y2 [label="" shape="circle" style="filled" fillcolor="lightblue"]
+  
+  x1, x2 -> z11, z12, z13
+  z11, z12, z13 -> z21, z22, z23
+  z21, z22, z23 -> y1, y2
+}
+```
+
+
+## A "neuron"
+
+- A regression
