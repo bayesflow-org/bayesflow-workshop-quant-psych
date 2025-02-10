@@ -37,3 +37,280 @@ Uses:
 
 ## Normalizing flows
 
+Generative models build on invertible transformations of random variables
+
+General characteristics:
+- Efficient to evaluate $p_X(x)$
+- Efficient fo sample from $p_X$
+- Expressive (flexible)
+- Can represent high-dimensional probability distributions
+- Easy to train (standard ML methods)
+<!-- - Transform a (complex) data distribution $p_X(X)$ into a simple (analytic) distribution -->
+
+## Change of variables
+
+- Transformations of random variables are described by "change of variables"
+
+- $Z \sim p_Z(z)$
+- $Z = f(X)$ (or $X = f^{-1}(Z)$)
+- $p_X(x)?$
+
+
+Express the density of $X$ using the density of $Z$ and the transform $f$
+
+## Change of variables - scaling example
+
+$$
+\begin{aligned}
+Z & \sim \text{Uniform}(0, 1) \implies p_Z(z) = \begin{cases} 1 \text{ when } z \in [0, 1]\\ 0 \text{ otherwise}\end{cases} \\
+Z & = 0.5X \implies p_X(x) = \begin{cases} 0.5 \text{ when } x \in [0, 2]\\ 0 \text{ otherwise}\end{cases} 
+\end{aligned}
+$$
+
+## Change of variables - more formally {auto-animate=true}
+
+$$
+p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
+$$
+
+
+## Change of variables - more formally {auto-animate=true}
+
+$$
+p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
+$$
+
+- $f: Z = \log(X)$
+- $\frac{d}{dx} f(x) = \frac{d}{dx} \log(x) = \frac{1}{x}$
+
+## Change of variables - more formally {auto-animate=true}
+
+$$
+p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
+$$
+
+- $f: Z = \log(X)$
+- $\frac{d}{dx} f(x) = \frac{d}{dx} \log(x) = \frac{1}{x}$
+
+- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{z^2}{2} \right)$
+- $p_X(x) = \frac{1}{x\sqrt{2\pi}} \exp\left(-\frac{\log(x)^2}{2}\right)$
+
+## Change of variables - affine transform {auto-animate=true}
+
+- $f: Z = a X + b$
+- $\frac{d}{dx} f(x) = \frac{d}{dx} a x + b = a$
+
+## Change of variables - affine transform {auto-animate=true}
+
+- $f: Z = a X + b$
+- $\frac{d}{dx} f(x) = \frac{d}{dx} a x + b = a$
+
+<br>
+
+- $f: Z = \frac{(X - \mu)}{\sigma}$
+- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{z^2}{2} \right)$
+- $p_X(x)?$
+
+
+## Change of variables - multivariate
+
+$$
+p_X(x) = p_Z(f(x)) \left| \det{J}_f(x) \right|
+$$
+
+$$
+J_f(x) = \begin{bmatrix}
+\frac{\partial z_1}{\partial x_1} & \dots & \frac{\partial z_1}{\partial x_K} \\
+\vdots & \ddots & \vdots \\
+\frac{\partial z_K}{\partial x_1} & \dots & \frac{\partial z_K}{\partial x_K}
+\end{bmatrix}
+$$
+
+
+## Change of variables - multivariate
+
+$$f\left(\begin{bmatrix}x_1 \\ x_2\end{bmatrix}\right) = \begin{bmatrix} x_1^2 x_2 \\ 3x_1 + \sin x_2 \end{bmatrix} = \begin{bmatrix}z_1 \\ z_2\end{bmatrix}$$
+
+$$J_f(x) = \begin{bmatrix}
+\frac{\partial z_1}{\partial x_1} & \frac{\partial z_1}{\partial x_2} \\
+\frac{\partial z_2}{\partial x_1} & \frac{\partial z_2}{\partial x_2}
+\end{bmatrix} = \begin{bmatrix} 2x_1x_2 & x_1^2 \\ 3 & \cos x_2 \end{bmatrix}
+$$
+
+
+## Normalizing flows {auto-animate=true}
+
+- Given samples $X$
+- Find $f$ such that $f(X) = Z \sim \text{Normal}(0, \text{I})$
+- "$f$ *normalizes* $X$"
+
+
+## Normalizing flows {auto-animate=true}
+
+- Given samples $X$
+- Find $f$ such that $f(X) = Z \sim \text{Normal}(0, \text{I})$
+- "$f$ *normalizes* $X$"
+
+:::: {.columns}
+
+:::{.column width="60%"}
+#### Density evaluation 
+
+$$
+p_X(x) = p_Z(f(x)) \left| \det{J}_f(x) \right|
+$$
+:::
+::::
+
+## Normalizing flows {auto-animate=true}
+
+- Given samples $X$
+- Find $f$ such that $f(X) = Z \sim \text{Normal}(0, \text{I})$
+- "$f$ *normalizes* $X$"
+
+:::: {.columns}
+
+:::{.column width="60%"}
+#### Density evaluation
+
+$$
+p_X(x) = p_Z(f(x)) \left| \det{J}_f(x) \right|
+$$
+:::
+
+:::{.column width="40%"}
+#### Sampling
+
+$$
+\begin{aligned}
+Z &\sim \text{Normal}(0, \text{I}) \\ 
+X & = f^{-1}(Z)
+\end{aligned}
+$$
+:::
+::::
+
+## Training
+
+Via maximum likelihood (or rather: negative log likelihood)
+
+$$
+\arg \min_\theta \sum_{i=1}^n \log p_Z(f(x_i \mid \theta)) + \log \left| \det{J}_f(x_i \mid \theta) \right|,
+$$
+where $\theta$ are trainable weights of a neural network that implements $f$.
+
+## Challenge {.incremental}
+
+Flow $f$ is a parametric function that:
+
+  - is invertible ($f^{-1}$ exists)
+  - is differentiable
+  - has a Jacobian determinant $\left| \det{J}_f(x_i \mid \theta) \right|$ that is computationally efficient
+  - expressive enough to represent non-trivial distributions
+
+diffeomorphism, bijection
+
+## Flow composition
+
+Invertible and differentiable functions are "closed" under composition
+
+$$
+f = f_L \circ f_{L-1} \circ \dots \circ f_1 \\ 
+$$
+
+::: {#fig-flow-composition layout="[[-10, 1, -10, 1, -10, 1, -10], [10, 1, 10, 1, 10, 1, 10]]"}
+
+$f_1$ 
+
+$f_2$ 
+
+$f_3$ 
+
+
+![](../figures/normalizing-flow/x_1.svg)
+
+$\rightarrow$ 
+
+![](../figures/normalizing-flow/x_2.svg)
+
+$\rightarrow$
+
+![](../figures/normalizing-flow/x_3.svg)
+
+$\rightarrow$
+
+![](../figures/normalizing-flow/x_4.svg)
+
+Flow composition in forward direction
+:::
+
+## Flow composition - inverse
+
+To invert a flow composition, we invert individual flows and run them in the opposite order
+
+$$
+f^{-1} = f_1^{-1} \circ f_2 ^{-1} \circ \dots \circ f_L^{-1} \\ 
+$$
+
+::: {#fig-flow-composition layout="[[-10, 1, -10, 1, -10, 1, -10], [10, 1, 10, 1, 10, 1, 10]]"}
+
+$f_1^{-1}$ 
+
+$f_2^{-1}$ 
+
+$f_3^{-1}$ 
+
+
+![](../figures/normalizing-flow/x_1.svg)
+
+$\leftarrow$ 
+
+![](../figures/normalizing-flow/x_2.svg)
+
+$\leftarrow$
+
+![](../figures/normalizing-flow/x_3.svg)
+
+$\leftarrow$
+
+![](../figures/normalizing-flow/x_4.svg)
+
+Flow composition in backward (inverse) direction
+:::
+
+## Flow composition - Jacobian
+
+- Chain rule
+$$
+\left| J_f(x) \right| = \left| \prod_{l=1}^L J_{f_l}(x)\right| = \prod_{l=1}^L \left| J_{f_l}(x)\right|
+$$
+
+- if we have a Jacobian for each individual transformation, then we have a Jacobian for their composition
+$$
+\arg \min_\theta \sum_{i=1}^n \log p_Z(f(x_i \mid \theta)) + \sum_{l=1}^L \log \left| \det{J}_{f_l}(x_i \mid \theta) \right|
+$$
+
+## Linear flow
+
+:::{.incremental}
+$$
+f(x) = Ax + b
+$$
+
+- inverse: $f^{-1}(z) = A^{-1}(x - b)$
+- Jacobian: $\left| J_f(x) \right| = \left| A \right|$
+
+- Limitations:
+  1. Not expressive (composition of linear functions is a linear function)
+  2. Jacobian/inverse may be in $\mathcal{O}(p^3)$
+:::
+
+## Coupling flows
+
+- *Increasing* expresiveness while potentially *decreasing* computational costs
+- A *coupling flow* is a way to construct non-linear flows
+
+1. Split the data in two disjoint subsets: $x = (x_A, x_B)$
+2. Compute parameters conditionally on one subset: $\theta = g(x_A)$
+3. Apply transformation to the other subset: $z_B = f(x_B \mid \theta)$
+4. Concatenate $z = (x_A, z_B)$

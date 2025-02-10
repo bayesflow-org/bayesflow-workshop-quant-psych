@@ -1,4 +1,6 @@
 /.quarto/
 _site/
 _freeze/
-.Rproj.user
+.Rproj.usersandbox.ipynb
+*.DS_Store
+sandbox.ipynb
