@@ -286,3 +286,134 @@ x.shape # (100, 3)
 z = network(x) 
 z.shape # (100, 2)
 ```
+
+# Activation functions
+
+## Why activation functions?
+
+- A composition of linear functions is itself a linear function
+- Adding nonlinear activations introduces non-linearity
+- $\rightarrow$ In theory, represent any non-linear function
+- Often used for output range control
+
+
+## What is an activation function?
+
+:::{.incremental}
+- Basic idea: Neuron "firing activity" based on its internal state
+- Requirements:
+  - Non-linearity (expressiveness)
+  - Differentiability (training)
+  - Efficiency (scalability)
+:::
+
+## Activation functions
+
+- There are many
+  - [https://keras.io/api/layers/activations/](https://keras.io/api/layers/activations/)
+  - [https://arxiv.org/abs/2402.09092](https://arxiv.org/abs/2402.09092)
+
+Here are some basic examples
+
+## Activation functions
+
+$$
+\tanh{(x)} = \frac{e^x - e^{-x}}{e^x + e^{-x}}
+$$
+
+## Activation functions
+
+$$
+\text{ReLU}(x) = \begin{cases} 0, x \leq 0 \\ x, x > 0\end{cases}
+$$
+
+## Activation functions
+
+$$
+\text{GELU}(x) = x \Phi(x)
+$$
+
+## Activation functions
+
+$$
+\text{softplus}(x) = \log(1 + e^x)
+$$
+
+## Activation functions
+
+$$
+\sigma(x) = \frac{1}{1 + e^{-x}}
+$$
+
+## Activation functions
+
+$$
+\text{softmax}(x)_i = \frac{e^{x_i}}{\sum_{j=1}^{J} e^{x_j}}
+$$
+
+
+# Training networks
+
+## Loss function
+
+
+
+## Optimization {.smaller}
+
+:::{.incremental}
+- Gradient based (e.g., Newton's method)
+  - Second derivative of loss
+  - Few steps to converge to an optimum
+  - Each step is relatively slow
+  - Best for small data
+- Stochastic gradient descent (SGD)
+  - First derivative of loss
+  - Many steps to converge to an optimum
+  - Each step is relatively cheap
+  - Best for big data
+- Other methods
+  - BFGS, Gauss-Newton, Adagrad, Particle swarm, differential evolution,... 
+:::
+
+## Gradient descent
+
+$$
+\theta_{n+1} = \theta_n - \gamma \Delta_\theta \mathcal{L}(x; \theta_n) 
+$$
+
+- $\theta_{n+1}$: New network weights
+- $\theta_n$: Current network weights
+- $\gamma$: Learning rate
+- $\Delta_\theta$: Gradient (matrix of partial derivatives w.r.t network weights)
+- $\mathcal{L}$: Loss function
+- $x$: Data
+
+## Backpropagation
+
+## Adam
+
+## Training regimes
+
+1. Offline
+    - "In memory" - load at once (small to moderate data)
+    - "On disk" - load from disk on demand (large data)
+2. Online
+    - Generate data on the fly
+3. Distributed training
+    - Big data
+
+# Training tricks
+
+## Learning rate scheduling
+
+## Regularization
+
+## Early stopping
+
+## Dropout
+
+## Batch normalization
+
+## Gradient clipping
+
+
