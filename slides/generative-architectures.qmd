@@ -5,6 +5,9 @@ format:
         theme: default
         slide-number: true
         html-math-method: mathjax
+        include-in-header:
+            text: |
+                <script src="https://cdn.jsdelivr.net/npm/mermaid@11.2.1/dist/mermaid.min.js"></script>
 ---
 
 ## Probabilistic generative models
@@ -40,6 +43,7 @@ Uses:
 Generative models build on invertible transformations of random variables
 
 General characteristics:
+
 - Efficient to evaluate $p_X(x)$
 - Efficient fo sample from $p_X$
 - Expressive (flexible)
@@ -49,7 +53,7 @@ General characteristics:
 
 ## Change of variables
 
-- Transformations of random variables are described by "change of variables"
+Transformations of random variables are described by "change of variables"
 
 - $Z \sim p_Z(z)$
 - $Z = f(X)$ (or $X = f^{-1}(Z)$)
@@ -58,59 +62,161 @@ General characteristics:
 
 Express the density of $X$ using the density of $Z$ and the transform $f$
 
-## Change of variables - scaling example
+## Change of variables - intuition {auto-animate=true}
 
-$$
-\begin{aligned}
-Z & \sim \text{Uniform}(0, 1) \implies p_Z(z) = \begin{cases} 1 \text{ when } z \in [0, 1]\\ 0 \text{ otherwise}\end{cases} \\
-Z & = 0.5X \implies p_X(x) = \begin{cases} 0.5 \text{ when } x \in [0, 2]\\ 0 \text{ otherwise}\end{cases} 
-\end{aligned}
-$$
+:::: {.columns}
 
-## Change of variables - more formally {auto-animate=true}
+::: {.column width="50%"}
+$$Z \sim \text{Uniform}(0, 1)$$
+:::
 
-$$
-p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
-$$
+::::
+
+## Change of variables - intuition {auto-animate=true}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+$$Z \sim \text{Uniform}(0, 1)$$
+
+![](../figures/uniform.svg)
+:::
+
+::::
 
 
-## Change of variables - more formally {auto-animate=true}
+## Change of variables - intuition {auto-animate=true}
 
-$$
-p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
-$$
+:::: {.columns}
 
-- $f: Z = \log(X)$
-- $\frac{d}{dx} f(x) = \frac{d}{dx} \log(x) = \frac{1}{x}$
+::: {.column width="50%"}
+$$Z \sim \text{Uniform}(0, 1)$$
 
-## Change of variables - more formally {auto-animate=true}
+![](../figures/uniform.svg)
+:::
 
-$$
-p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
-$$
+::: {.column width="50%"}
+$$X = 2Z - 1$$
+:::
+::::
 
-- $f: Z = \log(X)$
-- $\frac{d}{dx} f(x) = \frac{d}{dx} \log(x) = \frac{1}{x}$
+## Change of variables - intuition {auto-animate=true}
 
-- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{z^2}{2} \right)$
-- $p_X(x) = \frac{1}{x\sqrt{2\pi}} \exp\left(-\frac{\log(x)^2}{2}\right)$
+:::: {.columns}
+
+::: {.column width="50%"}
+$$Z \sim \text{Uniform}(0, 1)$$
+
+![](../figures/uniform.svg)
+:::
+
+::: {.column width="50%"}
+$$X = 2Z - 1$$
+
+![](../figures/uniform-rescaled.svg)
+:::
+::::
 
 ## Change of variables - affine transform {auto-animate=true}
 
 - $f: Z = a X + b$
-- $\frac{d}{dx} f(x) = \frac{d}{dx} a x + b = a$
+  - shift by $b$: no effect
+  - scale by a constant $a$: multiply by $a$
+  - $p_X(x) = p_Z(f(x)) \times b$
 
 ## Change of variables - affine transform {auto-animate=true}
 
 - $f: Z = a X + b$
-- $\frac{d}{dx} f(x) = \frac{d}{dx} a x + b = a$
+  - shift by $b$: no effect
+  - scale by a constant $a$: multiply by $a$
+  - $p_X(x) = p_Z(f(x)) \times b$
 
-<br>
-
+- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
-- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{z^2}{2} \right)$
-- $p_X(x)?$
 
+## Change of variables - affine transform {auto-animate=true}
+
+- $f: Z = a X + b$
+  - shift by $b$: no effect
+  - scale by a constant $a$: multiply by $a$
+  - $p_X(x) = p_Z(f(x)) \times a$
+
+- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
+- $f: Z = \frac{(X - \mu)}{\sigma}$
+- $p_X(x) = p_Z(f(x)) \times a$
+
+## Change of variables - affine transform {auto-animate=true}
+
+- $f: Z = a X + b$
+  - shift by $b$: no effect
+  - scale by a constant $a$: multiply by $a$
+  - $p_X(x) = p_Z(f(x)) \times b$
+
+- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
+- $f: Z = \frac{(X - \mu)}{\sigma}$
+- $p_X(x) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} f(x)^2 \right) \times a$
+
+## Change of variables - affine transform {auto-animate=true}
+
+- $f: Z = a X + b$
+  - shift by $b$: no effect
+  - scale by a constant $a$: multiply by $a$
+  - $p_X(x) = p_Z(f(x)) \times b$
+
+- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
+- $f: Z = \frac{(X - \mu)}{\sigma}$
+- $p_X(x) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right) \times a$
+
+## Change of variables - affine transform {auto-animate=true}
+
+- $f: Z = a X + b$
+  - shift by $b$: no effect
+  - scale by a constant $a$: multiply by $a$
+  - $p_X(x) = p_Z(f(x)) \times b$
+
+- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
+- $f: Z = \frac{(X - \mu)}{\sigma}$
+- $p_X(x) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right) \times \frac{1}{\sigma}$
+
+## Change of variables - affine transform {auto-animate=true}
+
+- $f: Z = a X + b$
+  - shift by $b$: no effect
+  - scale by a constant $a$: multiply by $a$
+  - $p_X(x) = p_Z(f(x)) \times b$
+
+- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
+- $f: Z = \frac{(X - \mu)}{\sigma}$
+- $p_X(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right)$
+
+
+## Change of variables - more formally {auto-animate=true}
+
+$$
+p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
+$$
+
+
+## Change of variables - more formally {auto-animate=true}
+
+$$
+p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
+$$
+
+- $f: Z = \log(X)$
+- $\frac{d}{dx} f(x) = \frac{d}{dx} \log(x) = \frac{1}{x}$
+
+## Change of variables - more formally {auto-animate=true}
+
+$$
+p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
+$$
+
+- $f: Z = \log(X)$
+- $\frac{d}{dx} f(x) = \frac{d}{dx} \log(x) = \frac{1}{x}$
+
+- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
+- $p_X(x) = \frac{1}{x\sqrt{2\pi}} \exp\left(-\frac{1}{2} \log(x)^2\right)$
 
 ## Change of variables - multivariate
 
@@ -195,9 +301,9 @@ $$
 Via maximum likelihood (or rather: negative log likelihood)
 
 $$
-\arg \min_\theta \sum_{i=1}^n \log p_Z(f(x_i \mid \theta)) + \log \left| \det{J}_f(x_i \mid \theta) \right|,
+\arg \min_\phi - \sum_{i=1}^n \log p_Z(f(x_i \mid \phi)) + \log \left| \det{J}_f(x_i \mid \phi) \right|,
 $$
-where $\theta$ are trainable weights of a neural network that implements $f$.
+where $\phi$ are trainable weights of a neural network that implements $f$.
 
 ## Challenge {.incremental}
 
@@ -205,7 +311,7 @@ Flow $f$ is a parametric function that:
 
   - is invertible ($f^{-1}$ exists)
   - is differentiable
-  - has a Jacobian determinant $\left| \det{J}_f(x_i \mid \theta) \right|$ that is computationally efficient
+  - has a Jacobian determinant $\left| J_f(x_i \mid \phi) \right|$ that is computationally efficient
   - expressive enough to represent non-trivial distributions
 
 diffeomorphism, bijection
@@ -287,7 +393,7 @@ $$
 
 - if we have a Jacobian for each individual transformation, then we have a Jacobian for their composition
 $$
-\arg \min_\theta \sum_{i=1}^n \log p_Z(f(x_i \mid \theta)) + \sum_{l=1}^L \log \left| \det{J}_{f_l}(x_i \mid \theta) \right|
+\arg \min_\phi \sum_{i=1}^n \log p_Z(f(x_i \mid \phi)) + \sum_{l=1}^L \log \left| \det{J}_{f_l}(x_i \mid \phi) \right|
 $$
 
 ## Linear flow
@@ -311,6 +417,91 @@ $$
 - A *coupling flow* is a way to construct non-linear flows
 
 1. Split the data in two disjoint subsets: $x = (x_A, x_B)$
-2. Compute parameters conditionally on one subset: $\theta = g(x_A)$
-3. Apply transformation to the other subset: $z_B = f(x_B \mid \theta)$
+2. Compute parameters conditionally on one subset: $\theta(x_A)$
+3. Apply transformation to the other subset: $z_B = f(x_B \mid \theta(x_A))$
 4. Concatenate $z = (x_A, z_B)$
+
+## Coupling flow: forward
+
+```{mermaid}
+stateDiagram
+  direction LR
+  [*] --> $$x$$
+  state Split {
+    $$x$$ --> $$x_A$$
+    $$x$$ --> $$x_B$$
+  }
+  $$x_A$$ --> $$z_A$$
+  $$x_A$$ --> $$\theta(x_A)$$
+  $$\theta(x_A)$$ --> $$f(x_B\mid\theta(x_A))$$
+  $$x_B$$ --> $$f(x_B\mid\theta(x_A))$$
+  $$f(x_B\mid\theta(x_A))$$ --> $$z_B$$
+  state Concatenate {
+    $$z_A$$ --> $$z$$
+    $$z_B$$ --> $$z$$
+  }
+  $$z$$ --> [*]
+```
+
+
+## Coupling flow: backward
+
+## Coupling flow trick
+
+- Jacobian
+
+$$ J_f = 
+\begin{bmatrix}
+\text{I} & 0 \\
+\frac{\partial}{\partial x_A}f(x_B \mid \theta(x_A)) & J_f(x_B \mid \theta(x_A))
+\end{bmatrix}
+$$
+
+- Determinant
+
+$$
+\det{J}_f = \det(\text{I}) \times \det{J}_f(x_B \mid \theta(x_A)) = \det{J}_f(x_B \mid \theta(x_A))
+$$
+
+
+## Coupling flow trick
+
+- $\theta(x_A)$ can be arbitrarily complex
+  - non-linear,...
+  - $\rightarrow$ neural network
+- $f(x_B\mid\theta(x_A))$ needs to be differentiable and invertible
+  - easy to calculate determinant Jacobian... 
+
+
+## Affine coupling
+
+:::{.incremental}
+- $\theta(x_A)$: Trainable coupling networks
+  - Output: Shift $\mu$ and scale $\sigma$ 
+- Linear (affine) transform function $f(x_B\mid\theta(x_A)) = \frac{x_B - \mu(x_A)}{\sigma(x_A)}$
+
+- log Jacobian: $-\log{\sigma(x_A)}$
+:::
+
+## Exercise - Moons
+
+:::: {.columns}
+
+::: {.column width="50%"}
+### Forward
+
+{{< video ../exercises/normalizing-flow-forward.mp4 width="500" height="350">}}
+:::
+
+::: {.column width="50%"}
+### Backward
+
+{{< video ../exercises/normalizing-flow-backward.mp4 width="500" height="350">}}
+:::
+
+::::
+
+# Flow matching
+
+## Flow matching
+

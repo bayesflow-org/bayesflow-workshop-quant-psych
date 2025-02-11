@@ -4,3 +4,6 @@ _freeze/
 .Rproj.usersandbox.ipynb
 *.DS_Store
 sandbox.ipynb
+.Rproj.user
+todo.md
+.Rhistory
