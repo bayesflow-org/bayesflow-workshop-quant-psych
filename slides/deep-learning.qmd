@@ -8,7 +8,9 @@ format:
         highlight-style: github
 ---
 
-## What is "Deep Learning"?
+## What is Deep Learning
+
+
 
 # Python frameworks
 
@@ -81,13 +83,13 @@ import keras
 ## Tensors
 
 ```{.python filename="Python"}
-import torch
+import os
+os.environ["KERAS_BACKEND"] = "tensorflow"
+import keras
 
-x = torch.zeros((16, 2))
-
-x.shape        # torch.Size([16, 2])
-str(x.device)  # 'cpu'
-x.grad is None # True
+x = keras.ops.zeros((16, 2))
+x.shape # TensorShape([16, 2])
+x.device # device:CPU:0
 ```
 
 - First axis almost always `batch_size` (think "sample size")
@@ -95,144 +97,67 @@ x.grad is None # True
 
 # Neural networks
 
-## A network
-
-```{dot}
-digraph {
-  rotate=90;
-  x1 [label="" shape="circle" style="filled" fillcolor="coral1"]
-  x2 [label="" shape="circle" style="filled" fillcolor="coral1"]
-  
-  z11 [label="" shape="circle" style="filled" fillcolor="lightgray"]
-  z12 [label="" shape="circle" style="filled" fillcolor="lightgray"]
-  z13 [label="" shape="circle" style="filled" fillcolor="lightgray"]
-  
-  z21 [label="" shape="circle" style="filled" fillcolor="lightgray"]
-  z22 [label="" shape="circle" style="filled" fillcolor="lightgray"]
-  z23 [label="" shape="circle" style="filled" fillcolor="lightgray"]
-  
-  y1 [label="" shape="circle" style="filled" fillcolor="lightblue"]
-  y2 [label="" shape="circle" style="filled" fillcolor="lightblue"]
-  
-  x1, x2 -> z11, z12, z13
-  z11, z12, z13 -> z21, z22, z23
-  z21, z22, z23 -> y1, y2
-}
-``` 
-
-
-
 ## The anatomy of neural networks
 
-```{ojs}
-d3 = require("d3@7")
-```
-
-```{ojs}
-mlp = {
-    // Declare the chart dimensions and margins.
-    const width = 1000;
-    const height = 500;
-
-    const layers = [3, 4, 4, 2]; // 2 input nodes, 2 hidden layers with 4 nodes each, 1 output node
-    const layerSpacing = width / (layers.length + 1);
-    const nodeRadius = 30;
-
-    // Create the SVG container.
-    const svg = d3.create("svg")
-        .attr("width", width)
-        .attr("height", height);
-
-    // Generate nodes
-    const nodes = [];
-    layers.forEach((count, i) => {
-    for (let j = 0; j < count; j++) {
-        nodes.push({
-        layer: i,
-        x: (i + 1) * layerSpacing,
-        y: height / (count + 1) * (j + 1),
-        type: i === 0 ? "input" : (i === layers.length -1 ? "output" : "hidden") // node type
-        });
-    }
-    });
-
-    // Generate links between nodes
-    const links = [];
-    for (let i = 0; i < layers.length - 1; i++) {
-    const currentLayerNodes = nodes.filter(d => d.layer === i);
-    const nextLayerNodes = nodes.filter(d => d.layer === i + 1);
-
-    currentLayerNodes.forEach(source => {
-        nextLayerNodes.forEach(target => {
-        links.push({ source, target });
-        });
-    });
-    }
-
-
-    // Draw links
-    svg.selectAll("line")
-    .data(links)
-    .join("line")
-    .attr("x1", d => d.source.x)
-    .attr("y1", d => d.source.y)
-    .attr("x2", d => d.target.x)
-    .attr("y2", d => d.target.y)
-    .attr("stroke", "#000000")
-    .attr("stroke-width", 2);
-
-
-    // Color mapping for node types
-    const colorMap = {
-        input: "#FF7F50",   // Green for input layer
-        hidden: "#D3D3D3",  // Blue for hidden layers
-        output: "#ADD8E6"    // Orange for output layer
-    };
-
-    // Draw nodes
-    svg.selectAll("circle")
-        .data(nodes)
-        .join("circle")
-        .attr("cx", d => d.x)
-        .attr("cy", d => d.y)
-        .attr("r", nodeRadius)
-        .attr("fill", d => colorMap[d.type])
-        .attr("stroke", "#000000")
-        .attr("stroke-width", 2);
-
-  // Return the SVG element.
-  return svg.node();
-}
-```
+![](../figures/neural-network.svg){fig-align="center"}
 
 ## Neuron
 
-- A regression with a non-linear activation
-- $J$-dimensional input, $x$
-- 1-dimensional output, $z$
+Regression + non-linear activation 
 
-$$
-z = \sigma\Big(b + \sum_{j=1}^J x_j W_j \Big)
-$$
+![](../figures/neuron.svg){fig-align="center"}
+
 
 ## Perceptron
 
-- Multiple regressions made by a collection of neurons
-- $J$-dimensional input, $x$
-- $K$-dimensional output, $z$
+::::{.columns}
+
+:::{.column width="70%"}
+Multiple regressions + non-linear activations
 
 $$
 \begin{aligned}
-z_k &= \sigma \Big(b_k + \sum_{j=1}^J W_{jk}x_j\Big) \text{ for } k \in \{1, \dots, K\}\\ 
+z_k &= \sigma \Big(b_k + \sum_{j=1}^J W_{jk}x_j\Big)\\ 
 z &= \sigma \Big(b + x W'\Big)
 \end{aligned}
 $$
 
+:::
+
+:::{.column width="30%"}
+![](../figures/perceptron.svg){width=100%}
+:::
+::::
+
+## Perceptron in code
+
+```{.python filename="Python"}
+import keras
+
+network = keras.models.Sequential([
+    keras.Input((3,)),
+    keras.layers.Dense(5, activation="relu"),
+])
+network.summary()
+
+x = keras.random.normal((100, 3))
+x.shape # TensorShape([100, 3])
+
+z = network(x)
+z.shape # TensorShape([100, 5])
+```
 
 ## Multi-Layer Perceptron
 
-- $L$ layers of perceptrons
-- A composition of functions
+Multiple "layers" of perceptrons
+
+![](../figures/neural-network.svg){fig-align="center"}
+
+
+
+## Multi-Layer Perceptron
+
+Function composition
 
 $$
 \begin{aligned}
@@ -245,9 +170,8 @@ $$
  
 ## Multi-Layer Perceptron in Code
 
-```{.python filename="Python" code-line-numbers="4-11"}
+```{.python filename="Python" code-line-numbers="3-9"}
 import keras
-import numpy as np
 
 network = keras.models.Sequential([
     keras.Input((3,)),
@@ -255,21 +179,19 @@ network = keras.models.Sequential([
     keras.layers.Dense(4, activation="relu"),   # 4 inputs, 4 outputs
     keras.layers.Dense(2, activation="softmax") # 4 inputs, 2 outputs
 ])
-
 network.summary()
 
-x = np.random.normal(size=(100, 3))
-x.shape # (100, 3)
+x = keras.random.normal((100, 3))
+x.shape # TensorShape([100, 3])
 
 z = network(x)
-z.shape # (100, 2)
+z.shape # TensorShape([100, 2])
 ```
 
 ## Multi-Layer Perceptron in Code
 
-```{.python filename="Python" code-line-numbers="13-17"}
+```{.python filename="Python" code-line-numbers="11-16"}
 import keras
-import numpy as np
 
 network = keras.models.Sequential([
     keras.Input((3,)),
@@ -277,14 +199,13 @@ network = keras.models.Sequential([
     keras.layers.Dense(4, activation="relu"),   # 4 inputs, 4 outputs
     keras.layers.Dense(2, activation="softmax") # 4 inputs, 2 outputs
 ])
-
 network.summary()
 
-x = np.random.normal(size=(100, 3))
-x.shape # (100, 3)
+x = keras.random.normal((100, 3))
+x.shape # TensorShape([100, 3])
 
 z = network(x) 
-z.shape # (100, 2)
+z.shape # TensorShape([100, 2])
 ```
 
 # Activation functions

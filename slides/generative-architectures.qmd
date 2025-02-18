@@ -505,3 +505,8 @@ $$
 
 ## Flow matching
 
+
+## Flow matching
+
+
+{{< video ../exercises/datasaurus.mp4 width="500" height="350">}}
