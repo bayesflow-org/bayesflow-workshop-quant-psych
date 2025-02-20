@@ -1,0 +1,31 @@
+
+par(cex=1.5)
+plot(0, xlim=c(0, 5), ylim=c(0, 1.75), type="n", bty="n", axes=FALSE, xlab="", ylab="")
+rect(0, 0, 1, 1.75, col=adjustcolor("skyblue",0.5), lty=0)
+rect(2, 0, 5, 1.75, col=adjustcolor("skyblue",0.5), lty=0)
+curve(0.1+exp(-x), add=TRUE, ylim=c(0, 1.5), lwd=2)
+curve(0.12+0.1*x + 0.02*(x)^2 + exp(-x), add=TRUE, lwd=2, lty=2)
+text(4.5, 0.25, "Training")
+text(4.5, 1.2, "Validation")
+text(0.5, 1.55, "Underfitting\nHigh Bias")
+text(3.5, 1.55, "Overfitting\nHigh Variance")
+axis(1, labels=FALSE)
+axis(2, labels=FALSE)
+mtext("Network Complexity", side=1, cex=2.25, line = 1)
+mtext("Error", side=2, cex=2.25, line=1)
+
+
+
+
+par(cex=1.5)
+plot(0, xlim=c(0, 5), ylim=c(0, 1.75), type="n", bty="n", axes=FALSE, xlab="", ylab="")
+curve(0.1+exp(-x), add=TRUE, ylim=c(0, 1.5), lwd=2)
+curve(0.12+0.1*x + 0.02*(x)^2 + exp(-x), add=TRUE, lwd=2, lty=2)
+arrows(x0=1.6, y0=1, y1=0.55, lwd=4)
+text(4.5, 0.25, "Training")
+text(4.5, 1.2, "Validation")
+text(1.6, 1.05, "Stop early")
+axis(1, labels=FALSE)
+axis(2, labels=FALSE)
+mtext("Iterations", side=1, cex=2.25, line = 1)
+mtext("Error", side=2, cex=2.25, line=1)

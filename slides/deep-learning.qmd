@@ -242,17 +242,16 @@ $$
 \tanh{(x)} = \frac{e^x - e^{-x}}{e^x + e^{-x}}
 $$
 
+![](../figures/activations/tanh.svg){fig-align="center"}
+
+
 ## Activation functions
 
 $$
 \text{ReLU}(x) = \begin{cases} 0, x \leq 0 \\ x, x > 0\end{cases}
 $$
 
-## Activation functions
-
-$$
-\text{GELU}(x) = x \Phi(x)
-$$
+![](../figures/activations/relu.svg){fig-align="center"}
 
 ## Activation functions
 
@@ -260,11 +259,16 @@ $$
 \text{softplus}(x) = \log(1 + e^x)
 $$
 
+![](../figures/activations/softplus_small.svg){fig-align="left" width=49%}
+![](../figures/activations/softplus_large.svg){fig-align="right" width=49%}
+
 ## Activation functions
 
 $$
 \sigma(x) = \frac{1}{1 + e^{-x}}
 $$
+
+![](../figures/activations/sigma.svg){fig-align="center"}
 
 ## Activation functions
 
@@ -275,11 +279,46 @@ $$
 
 # Training networks
 
+## Training networks
+
+- Networks take an input and produce an output
+- The output depends on the _weights_ and _biases_ (_parameters_) of the neurons
+- _Training_: Adjusting the network parameters
+
+## Ingredients
+
+1. Network
+    - What is the network architecture?
+    - What are the parameters of the network $\theta$?
+2. Data
+    - What information do we have available?
+3. Goal
+    - What do we want the network to do?
+
 ## Loss function
 
+- The goal is operationalized by a loss function
 
+$$
+\mathcal{L}(x; \theta)
+$$
 
-## Optimization {.smaller}
+- $\theta$: Network parameters
+- $x$: Data
+  
+## Training networks
+
+Minimise the loss with respect to the model parameters
+
+$$
+\operatorname*{argmin}_{\theta} \mathcal{L}(x; \theta)
+$$
+
+![](../figures/loss.svg){fig-align="center"}
+
+## Optimisation
+
+<!-- ## Optimization {.smaller}
 
 :::{.incremental}
 - Gradient based (e.g., Newton's method)
@@ -294,7 +333,7 @@ $$
   - Best for big data
 - Other methods
   - BFGS, Gauss-Newton, Adagrad, Particle swarm, differential evolution,... 
-:::
+::: -->
 
 ## Gradient descent
 
@@ -311,6 +350,15 @@ $$
 
 ## Backpropagation
 
+## Autodifferentiation
+
+Details for each backend:
+
+- [`TensorFlow`](https://www.tensorflow.org/guide/autodiff)
+- [`Torch`](https://pytorch.org/tutorials/beginner/basics/autogradqs_tutorial.html)
+- [`JAX`](https://docs.jax.dev/en/latest/automatic-differentiation.html)
+
+
 ## Adam
 
 ## Training regimes
@@ -323,18 +371,258 @@ $$
 3. Distributed training
     - Big data
 
-# Training tricks
+# Tips for training
+
+## Kernel trick
+
+- Linear solver for non-linear problems
+- Project data into a higher-dimensional space
+- $\rightarrow$ networks to add dimensions first
 
 ## Learning rate scheduling
 
-## Regularization
+- Change LR through training
+- Typically: Quick warm up to target, then decay to zero
 
-## Early stopping
+- Improved convergence
+- "Get to a reasonable solution fast, then finetune using small steps"
 
-## Dropout
+## Issues with gradients
+
+Gradients can become excessively large or vanishingly small
+</br></br>
+
+::::{.columns}
+:::{.column width=50% style="font-size: 0.7em"}
+
+### Exploding gradients
+- Unstable training (jumping erratically)
+- Numerical issues (overflow)
+
+#### Remedies
+- Batch normalization
+- Gradient clipping
+:::
+
+:::{.column width=50% style="font-size: 0.7em"}
+### Vanishing gradients
+- Slow training (barely moving)
+- Numerical issues (underflow)
+
+#### Remedies
+- Batch normalization
+- Different activation functions
+- Residual connections
+:::
+::::
 
 ## Batch normalization
 
+- Keep output close to mean 0 and variance 1
+
+```{.python filename="Python" code-line-numbers="3-4"}
+network = keras.models.Sequential([
+    keras.Input((3,)),
+    keras.layers.Dense(4, activation="relu"),
+    keras.layers.BatchNormalization(),
+    keras.layers.Dense(4),
+    keras.layers.BatchNormalization(),
+    keras.layers.Activation("relu"),
+    keras.layers.Dense(2, activation="softmax")
+])
+```
+
+## Batch normalization
+
+- Keep output close to mean 0 and variance 1
+
+```{.python filename="Python" code-line-numbers="5-7"}
+network = keras.models.Sequential([
+    keras.Input((3,)),
+    keras.layers.Dense(4, activation="relu"),
+    keras.layers.BatchNormalization(),
+    keras.layers.Dense(4),
+    keras.layers.BatchNormalization(),
+    keras.layers.Activation("relu"),
+    keras.layers.Dense(2, activation="softmax")
+])
+```
+
 ## Gradient clipping
 
+Scale down gradients if they exceed certain threshold
 
+</br>
+
+::::{.columns}
+
+:::{.column width="50%" style="font-size: 0.8em"}
+### Value clipping
+
+- Restrict gradients to a specified range
+- Each gradient clipped individually
+:::
+
+:::{.column width="50%" style="font-size: 0.8em"}
+### Norm clipping
+- Restrict the size (norm) of the gradient to a specified range
+- All gradients rescaled so that the norm becomes smaller
+:::
+::::
+
+</br>
+
+```{.python filename="Python"}
+optimizer=keras.optimizers.Adam(learning_rate=1e-3, clipvalue=0.5)
+optimizer=keras.optimizers.Adam(learning_rate=1e-3, clipnorm=1.0)
+```
+
+## Residual / skip connections
+
+- Add output of a layer with its input
+- Removes vanishing gradients
+- Layer learns the "residual": $f(x) = r(x) + x$
+
+```{.python filename="Python"}
+inputs = keras.Input(shape=(64,))
+
+residual = keras.layers.Dense(64)(inputs)
+outputs = keras.layers.Add()([residual, inputs])
+outputs = keras.layers.Activation("relu")(outputs)
+
+outputs = keras.layers.Dense(10, activation="softmax")(outputs)
+
+model = keras.Model(inputs, outputs)
+```
+
+## Guards against overfiting
+
+Large networks tend to overfit
+
+![](../figures/overfitting.svg){fig-align="left"}
+
+## Guards against overfiting
+
+Large networks tend to overfit
+
+</br>
+
+### Remedies
+- Early stopping
+- Regularization
+- Dropout
+- Add more data
+  
+## Early stopping
+
+![](../figures/early-stopping.svg){fig-align="center"}
+
+
+## Early stopping
+
+</br>
+
+```{.python filename="Python"}
+early_stopping = keras.callbacks.EarlyStopping(
+    monitor="val_loss",
+    restore_best_weights=True 
+)
+
+model.fit(
+    X_train, y_train,
+    validation_data=(X_val, y_val),
+    epochs=100,
+    callbacks=[early_stopping]
+)
+```
+
+## Regularization
+
+Add (weighted) norm of the parameters to the loss
+$$
+\mathcal{L}(x, \theta) = \mathcal{L}_0(x, \theta) + \lambda ||\theta||
+$$
+
+::::{.columns}
+:::{.column width=50% style="font-size: 0.7em"}
+### L1
+- $||\theta||_1 = \sum|\theta|$
+- Encourages sparse weights
+- Discourages large weights
+- Feature selection/pruning
+:::
+
+:::{.column width=50% style="font-size: 0.7em"}
+### L2
+- $||\theta||_2 = \sum\theta^2$
+- Encourages spread out weights
+- Discourages large weights
+:::
+::::
+
+## Regularization
+
+```{.python filename="Python"}
+network = keras.Sequential([
+    keras.layers.Dense(64, 
+        activation="relu", 
+        kernel_regularizer=keras.regularizers.l1(0.01)),
+    keras.layers.Dense(32, 
+        activation="relu", 
+        kernel_regularizer=keras.regularizers.l2(0.02)),
+    keras.layers.Dense(10, activation="softmax")
+])
+```
+
+- In `keras`
+    - `kernel_regularizer`: Weights
+    - `bias_regularizer`: Bias
+    - `activity_regularizer`: Layer output
+
+## Dropout
+
+During training, "turn off" each activation with a probability $p$
+
+![[Image source: learnopencv.com](https://learnopencv.com/wp-content/uploads/2018/06/dropoutAnimation.gif)](https://learnopencv.com/wp-content/uploads/2018/06/dropoutAnimation.gif){fig-align="center" width=50%}
+
+- Better generalization
+  - Reduced dependence/influence of single neurons
+  - An ensemble of smaller networks
+- Reduced expressiveness
+- Increased variance during training
+
+## Dropout
+
+```{.python filename="Python" code-line-numbers="3-6"}
+network = keras.Sequential([
+    keras.Input((2,)),
+    keras.layers.Dense(64, activation="relu"),
+    keras.layers.Dropout(0.1),
+    keras.layers.Dense(64, activation="relu"),
+    keras.layers.Dropout(0.05),
+    keras.layers.Dense(10, activation="softmax")
+])
+
+x = keras.random.normal((100, 2))
+
+network(x)
+network(x, training=True)
+```
+
+## Dropout
+
+```{.python filename="Python" code-line-numbers="12-13"}
+network = keras.Sequential([
+    keras.Input((2,)),
+    keras.layers.Dense(64, activation="relu"),
+    keras.layers.Dropout(0.1),
+    keras.layers.Dense(64, activation="relu"),
+    keras.layers.Dropout(0.05),
+    keras.layers.Dense(10, activation="softmax")
+])
+
+x = keras.random.normal((100, 2))
+
+network(x)
+network(x, training=True)
+```
