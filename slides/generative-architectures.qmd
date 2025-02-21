@@ -33,6 +33,7 @@ Uses:
 - Generative adversarial networks (GAN)
 - Variational autoencoders (VAE)
 - Diffusion models
+- Consistency models
 - **Normalizing flows**
 - **Flow matching**
 
@@ -49,7 +50,6 @@ General characteristics:
 - Expressive (flexible)
 - Can represent high-dimensional probability distributions
 - Easy to train (standard ML methods)
-<!-- - Transform a (complex) data distribution $p_X(X)$ into a simple (analytic) distribution -->
 
 ## Change of variables
 
@@ -129,7 +129,7 @@ $$X = 2Z - 1$$
 - $f: Z = a X + b$
   - shift by $b$: no effect
   - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times b$
+  - $p_X(x) = p_Z(f(x)) \times a$
 
 - $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
@@ -150,7 +150,7 @@ $$X = 2Z - 1$$
 - $f: Z = a X + b$
   - shift by $b$: no effect
   - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times b$
+  - $p_X(x) = p_Z(f(x)) \times a$
 
 - $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
@@ -161,7 +161,7 @@ $$X = 2Z - 1$$
 - $f: Z = a X + b$
   - shift by $b$: no effect
   - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times b$
+  - $p_X(x) = p_Z(f(x)) \times a$
 
 - $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
@@ -172,7 +172,7 @@ $$X = 2Z - 1$$
 - $f: Z = a X + b$
   - shift by $b$: no effect
   - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times b$
+  - $p_X(x) = p_Z(f(x)) \times a$
 
 - $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
@@ -183,7 +183,7 @@ $$X = 2Z - 1$$
 - $f: Z = a X + b$
   - shift by $b$: no effect
   - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times b$
+  - $p_X(x) = p_Z(f(x)) \times a$
 
 - $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
@@ -246,7 +246,7 @@ $$
 
 ## Normalizing flows {auto-animate=true}
 
-- Given samples $X$
+- Given samples/data $X$
 - Find $f$ such that $f(X) = Z \sim \text{Normal}(0, \text{I})$
 - "$f$ *normalizes* $X$"
 
@@ -311,10 +311,8 @@ Flow $f$ is a parametric function that:
 
   - is invertible ($f^{-1}$ exists)
   - is differentiable
-  - has a Jacobian determinant $\left| J_f(x_i \mid \phi) \right|$ that is computationally efficient
+  - has a Jacobian determinant $\left|\det{J}_f(x_i \mid \phi) \right|$ that is computationally efficient
   - expressive enough to represent non-trivial distributions
-
-diffeomorphism, bijection
 
 ## Flow composition
 
@@ -388,7 +386,7 @@ Flow composition in backward (inverse) direction
 
 - Chain rule
 $$
-\left| J_f(x) \right| = \left| \prod_{l=1}^L J_{f_l}(x)\right| = \prod_{l=1}^L \left| J_{f_l}(x)\right|
+\left| \det{J}_f(x) \right| = \left| \det \prod_{l=1}^L J_{f_l}(x)\right| = \prod_{l=1}^L \left| \det{J}_{f_l}(x)\right|
 $$
 
 - if we have a Jacobian for each individual transformation, then we have a Jacobian for their composition
@@ -404,7 +402,7 @@ f(x) = Ax + b
 $$
 
 - inverse: $f^{-1}(z) = A^{-1}(x - b)$
-- Jacobian: $\left| J_f(x) \right| = \left| A \right|$
+- Jacobian: $\left| \det{J}_f(x) \right| = \left| \det{A} \right|$
 
 - Limitations:
   1. Not expressive (composition of linear functions is a linear function)
@@ -423,28 +421,11 @@ $$
 
 ## Coupling flow: forward
 
-```{mermaid}
-stateDiagram
-  direction LR
-  [*] --> $$x$$
-  state Split {
-    $$x$$ --> $$x_A$$
-    $$x$$ --> $$x_B$$
-  }
-  $$x_A$$ --> $$z_A$$
-  $$x_A$$ --> $$\theta(x_A)$$
-  $$\theta(x_A)$$ --> $$f(x_B\mid\theta(x_A))$$
-  $$x_B$$ --> $$f(x_B\mid\theta(x_A))$$
-  $$f(x_B\mid\theta(x_A))$$ --> $$z_B$$
-  state Concatenate {
-    $$z_A$$ --> $$z$$
-    $$z_B$$ --> $$z$$
-  }
-  $$z$$ --> [*]
-```
-
+![](../figures/coupling-layer-forward.svg){fig-align="center"}
 
 ## Coupling flow: backward
+
+![](../figures/coupling-layer-backward.svg){fig-align="center"}
 
 ## Coupling flow trick
 
@@ -466,11 +447,13 @@ $$
 
 ## Coupling flow trick
 
+- $f(x_B\mid\theta(x_A))$ needs to be differentiable and invertible
+  - easy to calculate determinant Jacobian... 
 - $\theta(x_A)$ can be arbitrarily complex
   - non-linear,...
   - $\rightarrow$ neural network
-- $f(x_B\mid\theta(x_A))$ needs to be differentiable and invertible
-  - easy to calculate determinant Jacobian... 
+
+- Stack multiple coupling blocks and permute $x_{A}$ and $x_B$
 
 
 ## Affine coupling
@@ -480,10 +463,22 @@ $$
   - Output: Shift $\mu$ and scale $\sigma$ 
 - Linear (affine) transform function $f(x_B\mid\theta(x_A)) = \frac{x_B - \mu(x_A)}{\sigma(x_A)}$
 
-- log Jacobian: $-\log{\sigma(x_A)}$
+- log det Jacobian: $-\log{\sigma(x_A)}$
 :::
 
+## Spline coupling
+
+- Same idea as affine coupling, but with splines
+- "Piecewise polynomials"
+- More expressive
+- Easier to overfit
+- Less performant
+
+Possible to alternate between affine and coupling blocks...
+
 ## Exercise - Moons
+
+Build your own affine coupling normalizing flow!
 
 :::: {.columns}
 
@@ -501,10 +496,21 @@ $$
 
 ::::
 
+## Idea
+
+- Normalizing flows transform X into Z in a set of discrete steps
+- But why not take one smooth/continuous transformation?
+
 # Flow matching
 
 ## Flow matching
 
+- Defines a flow that transforms a distribution over time
+  - $p_{t=0} = p_z$ - Base distribution 
+  - $p_{t=1} = p_x$ - Data distribution
+
 ## Flow matching
 
 {{< video ../exercises/flow-matching-datasaurus.mp4 width="800">}}
+
+

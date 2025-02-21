@@ -1,0 +1,16 @@
+---
+title: "BayesFlow seminar"
+format:
+    revealjs: 
+        theme: default
+        slide-number: true
+        html-math-method: mathjax
+        highlight-style: github
+---
+
+##
+
+
+---
+
+![](https://i.kym-cdn.com/photos/images/original/002/252/775/460.jpg){fig-align="center"}
