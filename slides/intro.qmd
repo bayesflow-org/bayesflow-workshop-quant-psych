@@ -8,9 +8,142 @@ format:
         highlight-style: github
 ---
 
-##
+---
+
+
+## Parameter estimation
+
+### Bayes' theorem
+
+$$
+\begin{aligned}
+p(\theta \mid x) & = \frac{p(\theta, x)}{p(x)} \\
+ & = \frac{p(\theta) \times p(x \mid \theta)}{\int p(\theta) \times p(x \mid \theta) d\theta}
+\end{aligned}
+$$
+
+## Marginal likelihood
+$$
+p(x) = \int p(\theta) \times p(x \mid \theta) d\theta
+$$ 
+
+- difficult to evaluate
+- often intractable
+
+## Classic workarounds
+
+- Approximate $p(\theta \mid x)$ 
+  - Markov Chain Monte Carlo (MCMC): $\theta \propto p(\theta) \times p(x \mid \theta)$
+- Obtain point estimates:
+  - Maximum likelihood: $\hat{\theta} = \operatorname*{argmax}_{\theta} p(x \mid \theta)$
+  - Maximum aposteriori: $\hat{\theta} = \operatorname*{argmax}_{\theta} p(\theta) \times p(x \mid \theta)$
+
+$\rightarrow$ none of the methods require $p(x)$
+
+## Classic workarounds
+
+- None of the methods require $p(x)$
+- But all require evaluating $p(x \mid \theta)$
+
+## Simulation-based inference (SBI)
+
+- Likelihood and prior
+  - Obtain "samples": $(\theta^{(s)}, x^{(s)}) \sim p(\theta, x)$
+  - Not necessary to evaluate
+- "Likelihood-free"
+
+General idea:
+
+- Approximate the joint distribution $p(\theta, x)$ using simulations
+- Condition on observed $x^{\text{obs}}$ for inference $p(\theta \mid x^{\text{obs}})$
+
+## Example - rejection sampling
+
+$$
+\begin{aligned}
+p(\theta, x) & = p(\theta) p(x \mid \theta)\\
+\end{aligned}
+$$
+
+## Example - rejection sampling
+
+
+$$
+\begin{aligned}
+\theta^{(s)} & \sim \text{Beta}(1, 1)\\
+x^{(s)} &\sim \text{Binomial}(\theta^{(s)}, 10)\\
+\\[0.1em]
+\theta \mid x^{\text{obs}}=7 & \approx \text{Samples from } \theta^{(s)} \text{ where } x^{(s)} = 7
+\end{aligned}
+$$
+
+
+```{.python filename="Python"}
+prior = np.random.beta(1, 1, size=5000)
+x = np.random.binomial(n=10, p=prior)
+
+observed = 7
+posterior = prior[x == observed] 
+```
+
+## Approximate Bayesian Computation
+
+- Generalization of rejection sampling
+- For a given parameter value $\theta$, draw a data set $x$
+- Compare the simulated data set to observed $x^{\text{obs}}$
+- Retain the parameter if the data sets are not too dissimilar
+
+$$
+\rho(s(x), s(x^{\text{obs}})) \leq \epsilon
+$$
+
+## Surrogate likelihood
+
+- For a given parameter value $\theta$, simulate many samples of $x$
+- Estimate the density $p(x\mid\theta)$ (e.g., kernel density estimation)
+
+Can be used for MLE/MAP, or within MCMC
+
+## Issues
+
+- Curse of dimensionality
+- Computationally expensive
+- Handcrafted summary statistics
+
+## Neural estimation
+
+- Approximate quantities of interest using "machine learning"
+
+- Neural likelihood estimation (NLE)
+    - Learn $p(x \mid \theta)$
+    - Maximise or evaluate within MCMC
+- Neural posterior estimation (NPE)
+    - Learn $p(\theta \mid x)$
+    - Sample or evaluate
+
+## Amortized Bayesian Inference (ABI)
+
+::::{.columns}
+
+:::{.column width=50%}
+### Training
+- Use extensive simulations
+- Train neural networks
+- Approximate the maping between data and parameters
+- Slow, time consuming process
+:::
+
+:::{.column width=50%}
+### Inference
+- Trained networks
+- Input observed data
+- Receive posterior of parameters
+- Fast, cheap process
+:::
+::::
 
 
 ---
 
-![](https://i.kym-cdn.com/photos/images/original/002/252/775/460.jpg){fig-align="center"}
+![](../figures/two-guys-bus.jpg){fig-align="center"}
+
