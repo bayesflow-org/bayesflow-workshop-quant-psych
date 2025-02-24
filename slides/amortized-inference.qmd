@@ -6,3 +6,152 @@ format:
         slide-number: true
         html-math-method: mathjax
 ---
+
+## Recap
+
+### Problem
+
+We want to approximate $p(\theta \mid x)$ or $p(x \mid \theta)$
+
+$$
+p(\theta \mid x) = \frac{p(\theta) \times p(x \mid \theta)}{p(x)}
+$$
+
+### Solution
+
+Approximate using generative neural networks
+
+## General solution
+
+1. Define a statistical model $p(\theta, x)$
+2. Generative neural network to $q_\phi(\theta \mid x)$
+3. Train the network
+   1. Sample from $(\theta^{(s)}, x^{(s)}) \sim p(\theta, x)$
+   2. Optimize weights $\phi$ so that $q_\phi(\theta \mid x) \approx p(\theta \mid x)$
+
+
+## Normalizing Flows
+
+$$
+\begin{aligned}
+\hat{\phi} = \operatorname*{argmin}_{\phi} & \mathbb{E}_{x \sim p(x)} \mathbb{KL}(p(\theta \mid x) || q_\phi(\theta \mid x)) = \\
+= \operatorname*{argmin}_{\phi} & \mathbb{E}_{x \sim p(x)} \mathbb{E}_{\theta \sim p(\theta \mid x)} \log \frac{p(\theta \mid x)}{q_\phi(\theta \mid x)} \approx \\
+\approx \operatorname*{argmin}_{\phi} & \sum_{s=1}^S \log p(\theta^{(s)} \mid x^{(s)}) - \log q_\phi(\theta^{(s)} \mid x^{(s)}) \propto \\
+\propto \operatorname*{argmin}_{\phi} & - \sum_{s=1}^S \log q_\phi(\theta^{(s)} \mid x^{(s)})
+\end{aligned}
+$$
+
+## Normalizing Flows
+
+$$
+\hat{\phi} = \operatorname*{argmin}_{\phi} - \sum_{s=1}^S \log q_\phi(\theta^{(s)} \mid x^{(s)})
+$$
+
+$$
+q_\phi(\theta^{(s)} \mid x^{(s)}) = p_z(f_\phi(\theta^{(s)} \mid x)) \det{J}_\phi(\theta^{(s)})
+$$
+
+## Flow matching - intuition
+
+- Sample from $(\theta, x) \sim p(\theta, x)$
+- Train a flow matching network to transport $p_0(\theta) \rightarrow p_1(\theta \mid x)$
+- Network learns $p_1(\theta \mid x) \approx p(\theta \mid x)$
+
+## Data of different dimensions
+
+
+
+# Working with `bayesflow`
+
+## Bayesflow
+
+- Bayesflow is a Python library
+- Built on `keras`
+  - Can run on `TensorFlow`, `JAX`, or `PyTorch` as a backend
+- Implementation of common neural architectures to make ABI easier
+- Helper functions for simulation, configuration, training, validation, diagnostics,...
+
+## Ingredients {.smaller}
+
+- Simulator
+  - Simulate data from the statistical model 
+- Adapter
+  - Configure the data into a format suitable for neural networks
+  - Reshape, standardize
+- Summary network (optional)
+  - Get data embedding
+- Inference network
+  - Approximate the posterior
+- Approximator
+  - Combine adapter, summary net, inference net 
+
+## Workflow
+
+1. Define a simulator (statistical generative model)
+2. Define approximator (using neural networks)
+3. Train the networks using simulated data
+4. Network diagnostics
+5. Apply to real data
+6. Inference validation
+
+## Define a simulator
+
+- Define a "statistical" model in terms of a simulator
+- `bayesflow` expects "batched" simulations
+
+```{.python filename="Python"}
+class Simulator(bf.simulators.Simulator):
+    def sample(self, batch_size):
+        theta = np.random.beta(1, 1, size=batch_size)
+        x = np.random.binomial(n=10, p=theta)
+        return dict(theta=theta, x=x)
+
+simulator = Simulator()
+dataset = simulator.sample(100)
+```
+
+
+## Define a simulator
+
+- Define a "statistical" model in terms of a simulator
+- `bayesflow` expects "batched" simulations
+- Convenient interface for "auto batching"
+
+```{.python filename="Python"}
+def prior():
+    return dict(theta = np.random.beta(1, 1))
+
+def likelihood(theta):
+    return dict(x = np.random.binomial(n=10, p=theta))
+
+simulator = bf.make_simulator([prior, likelihood])
+
+simulator.sample(10)
+```
+
+
+## Define approximator
+
+```{.python filename="Python"}
+approximator = bf.app
+```
+
+## Network training
+
+## Validation
+
+## Validation - SBC
+
+- Simulation based calibration
+
+## Validation - Posterior contraction, z-score
+
+## Validation - Parameter recovery
+
+## Apply to real data
+
+## Inference validation
+
+## Inference validation - Posterior predictives
+
+## Inference validation - Summary network
