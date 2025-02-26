@@ -276,6 +276,7 @@ $$
 \text{softmax}(x)_i = \frac{e^{x_i}}{\sum_{j=1}^{J} e^{x_j}}
 $$
 
+![](../figures/softmax.svg){fig-align="center"}
 
 # Training networks
 
@@ -316,11 +317,12 @@ $$
 
 ![](../figures/loss.svg){fig-align="center"}
 
-## Optimisation
+## Optimization {.smaller}
 
-<!-- ## Optimization {.smaller}
+- Second order derivatives
+- First order derivatives
+- Function values
 
-:::{.incremental}
 - Gradient based (e.g., Newton's method)
   - Second derivative of loss
   - Few steps to converge to an optimum
@@ -333,7 +335,7 @@ $$
   - Best for big data
 - Other methods
   - BFGS, Gauss-Newton, Adagrad, Particle swarm, differential evolution,... 
-::: -->
+
 
 ## Gradient descent
 
@@ -348,7 +350,19 @@ $$
 - $\mathcal{L}$: Loss function
 - $x$: Data
 
+## Adaptive gradient
+
+## Momentum
+
+## Adam
+
 ## Backpropagation
+
+- Method to apply gradients of a multi-layer network
+
+1. Forward pass (prediction)
+2. Evaluation (gradient calculation)
+3. Backward pass (error correction)
 
 ## Autodifferentiation
 
@@ -357,9 +371,6 @@ Details for each backend:
 - [`TensorFlow`](https://www.tensorflow.org/guide/autodiff)
 - [`Torch`](https://pytorch.org/tutorials/beginner/basics/autogradqs_tutorial.html)
 - [`JAX`](https://docs.jax.dev/en/latest/automatic-differentiation.html)
-
-
-## Adam
 
 ## Training regimes
 
@@ -627,7 +638,6 @@ network(x)
 network(x, training=True)
 ```
 
-
 # Special neural architectures
 
 ## MLP {.smaller}
@@ -657,26 +667,31 @@ $\rightarrow$ leverage properties of data to our advantage by building networks 
 
 ## Recurrent neural network (RNN) {.smaller}
 
-::::{.columns}
-
-:::{.column width=70%}
 - Works for sequences of different lengths
 - Maintain a hidden state $h_t = \sigma_h(W_h * h_{t-1} + W_x x_t + b_h)$
 - Output depends on hidden state $y_t = \sigma_y(W_g * h_t + b_y)$
 
 </br>
 
+::::{.columns}
+:::{.column width=30%}
 ### Issues
 - Sequential updating
 - Limited long-term memory
 - Vanishing gradient
 :::
-
-:::{.column width=30%}
+:::{.column width=70%}
+![[Source: Christopher Olah's blog](https://colah.github.io/posts/2015-08-Understanding-LSTMs/)](https://colah.github.io/posts/2015-08-Understanding-LSTMs/img/RNN-unrolled.png){fig-align="right"}
 :::
+
 ::::
 
 ## Long short-term memory (LSTM)
+
+- Learn to what to "forget" (forget gate) and what to "remember" (input gate)
+- Cell state can carry over long term dependencies
+
+![[Source: Christopher Olah's blog](https://colah.github.io/posts/2015-08-Understanding-LSTMs/)](https://colah.github.io/posts/2015-08-Understanding-LSTMs/img/LSTM3-chain.png){fig-align="center"}
 
 ## Attention mechanism
 
@@ -691,10 +706,12 @@ $\rightarrow$ leverage properties of data to our advantage by building networks 
 
 ## Attention
 
-- Query $Q$, Key $K$, Value $V$
-
+- Query: $Q = XW_Q$
+- Key: $K=XW_K$
+- Value: $V=XW_V$
+  
 $$
-\text{Attention} = \text{softmax}(QK^{\text{T}})V
+\text{Attention}(Q, K, V) = \text{softmax}(QK^{\text{T}})V
 $$
 
 ## Attention
@@ -713,7 +730,7 @@ $$
   - e.g., original (keys) and translated (queries) text
 - Multihead attention
   - Multiple attention blocks in parallel
-  - Each block "attends" to a different representations 
+  - Each block "attends" to different representations 
 
 - Transformers: Multiple layers of Multihead attention layers and MLP
 
@@ -724,8 +741,20 @@ $$
 
 ![](../figures/set.svg){fig-align="center"}
 
-## Deep Set
+## Set architectures
+
 - Permutation invariant function: $f(x) = f(\pi(x))$
+
+- Embeddings of sets
+  - Handle different set sizes
+  - Permutation invariant
+  - Interactions between elements
+
+## Deep Set
+
+::::{.columns}
+
+:::{.column width=70%}
 
 $$
 f(X = \{ x_i \}) = \rho \left( \sigma(\tau(X)) \right)
@@ -734,19 +763,16 @@ $$
 - $\tau$: Permutation equivariant function
 - $\sigma$: Permutation invariant pooling function (sum, mean)
 - $\rho$: Any function
+:::
 
-## Deep Set
-
-::::{.columns}
 
 :::{.column width=28%}
 ![](../figures/deepset.svg){width=100%}
 :::
-
-:::{.column width=70%}
-- Embeddings of sets
-- Permutation invariant
-- Handles sets of different sizes
-:::
 ::::
 
+## Deep Set
+
+![](../figures/deepset-detailed.svg){width=100%}
+
+## References
