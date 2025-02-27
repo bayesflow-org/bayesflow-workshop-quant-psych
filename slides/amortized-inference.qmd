@@ -5,6 +5,7 @@ format:
         theme: default
         slide-number: true
         html-math-method: mathjax
+        highlight-style: github
 ---
 
 ## Recap
@@ -94,6 +95,8 @@ $$
 5. Apply to real data
 6. Inference validation
 
+# Define the statistical model
+
 ## Define a simulator
 
 - Define a "statistical" model in terms of a simulator
@@ -129,6 +132,7 @@ simulator = bf.make_simulator([prior, likelihood])
 simulator.sample(10)
 ```
 
+# Define neural approximator
 
 ## Define approximator
 
@@ -136,22 +140,168 @@ simulator.sample(10)
 approximator = bf.app
 ```
 
+# Train neural networks
+
 ## Network training
 
-## Validation
+# Validate the model
 
-## Validation - SBC
+## Goals
 
-- Simulation based calibration
+1. Is the neural approximator doing a good job at approximating the true posterior?
+    - Computational faithfullness
+2. How much can we expect to learn given data?
+    - Parameter recovery
+    - Posterior contraction
+    - Posterior z-score
 
-## Validation - Posterior contraction, z-score
 
-## Validation - Parameter recovery
+## Procedure
 
-## Apply to real data
+1. Draw fresh validation data from the simulator
+2. Extract the parameter samples from the prior
+3. Sample from the posterior
 
-## Inference validation
+```{.python filename="Python"}
+dataset = simulator.sample(1_000)
+prior = {k: v if k in param_keys for k, v in dataset.items()}
+posterior = approximator.sample(500, conditions = dataset)
+```
 
-## Inference validation - Posterior predictives
+## Simulation-based calibration (SBC)
 
-## Inference validation - Summary network
+- Testing computational faithfullness of a posterior approximator
+- Posterior distribution averaged over prior predictive distribution is the same as the prior distribution
+
+$$
+p(\theta) = \int \int p(\theta \mid \tilde{y}) \underbrace{p(\tilde{y} \mid \tilde{\theta}) p(\tilde{\theta})}_{\text{Prior predictives}} d\tilde{\theta} d \tilde{y}
+$$
+
+## Simulation-based calibration 
+
+::::{.columns}
+:::{.column width=50%}
+### Simulate
+$$
+\begin{aligned}
+\theta^{\text{sim}} & \sim p(\theta) \\
+y^{\text{sim}} &\sim p(y \mid \theta^{\text{sim}})
+\end{aligned}
+$$
+:::
+
+:::{.column width=50%}
+### By symmetry
+$$
+\begin{aligned}
+(\theta^{\text{sim}}, y^{\text{sim}}) & \sim p(\theta, y) \\
+\theta^{\text{sim}} &\sim p(\theta \mid y^{\text{sim}})
+\end{aligned}
+$$
+:::
+::::
+
+### Compute
+$$
+\begin{aligned}
+\theta_1, \dots, \theta_M & \sim q(\theta \mid y^{\text{sim}}) \\
+\end{aligned}
+$$
+
+If $q(\theta \mid y^{\text{sim}}) = p(\theta \mid y^{\text{sim}})$, then the rank statistic of $\theta^{\text{sim}}$ is uniform.
+
+## Simulation-based calibration
+
+1. Draw $N$ prior predictive datasets $(\theta_i^{\text{sim}}, y_i^{\text{sim}}) \sim p(\theta, y)$
+2. For each data set $y_i$, draw $M$ samples from the approximate posterior: $\theta_{ij} \sim q(\theta \mid y_i^{\text{sim}})$
+3. Calculate rank statistic $r_i = \sum_{j=1}^M \text{I}\big(\theta_{ij} < \theta_i^{\text{sim}}\big)$ 
+
+## Visualizing SBC
+
+1. Histograms
+2. ECDF 
+3. ECDF difference
+
+## SBC Histograms
+
+```{.python filename="Python"}
+fig=bf.diagnostics.calibration_histogram(
+    estimates=posterior, 
+    targets=prior)
+```
+
+</br>
+
+![](../figures/sbc/histogram.png){fig-align="center"}
+
+## SBC ECDF
+
+```{.python filename="Python"}
+fig=bf.diagnostics.calibration_ecdf(
+    estimates=posterior, 
+    targets=prior)
+```
+
+</br>
+
+![](../figures/sbc/ecdf.png){fig-align="center"}
+
+## SBC ECDF Difference
+
+```{.python filename="Python"}
+fig=bf.diagnostics.calibration_ecdf(
+    estimates=posterior, 
+    targets=prior,
+    difference=True)
+```
+
+</br>
+
+![](../figures/sbc/ecdf-diff.png){fig-align="center"}
+
+## Posterior z-score
+
+- How well does the estimated posterior mean match the true parameter used for simulating the data?
+
+$$
+z = \frac{\text{mean}(\theta_i) - \theta^{\text{sim}}}{\text{sd}(\theta_i)}
+$$
+
+## Posterior contraction
+
+- How much uncertainty is removed after updating the prior to posterior?
+
+$$
+\text{contraction} = 1 - \frac{\text{sd}(\theta_i)}{\text{sd}(\theta^{\text{sim}})}
+$$
+
+
+## Z-score vs. contraction plot
+
+```{.python filename="Python"}
+fig=bf.diagnostics.plots.z_score_contraction(
+    estimates=posterior, 
+    targets=prior)
+```
+
+</br>
+
+![](../figures/z-score_contraction.png){fig-align="center"}
+
+## Parameter recovery
+
+- Plot the true parameter values $\theta^{\text{sim}}$ against a posterior point estimate (mean, median)
+
+```{.python filename="Python"}
+fig=bf.diagnostics.plots.recovery(estimates=posterior, targets=prior)
+```
+
+![](../figures/recovery.png){fig-align="center"}
+
+# Inference
+
+## Simulation gap
+
+
+## Posterior predictive checks
+

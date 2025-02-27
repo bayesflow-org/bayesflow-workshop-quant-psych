@@ -5,6 +5,7 @@ format:
         theme: default
         slide-number: true
         html-math-method: mathjax
+        highlight-style: github
         include-in-header:
             text: |
                 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.2.1/dist/mermaid.min.js"></script>
@@ -508,6 +509,33 @@ Build your own affine coupling normalizing flow!
 - Defines a flow that transforms a distribution over time
   - $p_{t=0} = p_z$ - Base distribution 
   - $p_{t=1} = p_x$ - Data distribution
+
+![](../figures/flow-matching/two-dists.svg){fig-align="center"}
+
+## Flow matching
+
+- Flow defines position $X_t = \phi_t(X_0)$
+- Time dependent vector field: $\frac{d}{dt} \phi_t(x) = u_t(\phi_t(x))$
+- $X_0 \sim p_0(X_0)$
+- $X_t = \phi_t(X_0) \sim p_t(X_t)$
+
+![](../figures/flow-matching/two-dists-path.svg){fig-align="center"}
+
+## Flow matching
+
+$$
+\mathcal{L}_{\text{FM}}(\theta) = \mathbb{E}_{t, X_t}|| u_\theta(X_t \mid t) - u(X_t \mid t) ||^2, t\sim\text{Uniform}(0,1), X_t \sim p_t(X_t)
+$$
+
+![](../figures/flow-matching/two-dists-path.svg){fig-align="center"}
+
+## Flow matching
+
+$X_t = (1-t) X_0 + t X_1$ 
+
+## Flow matching
+
+- Define a "probability path" $p_t(x) = \int p(x \mid z) p(z) dz$
 
 ## Flow matching
 
