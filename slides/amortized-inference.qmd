@@ -300,8 +300,19 @@ fig=bf.diagnostics.plots.recovery(estimates=posterior, targets=prior)
 
 # Inference
 
-## Simulation gap
+## Obtain posterior samples
 
+```{.python filename="Python"}
+data = dict(y = ...)
+posterior = approximator.sample(1000, conditions=data)
+
+fig=bf.diagnostics.plots.pairs_posterior(estimates=posterior)
+```
+
+## Simulation gap / distribution shift
+
+- Model might be misspecified
+- The data is very different
 
 ## Posterior predictive checks
 

@@ -1,0 +1,64 @@
+---
+title: "Exercises"
+---
+
+## Basics of Deep Learning in Python
+
+## Generative neural networks
+
+### Normalizing flow
+
+- Peek online: [here](./exercises/normalizing-flow.ipynb){target="_blank"}
+- Download notebook: [here](./exercises/normalizing-flow.ipynb){download="normalizing-flow.ipynb"}
+
+In this exercise, you will build a normalizing flow based on affine coupling from scratch using `keras`, that will learn to transform the [moons distribution](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_moons.html) into a standard normal.
+
+
+::: {#fig-nf layout-ncol=2}
+![Forward direction](./exercises/normalizing-flow-forward.mp4)
+
+![Backward direction](./exercises/normalizing-flow-backward.mp4)
+
+Normalizing flow
+:::
+
+### Flow matching - Datasaurus
+
+- Peek online: [here](./exercises/flow-matching-datasaurus.ipynb){target="_blank"}.
+- Download notebook: [here](./exercises/flow-matching-datasaurus.ipynb){download="flow-matching-datasaurus.ipynb"}.
+- Download data: [here](./data/datasaurus.csv){download="datasaurus.csv"}
+
+In this exercise, you will build a flow matching model using `keras` that transports a standard normal distribution into a distribution based on the [datasaurus](https://en.wikipedia.org/wiki/Datasaurus_dozen).
+
+::: {#fig-fm}
+![](./exercises/flow-matching-datasaurus.mp4){fig-align="center"}
+
+Flow matching
+:::
+
+
+### Flow matching - mirroring the Swiss roll
+
+- Peek online: [here](./exercises/flow-matching-swiss-roll.ipynb){target="_blank"}.
+- Download notebook: [here](./exercises/flow-matching-swiss-roll.ipynb){download="flow-matching-swiss-roll.ipynb"}.
+
+In this exercise, you will expand the flow matching model so that you can condition the distribution on contextual variables. This will enable you to learn a flow that transports a doghnut distribution into the [swiss roll distribution](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_swiss_roll.html), mirrored along horizontal and vertical axes, depending on the context.
+
+::: {#fig-swiss-roll}
+![](./exercises/flow-matching-swiss-roll.png){fig-align="center"}
+
+Swiss roll mirrored along vertical or horizontal axes
+:::
+
+## BayesFlow
+
+The BayesFlow project comes with a couple of example notebooks that can help you started with BayesFlow. In addition, below are two exercise notebooks you can use to familiarize yourself with BayesFlow.
+
+### Estimating the mean and variance of a gaussian variable
+
+- Peek online: [here](./exercises/bayesflow-normal.ipynb){target="_blank"}.
+- Download notebook: [here](./exercises/bayesflow-normal.ipynb){download="bayesflow-normal.ipynb"}.
+
+This notebook provides you with the very basics of the BayesFlow workflow - starting with defining simulators, through defining and training the neural approximators, and ending with network validation and inference.
+
+### Diffusion decision model

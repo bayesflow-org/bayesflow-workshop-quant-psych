@@ -10,6 +10,8 @@ website:
         text: Home
       - href: slides.qmd
         text: Slides
+      - href: exercises.qmd
+        text: Exercises
       - about.qmd
   open-graph: true
 
