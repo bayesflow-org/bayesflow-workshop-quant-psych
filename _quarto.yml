@@ -12,6 +12,8 @@ website:
         text: Slides
       - href: exercises.qmd
         text: Exercises
+      - href: projects.qmd
+        text: Projects
       - about.qmd
   open-graph: true
 

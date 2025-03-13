@@ -1,0 +1,23 @@
+---
+bibliography: bibliography.bib
+bibliographystyle: apa.csl
+---
+
+## Double responding
+
+A relatively persistent phenomenon observed in decision-making tasks is the occurrence of double responses, where participants, after making an initial response, rapidly make a second response for an alternative option. For example, in a classic lexical decision task, participants are asked to judge whether a presented string of letters is a word or a non-word. A double response might occur if a participant first presses a key corresponding to word but immediately follows up with another key press corresponding to non-word. In most experiments, double responses are not of primary interest and are typically excluded or not recorded at all.
+
+However, @evans2020double argued that double responses might provide additional information about the underlying decision process. They proposed modifications to a selection of evidence accumulation models (EAMs) to account for this phenomenon. For most of the models examined by @evans2020double, the analytic likelihood is unknown, requiring the authors to use extensive simulation-based estimation, where the likelihood is approximated via a kernel density estimate on simulated data.
+
+In this project, you could select a specific model of double responses proposed by @evans2020double and implement it in BayesFlow. Following this, you may reproduce the analysis using data from @dutilh2009diffusion.
+
+## Circular accumulation model
+
+
+## Prior sensitivity
+
+
+### References
+
+::: {#refs}
+:::
