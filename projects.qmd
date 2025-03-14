@@ -1,6 +1,6 @@
 ---
 bibliography: bibliography.bib
-bibliographystyle: apa.csl
+csl: apa.csl
 ---
 
 ## Double responding
@@ -9,13 +9,46 @@ A relatively persistent phenomenon observed in decision-making tasks is the occu
 
 However, @evans2020double argued that double responses might provide additional information about the underlying decision process. They proposed modifications to a selection of evidence accumulation models (EAMs) to account for this phenomenon. For most of the models examined by @evans2020double, the analytic likelihood is unknown, requiring the authors to use extensive simulation-based estimation, where the likelihood is approximated via a kernel density estimate on simulated data.
 
-In this project, you could select a specific model of double responses proposed by @evans2020double and implement it in BayesFlow. Following this, you may reproduce the analysis using data from @dutilh2009diffusion.
+In this project, you could select a specific model of double responses proposed by @evans2020double and implement it in BayesFlow. Following this, you may reproduce the analysis using data from @dutilh2009diffusion. Alternatively, you can implement two versions of one model - one which accounts for double responses and one which does not. Investigate under which circumstances including information about double responding brings valuable information about the model parameters (e.g., by investigating whether including double responses increases posterior contraction).
 
-## Circular accumulation model
+Download data from @dutilh2009diffusion, reported by @evans2020double at in the [OSF repository](https://osf.io/7jmb2/):
+
+- [`participant_1.csv`](data/double-responding/participant_1.csv){target="_blank"}
+- [`participant_2.csv`](data/double-responding/participant_2.csv){target="_blank"}
+- [`participant_3.csv`](data/double-responding/participant_3.csv){target="_blank"}
+- [`participant_4.csv`](data/double-responding/participant_4.csv){target="_blank"}
 
 
-## Prior sensitivity
+## SWIFT model
 
+Cognitive models are widely used in decision-making research, where participants respond to stimuli by making choices. However, their applications extend far beyond this domain [@rasanan2024beyond].
+
+One area where cognitive models have advanced our understanding is visual processing. These models predict how gaze direction is driven by the cognitive state of the observer, but also their environment. However, eye movement behavior is complex, and many models produce intractable likelihoods, making amortized inference a promising approach.
+
+A notable example is SWIFT, a dynamic model of eye movement control during reading. The original version [@engbert2005swift] is challenging to fit, but a simplified variant [@engbert2024tutorial] allows for more efficient likelihood calculation, making SWIFT an excellent starting point for implementing models of eye movement behavior with BayesFlow.
+
+In this project, you can explore amortized inference for the SWIFT model using the simplified version from @engbert2024tutorial. The [OSF repository of the tutorial paper](https://osf.io/8wrf6) provides relevant datasets, including individual participant data and a language corpus. For instance, you can download data from one participant from [https://osf.io/teyd4](https://osf.io/teyd4) and load it into Python:
+
+```{.python}
+import pandas as pd
+
+df=pd.read_csv("fixseqin_PB2expVP10.dat", 
+    delimiter="\t", 
+    names=["sentID", "wordID", "duration"], 
+    usecols=[0, 1, 3])
+```
+
+where `sentID` and `wordID` columns indicate the sentence id and word id that was fixated, and `duration` column represents fixation duration (in ms).
+
+To obtain word frequencies, download the corpus data from [https://osf.io/nj2mf](https://osf.io/nj2mf) and load it into Python:
+
+```{.python}
+import pandas as pd
+
+corpus=pd.read_csv("Rcorpus_PB2.dat", delimiter="\t", usecols=range(5))
+```
+
+The relevant columns are `sentID` and `wordID` that allow you to match the fixated word to a word from the corpus, and `freq` which gives the word frequency.
 
 ### References
 
