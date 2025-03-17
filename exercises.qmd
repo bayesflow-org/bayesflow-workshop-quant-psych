@@ -2,9 +2,11 @@
 title: "Exercises"
 ---
 
-## Basics of Deep Learning in Python
+<!-- ## Basics of Deep Learning in Python -->
 
 ## Generative neural networks
+
+Here you can download example notebooks related to creating your own generative neural network architectures.
 
 ### Normalizing flow
 
@@ -52,7 +54,7 @@ Swiss roll mirrored along vertical or horizontal axes
 
 ## BayesFlow
 
-The BayesFlow project comes with a couple of example notebooks that can help you started with BayesFlow. In addition, below are two exercise notebooks you can use to familiarize yourself with BayesFlow.
+Please visit the BayesFlow repository to find a [bunch of examples](https://github.com/bayesflow-org/bayesflow/tree/dev?tab=readme-ov-file#getting-started) that can help you with BayesFlow. In addition, below are two exercise notebooks you can use to familiarize yourself with BayesFlow.
 
 ### Estimating the mean and variance of a gaussian variable
 
@@ -62,3 +64,9 @@ The BayesFlow project comes with a couple of example notebooks that can help you
 This notebook provides you with the very basics of the BayesFlow workflow - starting with defining simulators, through defining and training the neural approximators, and ending with network validation and inference.
 
 ### Diffusion decision model
+
+- Peek online: [here](./exercises/bayesflow-diffusion.ipynb){target="_blank"}
+- Download notebook: [here](./exercises/bayesflow-diffusion.ipynb){download="bayesflow-diffusion.ipynb"}
+- Download data: [here](./data/forstmann.csv){download="forstmann.csv"}
+
+This notebook provides you with a basic application of BayesFlow in the context of models of decision making - the Wald model of simple response times, and the racing diffusion model.
