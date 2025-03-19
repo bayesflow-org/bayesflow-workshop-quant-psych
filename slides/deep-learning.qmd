@@ -1,18 +1,38 @@
 ---
 title: "Deep Learning"
+subtitle: "Introduction"
 format:
     revealjs: 
         theme: default
         slide-number: true
         html-math-method: mathjax
         highlight-style: github
+csl: ../apa.csl
+bibliography: ../bibliography.bib
 ---
 
-## What is Deep Learning
+##
 
+</br>
+![](../figures/word-cloud.png)
 
+##
 
-# Python frameworks
+![@van2024reclaiming](../figures/meaning-of-ai.png)
+
+## 
+
+> Artificial Intelligence has two goals. First, AI is directed toward getting computers to be smart and do smart things so that human beings don't have to do them. And second, AI *[...]* is also directed at using computers to simulate human beings, so that we can find out how humans work.
+
+@simon1983should [p. 27]
+
+##
+
+![@shahab2024large](../figures/taxonomy.png){fig-align="center"}
+
+# Deep Learning in Python
+
+## Python frameworks
 
 - [`PyTorch`](https://pytorch.org/)
 - [`TensorFlow`](https://www.tensorflow.org/)
@@ -51,7 +71,7 @@ format:
 
 ```{.python filename="Python"}
 import os
-os.environ["KERAS_BACKEND"] = "jax" # torch, tensorflow
+os.environ["KERAS_BACKEND"] = "tensorflow" # torch, jax
 import keras
 ```
 
@@ -75,9 +95,9 @@ import keras
 ## Tensors
 
 - All of Deep Learning revolves around "Tensors"
-- Similar to multidimensional arrays in `numpy`
+- Similar to arrays in `numpy`
 - Additional features:
-  - Stores values and gradients
+  - Values *and gradients*
   - Can be stored on GPUs (optional)
 
 ## Tensors
@@ -213,8 +233,10 @@ z.shape # TensorShape([100, 2])
 ## Why activation functions?
 
 - A composition of linear functions is itself a linear function
-- Adding nonlinear activations introduces non-linearity
-- $\rightarrow$ In theory, represent any non-linear function
+- Non-linear activations introduces non-linearity
+
+    $\rightarrow$ Represent any non-linear function
+
 - Often used for output range control
 
 
@@ -226,15 +248,10 @@ z.shape # TensorShape([100, 2])
   - Non-linearity (expressiveness)
   - Differentiability (training)
   - Efficiency (scalability)
+- Many options [@kunc2024three]
+  - [https://keras.io/api/layers/activations/](https://keras.io/api/layers/activations/)
 :::
 
-## Activation functions
-
-- There are many
-  - [https://keras.io/api/layers/activations/](https://keras.io/api/layers/activations/)
-  - [https://arxiv.org/abs/2402.09092](https://arxiv.org/abs/2402.09092)
-
-Here are some basic examples
 
 ## Activation functions
 
@@ -319,25 +336,22 @@ $$
 
 ## Optimization {.smaller}
 
-- Second order derivatives
-- First order derivatives
-- Function values
+#### Second order derivatives
 
-- Gradient based (e.g., Newton's method)
-  - Second derivative of loss
-  - Few steps to converge to an optimum
-  - Each step is relatively slow
-  - Best for small data
-- Stochastic gradient descent (SGD)
-  - First derivative of loss
-  - Many steps to converge to an optimum
-  - Each step is relatively cheap
-  - Best for big data
-- Other methods
-  - BFGS, Gauss-Newton, Adagrad, Particle swarm, differential evolution,... 
+- e.g., Newton's method 
+- Few slow steps
+- Small data
 
+#### First order derivatives
 
-## Gradient descent
+- e.g., Gradient descent 
+- Many cheap steps
+- Large data
+
+#### Function values & heuristics
+- e.g., Nelder-Mead, BFGS, Differential evolution, ...
+
+## Gradient descent (GD)
 
 $$
 \theta_{n+1} = \theta_n - \gamma \Delta_\theta \mathcal{L}(x; \theta_n) 
@@ -350,53 +364,111 @@ $$
 - $\mathcal{L}$: Loss function
 - $x$: Data
 
+## Stochastic gradient descent (SGD)
+
+### GD
+
+- Run through *all* data to do a single step
+
+### SGD
+
+- Make a single step based on a *subset* of the data (minibatch)
+
+## Learning rate (LR)
+
+$$
+\theta_{n+1} = \theta_n - \gamma \Delta_\theta \mathcal{L}(x; \theta_n) 
+$$
+
+- Too small LR: Too many steps to converge
+- Too large LR: May not converge
+
 ## Adaptive gradient
+
+- Adjust LR based on multiple iterations
+- Individual LR per parameter
+
+$$
+g_n = \Delta_\theta \mathcal{L}(x; \theta_n) 
+$$
+
+$$
+G_n = G_{n-1} + g_n^2
+$$
+
+$$
+\theta_{n+1} = \theta_n + \frac{\gamma}{\sqrt{G_n} + \epsilon} g_n
+$$
 
 ## Momentum
 
-## Adam
+- Accumulate gradient over iterations
+- Smoother parameter updates
+- Avoid getting stuck in local minima, saddle points
+
+$$
+m_n = \beta m_{n-1} + (1-\beta) \Delta_\theta \mathcal{L}(x; \theta_n) 
+$$
+
+$$
+\theta_{n+1} = \theta_n - \gamma m_n
+$$
+
+## Adam [@kingma2014adam]
+
+$$
+g_n = \Delta_\theta \mathcal{L}(x; \theta_n)
+$$
+$$
+\begin{aligned}
+m_n & = \beta_1 m_{n-1} + (1-\beta_1) g_n; & \hat{m}_n & = \frac{m_n}{1 - \beta_1^n} \\
+v_n & = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; & \hat{v}_n & = \frac{v_n}{1 - \beta_1^n}\\ 
+\end{aligned}
+$$
+
+$$
+\theta_{n+1} = \theta_n - \frac{\gamma}{\sqrt{\hat{v}_n} + \epsilon} \hat{m}_t
+$$
+
+
+## Evaluating gradients
+$$\Delta_\theta \mathcal{L}(x; \theta_n)$$
+
+![](../figures/neural-network.svg){fig-align="center"}
 
 ## Backpropagation
+$$
+\frac{\partial \mathcal{L}}{\theta_l} = \frac{\partial \mathcal{L}}{z_L} \frac{\partial z_L}{\partial x_{L-1}} \dots \frac{\partial z_l}{\partial \theta_l}
+$$
 
-- Method to apply gradients of a multi-layer network
 
-1. Forward pass (prediction)
-2. Evaluation (gradient calculation)
-3. Backward pass (error correction)
 
-## Autodifferentiation
-
-Details for each backend:
-
-- [`TensorFlow`](https://www.tensorflow.org/guide/autodiff)
-- [`Torch`](https://pytorch.org/tutorials/beginner/basics/autogradqs_tutorial.html)
-- [`JAX`](https://docs.jax.dev/en/latest/automatic-differentiation.html)
-
-## Training regimes
-
-1. Offline
-    - "In memory" - load at once (small to moderate data)
-    - "On disk" - load from disk on demand (large data)
-2. Online
-    - Generate data on the fly
-3. Distributed training
-    - Big data
-
-# Tips for training
+# Tips & tricks
 
 ## Kernel trick
 
-- Linear solver for non-linear problems
+- Non-linear patterns in the data
 - Project data into a higher-dimensional space
-- $\rightarrow$ networks to add dimensions first
+
+![[Figure by Gregory Gundersen](https://gregorygundersen.com/blog/2019/12/10/kernel-trick/){target="_blank"}](https://gregorygundersen.com/image/kerneltrick/idea.png){fig-align="center"}
+
+
+$\rightarrow$ networks to add dimensions
 
 ## Learning rate scheduling
 
 - Change LR through training
 - Typically: Quick warm up to target, then decay to zero
-
 - Improved convergence
-- "Get to a reasonable solution fast, then finetune using small steps"
+
+</br>
+
+```{.python filename="Python"}
+schedule = keras.optimizers.schedules.CosineDecay(
+  initial_learning_rate=1e-3
+)
+optimizer = keras.optimizers.Adam(learning_rate=schedule)
+```
 
 ## Issues with gradients
 
@@ -481,11 +553,12 @@ Scale down gradients if they exceed certain threshold
 :::
 ::::
 
-</br>
 
 ```{.python filename="Python"}
-optimizer=keras.optimizers.Adam(learning_rate=1e-3, clipvalue=0.5)
-optimizer=keras.optimizers.Adam(learning_rate=1e-3, clipnorm=1.0)
+optimizer=keras.optimizers.Adam(
+  learning_rate=1e-3, 
+  clipvalue=0.5,
+  clipnorm=1.0)
 ```
 
 ## Residual / skip connections
@@ -597,8 +670,7 @@ During training, "turn off" each activation with a probability $p$
 ![[Image source: learnopencv.com](https://learnopencv.com/wp-content/uploads/2018/06/dropoutAnimation.gif)](https://learnopencv.com/wp-content/uploads/2018/06/dropoutAnimation.gif){fig-align="center" width=50%}
 
 - Better generalization
-  - Reduced dependence/influence of single neurons
-  - An ensemble of smaller networks
+- Reduced dependence on single neurons
 - Reduced expressiveness
 - Increased variance during training
 
@@ -645,15 +717,14 @@ network(x, training=True)
 ### Pros
 
 - Conceptually simple, universal function approximator
-- Almost zero assumptions about data
 - Easy to train, established
+- Almost zero assumptions about data
 
 ### Cons
 
 - Inefficient in high dimensions (many parameters)
+- Works only with fixed size input/output
 - Almost zero assumptions about data
-  - Has to learn basic patterns itself
-- Works only with fixed size input
 
 ## Assumptions: Data types
 
@@ -716,11 +787,11 @@ $$
 
 ## Attention
 
-![](../figures/attention_conceptual.svg){width="100%"}
+![](../figures/attention_conceptual.svg){fig-align="center"}
 
 ## Attention
 
-![](../figures/attention_concrete.svg){width="100%"}
+![](../figures/attention_concrete.svg){fig-align="center"}
 
 
 ## Attention
@@ -774,5 +845,12 @@ $$
 ## Deep Set
 
 ![](../figures/deepset-detailed.svg){width=100%}
+
+## Examples & further references
+
+- [Keras code examples](https://keras.io/examples/)
+- [Tensorflow playground](https://playground.tensorflow.org/)
+- @chollet2021deep, [GitHub ](https://github.com/fchollet/deep-learning-with-python-notebooks)
+- @urban2021deep
 
 ## References
