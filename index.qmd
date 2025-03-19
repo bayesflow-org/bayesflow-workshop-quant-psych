@@ -1,4 +1,38 @@
 ---
-title: "Introduction to BayesFlow"
+title: "Welcome to the seminar!"
 ---
 
+You can use this website to access materials related to the workshop.
+
+## Schedule
+
+| Day | Time | Topic |
+|-----|------|-------|
+| Wed | 9:00-10:30  | Introduction, Deep Learning |
+| Wed | 11:00-12:30 | Deep Learning, Generative Neural Networks |
+| Wed | 14:00-15:30 | Practical exercise |
+| Wed | 16:00-17:30 | Amortized Bayesian Inference with BayesFlow |
+| Thu | 9:00-10:30  | BayesFlow demonstration |
+| Thu | 11:00-12:30 | Practical exercise |
+
+
+## Slides
+
+Here you can access the presentation slides
+
+1. [Introduction](./slides/intro.qmd){target="_blank"}
+2. [Deep Learning](./slides/deep-learning.qmd){target="_blank"}
+3. [Generative Neural Networks](./slides/generative-architectures.qmd){target="_blank"}
+4. [Amortized Bayesian Inference with BayesFlow](./slides/amortized-inference.qmd){target="_blank"}
+
+## Exercises
+
+Use the Exercises tab in the navigation bar to access exercise notebooks.
+
+## Projects
+
+Use the Projects tab in the navigation bar to access the project descriptions. See [https://quantitative-thinking.eu/mobilities/seminar-2025/](https://quantitative-thinking.eu/mobilities/seminar-2025/) for all projects.
+
+</br>
+
+![](figures/tu-logo.svg){fig-align="center"}

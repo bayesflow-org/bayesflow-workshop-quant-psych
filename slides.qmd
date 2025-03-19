@@ -1,8 +1,0 @@
----
-title: "Presentation slides"
----
-
-- [Introduction](./slides/intro.qmd){target="_blank"}
-- [Deep Learning](./slides/deep-learning.qmd){target="_blank"}
-- [Generative architectures](./slides/generative-architectures.qmd){target="_blank"}
-- [Amortized inference](./slides/amortized-inference.qmd){target="_blank"}

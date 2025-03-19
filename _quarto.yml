@@ -2,20 +2,35 @@ project:
   type: website
 
 website:
-  title: "Introduction to BayesFlow"
+  title: "Seminar in Amortized Bayesian Inference"
+  search: true
   description: "Materials for learning working with BayesFlow"
+  repo-url: https://github.com/Kucharssim/bayesflow-seminar
+  repo-actions: [edit, issue]
   navbar:
+    logo: figures/bayesflow-logo.png
     left:
       - href: index.qmd
         text: Home
-      - href: slides.qmd
-        text: Slides
       - href: exercises.qmd
         text: Exercises
       - href: projects.qmd
         text: Projects
-      - about.qmd
+    tools:
+      - icon: house-fill
+        url: https://bayesflow.org/
+      - icon: chat-fill
+        url: https://discuss.bayesflow.org/
+      - icon: github
+        menu:
+          - text: This website
+            href: https://github.com/Kucharssim/bayesflow-seminar
+          - text: BayesFlow
+            href: htpps://github.com/bayesflow-org/bayesflow
   open-graph: true
+  page-footer: 
+    left: © 2025 Šimon Kucharský
+    right: Generated with [quarto](https://quarto.org/).
 
 format:
   html:
@@ -23,5 +38,6 @@ format:
     css: styles.css
     toc: true
 
-
+bibliography: bibliography.bib
+csl: apa.csl
 
