@@ -26,7 +26,7 @@ website:
           - text: This website
             href: https://github.com/Kucharssim/bayesflow-seminar
           - text: BayesFlow
-            href: htpps://github.com/bayesflow-org/bayesflow
+            href: https://github.com/bayesflow-org/bayesflow
   open-graph: true
   page-footer: 
     left: © 2025 Šimon Kucharský

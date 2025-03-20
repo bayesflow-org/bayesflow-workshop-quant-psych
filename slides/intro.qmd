@@ -1,5 +1,6 @@
 ---
-title: "BayesFlow seminar"
+title: "Amortized Bayesian Inference"
+subtitle: "Introduction"
 format:
     revealjs: 
         theme: default
@@ -8,10 +9,16 @@ format:
         highlight-style: github
 ---
 
----
+## 
+
+> Artificial Intelligence has two goals. First, AI is directed toward getting computers to be smart and do smart things so that human beings don't have to do them. And second, AI *[...]* is also directed at using computers to simulate human beings, so that we can find out how humans work.
+
+@simon1983should [p. 27], @van2024reclaiming
 
 
 ## Parameter estimation
+
+What are the values of the model parameters $\theta$, given observed data $x$?
 
 ### Bayes' theorem
 
@@ -30,7 +37,7 @@ $$
 - difficult to evaluate
 - often intractable
 
-## Classic workarounds
+## Classic alternatives
 
 - Approximate $p(\theta \mid x)$ 
   - Markov Chain Monte Carlo (MCMC): $\theta \propto p(\theta) \times p(x \mid \theta)$
@@ -38,26 +45,31 @@ $$
   - Maximum likelihood: $\hat{\theta} = \operatorname*{argmax}_{\theta} p(x \mid \theta)$
   - Maximum aposteriori: $\hat{\theta} = \operatorname*{argmax}_{\theta} p(\theta) \times p(x \mid \theta)$
 
-$\rightarrow$ none of the methods require $p(x)$
-
-## Classic workarounds
-
 - None of the methods require $p(x)$
 - But all require evaluating $p(x \mid \theta)$
 
 ## Simulation-based inference (SBI)
 
-- Likelihood and prior
-  - Obtain "samples": $(\theta^{(s)}, x^{(s)}) \sim p(\theta, x)$
-  - Not necessary to evaluate
 - "Likelihood-free"
+- Cannot evaluate $p(x \mid \theta)$ or $p(\theta)$
+- Approximate using sampling
 
-General idea:
+#### Examples
 
-- Approximate the joint distribution $p(\theta, x)$ using simulations
-- Condition on observed $x^{\text{obs}}$ for inference $p(\theta \mid x^{\text{obs}})$
+1. Surrogate Likelihood
+2. Rejection Sampling
+3. Approximate Bayesian Computation
 
-## Example - rejection sampling
+Modern overview: @cranmer2020frontier
+
+
+## Surrogate likelihood
+
+- For a given parameter value $\theta$, simulate many samples of $x$
+- Estimate the density $p(x\mid\theta)$ (e.g., kernel density estimation)
+  - Used for approximate MLE/MAP, or within MCMC
+
+## Rejection sampling
 
 $$
 \begin{aligned}
@@ -65,7 +77,19 @@ p(\theta, x) & = p(\theta) p(x \mid \theta)\\
 \end{aligned}
 $$
 
-## Example - rejection sampling
+![](../figures/joint-distribution.svg){fig-align="center"}
+
+## Rejection sampling
+
+$$
+\begin{aligned}
+p(\theta, x) & = p(\theta) p(x \mid \theta)\\
+\end{aligned}
+$$
+
+![](../figures/conditional-distribution.svg){fig-align="center"}
+
+## Rejection sampling
 
 
 $$
@@ -86,10 +110,10 @@ observed = 7
 posterior = prior[x == observed] 
 ```
 
-## Approximate Bayesian Computation
+## Approximate Bayesian Computation (ABC)
 
 - Generalization of rejection sampling
-- For a given parameter value $\theta$, draw a data set $x$
+- Given a sampled parameter value $\theta$, generate a data set $x$
 - Compare the simulated data set to observed $x^{\text{obs}}$
 - Retain the parameter if the data sets are not too dissimilar
 
@@ -97,12 +121,6 @@ $$
 \rho(s(x), s(x^{\text{obs}})) \leq \epsilon
 $$
 
-## Surrogate likelihood
-
-- For a given parameter value $\theta$, simulate many samples of $x$
-- Estimate the density $p(x\mid\theta)$ (e.g., kernel density estimation)
-
-Can be used for MLE/MAP, or within MCMC
 
 ## Issues
 
@@ -112,38 +130,85 @@ Can be used for MLE/MAP, or within MCMC
 
 ## Neural estimation
 
-- Approximate quantities of interest using "machine learning"
+- Approximate using *generative neural networks*
+  - Deep learning architecture that approximates a probability distribution 
 
-- Neural likelihood estimation (NLE)
-    - Learn $p(x \mid \theta)$
-    - Maximise or evaluate within MCMC
-- Neural posterior estimation (NPE)
-    - Learn $p(\theta \mid x)$
-    - Sample or evaluate
+</br>
+
+::::{.columns}
+
+:::{.column width=50%}
+#### Neural likelihood estimation (NLE)
+
+- Learn $p(x \mid \theta)$
+- Surrogate likelihood
+:::
+
+:::{.column width=50%}
+#### Neural posterior estimation (NPE)
+
+- Learn $p(\theta \mid x)$
+- Obtain posterior directly
+:::
+::::
 
 ## Amortized Bayesian Inference (ABI)
+
+- Generative neural networks
+  - Produce a distribution $q(\theta \mid x)$
+- Train them on *simulated* pairs $(\theta^{(s)}, x^{(s)}) \sim p(\theta, x)$
+  - Learn $q(\theta \mid x) \approx p(\theta \mid x)$
+- Once trained, can be used on observed data $x^\text{obs}$
+  - $q(\theta \mid x^\text{obs}) \approx p(\theta \mid x^\text{obs})$ 
+
+## Amortized Bayesian Inference (ABI)
+
+Pay the cost of inference upfront during training, receive benefits later
 
 ::::{.columns}
 
 :::{.column width=50%}
 ### Training
-- Use extensive simulations
 - Train neural networks
-- Approximate the maping between data and parameters
-- Slow, time consuming process
+- Simulated data and parameters
+- Learn the maping between data and parameters
+- Slow, resource consuming process
 :::
 
 :::{.column width=50%}
 ### Inference
-- Trained networks
-- Input observed data
-- Receive posterior of parameters
+- Apply pretrained networks
+- Observed data
+- Posterior distribution of parameters
 - Fast, cheap process
 :::
 ::::
 
+## Amortized Bayesian Inference (ABI)
 
----
+Using deep learning generative neural networks to make Bayesian inference.
 
-![](../figures/two-guys-bus.jpg){fig-align="center"}
+</br>
+
+::::{.columns}
+
+:::{.column width=50%}
+### Advantages
+
+- Computationally intractable models
+- Inference is fast
+
+:::
+
+:::{.column width=50%}
+### Disadvantages
+
+- Approximation
+- Less quarantees
+- Extensive training
+:::
+::::
+
+
+## References
 

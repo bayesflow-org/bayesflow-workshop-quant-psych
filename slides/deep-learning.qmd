@@ -16,15 +16,6 @@ bibliography: ../bibliography.bib
 </br>
 ![](../figures/word-cloud.png)
 
-##
-
-![@van2024reclaiming](../figures/meaning-of-ai.png)
-
-## 
-
-> Artificial Intelligence has two goals. First, AI is directed toward getting computers to be smart and do smart things so that human beings don't have to do them. And second, AI *[...]* is also directed at using computers to simulate human beings, so that we can find out how humans work.
-
-@simon1983should [p. 27]
 
 ##
 
@@ -434,14 +425,14 @@ $$
 ## Evaluating gradients
 $$\Delta_\theta \mathcal{L}(x; \theta_n)$$
 
-![](../figures/neural-network.svg){fig-align="center"}
+![](../figures/backpropagation.svg){fig-align="center"}
 
 ## Backpropagation
 $$
-\frac{\partial \mathcal{L}}{\theta_l} = \frac{\partial \mathcal{L}}{z_L} \frac{\partial z_L}{\partial x_{L-1}} \dots \frac{\partial z_l}{\partial \theta_l}
+\frac{\partial \mathcal{L}}{\partial \theta_l} = \frac{\partial \mathcal{L}}{\partial z_L} \frac{\partial z_L}{\partial z_{L-1}} \dots \frac{\partial z_l}{\partial \theta_l}
 $$
 
-
+![](../figures/backpropagation-chain.svg){fig-align="center"}
 
 # Tips & tricks
 
@@ -596,6 +587,7 @@ Large networks tend to overfit
 - Regularization
 - Dropout
 - Add more data
+- ...
   
 ## Early stopping
 

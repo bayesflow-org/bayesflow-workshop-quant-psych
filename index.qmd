@@ -33,6 +33,28 @@ Use the Exercises tab in the navigation bar to access exercise notebooks.
 
 Use the Projects tab in the navigation bar to access the project descriptions. See [https://quantitative-thinking.eu/mobilities/seminar-2025/](https://quantitative-thinking.eu/mobilities/seminar-2025/) for all projects.
 
+## Environment
+
+The exercises and projects require Python 3.10 -- 3.12, and installing necessary libraries. The recommended steps using [conda](https://docs.conda.io/en/latest/):
+
+```{.bash filename="Terminal"}
+# create a "bayesflow-seminar" conda environment with Python 3.11
+conda create --name bayesflow-seminar python=3.11.11
+# activate the environment
+conda activate bayesflow-seminar
+
+# install packages
+pip install tensorflow
+pip install git+https://github.com/bayesflow-org/bayesflow@main
+pip install sklearn
+```
+
+When running the exercise notebooks, remember to use the correct environment!
+
+*Note:* `bayesflow` can run with `jax` or `pytorch` instead of `tensorflow`. If you prefer to use those as a backend, you can install them as well. Remember to set the correct environment before loading `keras`, e.g., `os.environ["KERAS_BACKEND"] = "jax"`. Note that the examples of [generative neural networks](exercises.qmd#generative-neural-networks) do require `tensorflow` regardless.
+
+</br>
+
 </br>
 
 ![](figures/tu-logo.svg){fig-align="center"}
