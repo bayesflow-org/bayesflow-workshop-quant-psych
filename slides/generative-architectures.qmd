@@ -1,5 +1,5 @@
 ---
-title: "Generative architectures"
+title: "Generative Neural Networks"
 format:
     revealjs: 
         theme: default
@@ -11,6 +11,7 @@ format:
                 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.2.1/dist/mermaid.min.js"></script>
 ---
 
+
 ## Probabilistic generative models
 
 We have samples of a random variable X, and we are interested in learning (approximating) it's probability distribution $p_X(X)$
@@ -20,7 +21,7 @@ Uses:
 - **Evaluate** the density $p_X(X)$
 - **Sample** new data from the distribution, $X \sim p_X(X)$
 
-## Example: Mixture model
+## Mixture model
 
 - The target distribution is modeled as a weighted sum of multiple simpler (e.g., Gaussian) distributions
   - $p_X(X) = \sum_k^K w_k p_k(X)$
@@ -28,15 +29,15 @@ Uses:
 - Theoretically can represent any distribution
 - Practically, does not scale well
 
-## Other architectures
+## Many architectures
 
-- Markov random fields
-- Generative adversarial networks (GAN)
-- Variational autoencoders (VAE)
-- Diffusion models
-- Consistency models
-- **Normalizing flows**
-- **Flow matching**
+- Markov random fields [@li2009markov]
+- Generative adversarial networks [GAN, @goodfellow2014generative]
+- Variational autoencoders [VAE, @kingma2013auto]
+- Diffusion models [@song2020score]
+- Consistency models [@song2023consistency]
+- **Normalizing flows** [@kobyzev2020normalizing;@papamakarios2021normalizing]
+- **Flow matching** [@lipman2022flow]
 
 # Normalizing flows
 
@@ -63,7 +64,7 @@ Transformations of random variables are described by "change of variables"
 
 Express the density of $X$ using the density of $Z$ and the transform $f$
 
-## Change of variables - intuition {auto-animate=true}
+## Change of variables - intuition
 
 :::: {.columns}
 
@@ -73,7 +74,7 @@ $$Z \sim \text{Uniform}(0, 1)$$
 
 ::::
 
-## Change of variables - intuition {auto-animate=true}
+## Change of variables - intuition
 
 :::: {.columns}
 
@@ -86,7 +87,7 @@ $$Z \sim \text{Uniform}(0, 1)$$
 ::::
 
 
-## Change of variables - intuition {auto-animate=true}
+## Change of variables - intuition
 
 :::: {.columns}
 
@@ -101,7 +102,7 @@ $$X = 2Z - 1$$
 :::
 ::::
 
-## Change of variables - intuition {auto-animate=true}
+## Change of variables - intuition
 
 :::: {.columns}
 
@@ -118,14 +119,14 @@ $$X = 2Z - 1$$
 :::
 ::::
 
-## Change of variables - affine transform {auto-animate=true}
+## Change of variables - affine transform
 
 - $f: Z = a X + b$
   - shift by $b$: no effect
   - scale by a constant $a$: multiply by $a$
   - $p_X(x) = p_Z(f(x)) \times b$
 
-## Change of variables - affine transform {auto-animate=true}
+## Change of variables - affine transform
 
 - $f: Z = a X + b$
   - shift by $b$: no effect
@@ -135,7 +136,7 @@ $$X = 2Z - 1$$
 - $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
 
-## Change of variables - affine transform {auto-animate=true}
+## Change of variables - affine transform
 
 - $f: Z = a X + b$
   - shift by $b$: no effect
@@ -146,7 +147,7 @@ $$X = 2Z - 1$$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
 - $p_X(x) = p_Z(f(x)) \times a$
 
-## Change of variables - affine transform {auto-animate=true}
+## Change of variables - affine transform
 
 - $f: Z = a X + b$
   - shift by $b$: no effect
@@ -157,7 +158,7 @@ $$X = 2Z - 1$$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
 - $p_X(x) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} f(x)^2 \right) \times a$
 
-## Change of variables - affine transform {auto-animate=true}
+## Change of variables - affine transform
 
 - $f: Z = a X + b$
   - shift by $b$: no effect
@@ -168,7 +169,7 @@ $$X = 2Z - 1$$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
 - $p_X(x) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right) \times a$
 
-## Change of variables - affine transform {auto-animate=true}
+## Change of variables - affine transform
 
 - $f: Z = a X + b$
   - shift by $b$: no effect
@@ -179,7 +180,7 @@ $$X = 2Z - 1$$
 - $f: Z = \frac{(X - \mu)}{\sigma}$
 - $p_X(x) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right) \times \frac{1}{\sigma}$
 
-## Change of variables - affine transform {auto-animate=true}
+## Change of variables - affine transform
 
 - $f: Z = a X + b$
   - shift by $b$: no effect
@@ -191,14 +192,14 @@ $$X = 2Z - 1$$
 - $p_X(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right)$
 
 
-## Change of variables - more formally {auto-animate=true}
+## Change of variables - more formally
 
 $$
 p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
 $$
 
 
-## Change of variables - more formally {auto-animate=true}
+## Change of variables - more formally
 
 $$
 p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
@@ -207,7 +208,7 @@ $$
 - $f: Z = \log(X)$
 - $\frac{d}{dx} f(x) = \frac{d}{dx} \log(x) = \frac{1}{x}$
 
-## Change of variables - more formally {auto-animate=true}
+## Change of variables - more formally
 
 $$
 p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
@@ -245,14 +246,14 @@ $$J_f(x) = \begin{bmatrix}
 $$
 
 
-## Normalizing flows {auto-animate=true}
+## Normalizing flows
 
-- Given samples/data $X$
+- Given samples $X$
 - Find $f$ such that $f(X) = Z \sim \text{Normal}(0, \text{I})$
 - "$f$ *normalizes* $X$"
 
 
-## Normalizing flows {auto-animate=true}
+## Normalizing flows
 
 - Given samples $X$
 - Find $f$ such that $f(X) = Z \sim \text{Normal}(0, \text{I})$
@@ -267,9 +268,13 @@ $$
 p_X(x) = p_Z(f(x)) \left| \det{J}_f(x) \right|
 $$
 :::
+
+:::{.column width=40%}
+
+:::
 ::::
 
-## Normalizing flows {auto-animate=true}
+## Normalizing flows
 
 - Given samples $X$
 - Find $f$ such that $f(X) = Z \sim \text{Normal}(0, \text{I})$
@@ -467,15 +472,28 @@ $$
 - log det Jacobian: $-\log{\sigma(x_A)}$
 :::
 
-## Spline coupling
+## Spline coupling [@muller2019neural]
 
-- Same idea as affine coupling, but with splines
-- "Piecewise polynomials"
+
+::::{.columns}
+
+:::{.column width=50%}
+- Transformation: Splines
+  - "Piecewise polynomials"
 - More expressive
 - Easier to overfit
-- Less performant
+- Slower at training and inference
+:::
 
-Possible to alternate between affine and coupling blocks...
+:::{.column width=50%}
+
+![Figure from @durkan2019neural](../figures/spline-transform.png)
+
+:::
+
+
+::::
+
 
 ## Exercise - Moons
 

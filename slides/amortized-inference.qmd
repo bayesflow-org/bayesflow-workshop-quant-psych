@@ -1,5 +1,6 @@
 ---
 title: "Amortized Bayesian Inference"
+subtitle: "with BayesFlow"
 format:
     revealjs: 
         theme: default
@@ -307,7 +308,7 @@ Various options available, see the [Two Moons Example](https://github.com/bayesf
 :::
 ::::
 
-## Inference network
+## What architecture to pick?
 
 - **Affine coupling** for low-dimensional, uni-modal posteriors
 - **Spline coupling** for harder posteriors, including multi-modal
@@ -632,8 +633,10 @@ fig=bf.diagnostics.plots.recovery(estimates=posterior, targets=prior)
 
 - Possible causes:
   - Poor calibration of the approximator $\rightarrow$ see SBC
-  - Problem with the statistical model or data, e.g.
-    - Low sample size leads to poorly identified posterior
+  - Poor identification of the parameters
+    - Use more informative priors
+    - Change the model 
+    - Add more data (sample size, additional variables)
 
 # 5. Inference and diagnostics
 
@@ -699,14 +702,14 @@ In addition to learning $p(\theta \mid x)$:
 :::{.column width=50%}
 #### Advantages
 - Fast inference
-- Simulation based - intractable models
+- Simulation based -- intractable models
 :::
 
 
 :::{.column width=50%}
 #### Disatvantages
 - Need for training
-- Simulation based - weaker guarantees
+- Simulation based -- weaker guarantees
 :::
 ::::
 
@@ -724,7 +727,7 @@ In addition to learning $p(\theta \mid x)$:
 
 *--- misquote of John F. Kennedy, unknown author*
 
-- It is common to have problems with making it work
+</br>
 
 Resources:
 

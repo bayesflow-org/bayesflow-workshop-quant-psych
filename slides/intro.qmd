@@ -190,22 +190,18 @@ Using deep learning generative neural networks to make Bayesian inference.
 
 </br>
 
-::::{.columns}
-
+:::: {.columns}
 :::{.column width=50%}
-### Advantages
-
-- Computationally intractable models
-- Inference is fast
-
+#### Advantages
+- Fast inference
+- Simulation based -- intractable models
 :::
 
-:::{.column width=50%}
-### Disadvantages
 
-- Approximation
-- Less quarantees
-- Extensive training
+:::{.column width=50%}
+#### Disatvantages
+- Need for training
+- Simulation based -- weaker guarantees
 :::
 ::::
 
