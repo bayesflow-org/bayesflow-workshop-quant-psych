@@ -336,14 +336,15 @@ p(\theta \mid x) = \frac{p(\theta) \times p(x \mid \theta)}{p(x)}
 <li>Helper functions for simulation, configuration, training, validation, diagnostics,…</li>
 </ul>
 </section>
-<section id="old-version-httpsbayesflow.org" class="slide level2">
-<h2>Old version <a href="https://bayesflow.org/">https://bayesflow.org/</a></h2>
+<section id="old-version" class="slide level2">
+<h2>Old version</h2>
 <ul>
 <li>Build on <code>TensorFlow</code></li>
 <li>Previous projects build with it</li>
-<li>Bespoke syntax, not transparent</li>
-<li>Stable, <code>pip install bayesflow</code></li>
+<li>Bespoke syntax, not that transparent</li>
 <li>Stale development (no new features), being deprecated</li>
+<li><a href="https://github.com/bayesflow-org/bayesflow/tree/stable-legacy" target="_blank">stable legacy branch on GitHub</a></li>
+<li><code>pip install git+https://github.com/bayesflow-org/bayesflow@stable-legacy</code></li>
 </ul>
 </section>
 <section id="new-version" class="slide level2">
@@ -354,8 +355,10 @@ p(\theta \mid x) = \frac{p(\theta) \times p(x \mid \theta)}{p(x)}
 <li><code>TensorFlow</code>, <code>JAX</code>, or <code>PyTorch</code> as a backend</li>
 </ul></li>
 <li>Modern interface, more transparent, faster</li>
-<li>Currently less stable, available from <a href="https://github.com/bayesflow-org/bayesflow/tree/dev?tab=readme-ov-file#install" target="_blank">GitHub</a></li>
+<li>Released very recently</li>
 <li>Active development, future standard</li>
+<li><a href="https://github.com/bayesflow-org/bayesflow/" target="_blank">main branch on GitHub</a></li>
+<li><code>pip install git+https://github.com/bayesflow-org/bayesflow@main</code></li>
 </ul>
 </section>
 <section id="general-workflow" class="slide level2">
@@ -570,7 +573,7 @@ p(\theta \mid x) = \frac{p(\theta) \times p(x \mid \theta)}{p(x)}
 <div class="sourceCode" id="cb6" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a></a>inference_network <span class="op">=</span> bf.networks.FlowMatching()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p><br></p>
-<p>Various options available, see the <a href="https://github.com/bayesflow-org/bayesflow/blob/dev/examples/Two_Moons_Starter.ipynb">Two Moons Example</a>.</p>
+<p>Various options available, see the <a href="https://github.com/bayesflow-org/bayesflow/blob/main/examples/Two_Moons_Starter.ipynb">Two Moons Example</a>.</p>
 </section>
 <section id="what-architecture-to-pick" class="slide level2">
 <h2>What architecture to pick?</h2>
@@ -1108,9 +1111,9 @@ z = \frac{\text{mean}(\theta_i) - \theta^{\text{sim}}}{\text{sd}(\theta_i)}
 <p><br></p>
 <p>Resources:</p>
 <ul>
-<li><a href="https://bayesflow.org/">BayesFlow website</a>: documentation, examples</li>
-<li><a href="https://discuss.bayesflow.org/">BayesFlow forum</a>: ask questions about your use cases</li>
-<li><a href="https://github.com/bayesflow-org/bayesflow/tree/dev">BayesFlow repository</a>: contribute, submit bug reports, feature requests</li>
+<li><a href="https://bayesflow.org/" target="_blank">BayesFlow website</a>: documentation, examples</li>
+<li><a href="https://discuss.bayesflow.org/" target="_blank">BayesFlow forum</a>: ask questions about your use cases</li>
+<li><a href="https://github.com/bayesflow-org/bayesflow/" target="_blank">BayesFlow repository</a>: contribute, submit bug reports, feature requests</li>
 </ul>
 </section>
 <section id="references" class="slide level2 smaller scrollable">

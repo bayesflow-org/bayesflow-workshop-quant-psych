@@ -819,18 +819,18 @@
     "text": "BayesFlow (Radev, Schmitt, Schumacher, et al., 2023)\n\nPython library\nImplementation of common neural architectures to make ABI easier\nHelper functions for simulation, configuration, training, validation, diagnostics,…"
   },
   {
-    "objectID": "slides/amortized-inference.html#old-version-httpsbayesflow.org",
-    "href": "slides/amortized-inference.html#old-version-httpsbayesflow.org",
+    "objectID": "slides/amortized-inference.html#old-version",
+    "href": "slides/amortized-inference.html#old-version",
     "title": "Amortized Bayesian Inference",
-    "section": "Old version https://bayesflow.org/",
-    "text": "Old version https://bayesflow.org/\n\nBuild on TensorFlow\nPrevious projects build with it\nBespoke syntax, not transparent\nStable, pip install bayesflow\nStale development (no new features), being deprecated"
+    "section": "Old version",
+    "text": "Old version\n\nBuild on TensorFlow\nPrevious projects build with it\nBespoke syntax, not that transparent\nStale development (no new features), being deprecated\nstable legacy branch on GitHub\npip install git+https://github.com/bayesflow-org/bayesflow@stable-legacy"
   },
   {
     "objectID": "slides/amortized-inference.html#new-version",
     "href": "slides/amortized-inference.html#new-version",
     "title": "Amortized Bayesian Inference",
     "section": "New version",
-    "text": "New version\n\nBuilt on keras\n\nTensorFlow, JAX, or PyTorch as a backend\n\nModern interface, more transparent, faster\nCurrently less stable, available from GitHub\nActive development, future standard"
+    "text": "New version\n\nBuilt on keras\n\nTensorFlow, JAX, or PyTorch as a backend\n\nModern interface, more transparent, faster\nReleased very recently\nActive development, future standard\nmain branch on GitHub\npip install git+https://github.com/bayesflow-org/bayesflow@main"
   },
   {
     "objectID": "slides/amortized-inference.html#general-workflow",
