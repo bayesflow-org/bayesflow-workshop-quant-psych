@@ -609,11 +609,11 @@
     "text": "Long short-term memory (LSTM)\n\nLearn to what to “forget” (forget gate) and what to “remember” (input gate)\nCell state can carry over long term dependencies\n\n\nSource: Christopher Olah’s blog"
   },
   {
-    "objectID": "slides/deep-learning.html#attention-mechanism",
-    "href": "slides/deep-learning.html#attention-mechanism",
+    "objectID": "slides/deep-learning.html#attention-vaswani2017attention",
+    "href": "slides/deep-learning.html#attention-vaswani2017attention",
     "title": "Deep Learning",
-    "section": "Attention mechanism",
-    "text": "Attention mechanism\n\nSequential updating is slow\nLimited memory (even for LSTM)\n\nSolution\n\nUse positional encoding (“concatenate with time variable”)\nParalellize the whole computation\n“Attention”: Focus on the relevant parts of the sentence."
+    "section": "Attention (Vaswani et al., 2017)",
+    "text": "Attention (Vaswani et al., 2017)\n\nSequential updating is slow\nLimited memory (even for LSTM)\n\nSolution\n\nUse positional encoding (“concatenate with time variable”)\nParalellize the whole computation\n“Attention”: Focus on the relevant parts of the sentence."
   },
   {
     "objectID": "slides/deep-learning.html#attention",
@@ -658,15 +658,15 @@
     "text": "Set architectures\n\nPermutation invariant function: \\(f(x) = f(\\pi(x))\\)\nEmbeddings of sets\n\nHandle different set sizes\nPermutation invariant\nInteractions between elements"
   },
   {
-    "objectID": "slides/deep-learning.html#deep-set",
-    "href": "slides/deep-learning.html#deep-set",
+    "objectID": "slides/deep-learning.html#deep-set-zaheer_deep_2017",
+    "href": "slides/deep-learning.html#deep-set-zaheer_deep_2017",
     "title": "Deep Learning",
-    "section": "Deep Set",
-    "text": "Deep Set\n\n\n\\[\nf(X = \\{ x_i \\}) = \\rho \\left( \\sigma(\\tau(X)) \\right)\n\\]\n\n\\(\\tau\\): Permutation equivariant function\n\\(\\sigma\\): Permutation invariant pooling function (sum, mean)\n\\(\\rho\\): Any function"
+    "section": "Deep Set (Zaheer et al., 2017)",
+    "text": "Deep Set (Zaheer et al., 2017)\n\n\n\\[\nf(X = \\{ x_i \\}) = \\rho \\left( \\sigma(\\tau(X)) \\right)\n\\]\n\n\\(\\tau\\): Permutation equivariant function\n\\(\\sigma\\): Permutation invariant pooling function (sum, mean)\n\\(\\rho\\): Any function"
   },
   {
-    "objectID": "slides/deep-learning.html#deep-set-1",
-    "href": "slides/deep-learning.html#deep-set-1",
+    "objectID": "slides/deep-learning.html#deep-set",
+    "href": "slides/deep-learning.html#deep-set",
     "title": "Deep Learning",
     "section": "Deep Set",
     "text": "Deep Set"
@@ -683,7 +683,7 @@
     "href": "slides/deep-learning.html#references",
     "title": "Deep Learning",
     "section": "References",
-    "text": "References\n\n\n\n\nChollet, F. (2021). Deep learning with Python. Manning Publications.\n\n\nKingma, D. P., & Ba, J. (2014). Adam: A method for stochastic optimization. arXiv Preprint arXiv:1412.6980.\n\n\nKunc, V., & Kléma, J. (2024). Three decades of activations: A comprehensive survey of 400 activation functions for neural networks. arXiv Preprint arXiv:2402.09092.\n\n\nShahab, O., El Kurdi, B., Shaukat, A., Nadkarni, G., & Soroush, A. (2024). Large language models: A primer and gastroenterology applications. Therapeutic Advances in Gastroenterology, 17, 17562848241227031.\n\n\nUrban, C. J., & Gates, K. M. (2021). Deep learning: A primer for psychologists. Psychological Methods, 26(6), 743."
+    "text": "References\n\n\n\n\nChollet, F. (2021). Deep learning with Python. Manning Publications.\n\n\nKingma, D. P., & Ba, J. (2014). Adam: A method for stochastic optimization. arXiv Preprint arXiv:1412.6980.\n\n\nKunc, V., & Kléma, J. (2024). Three decades of activations: A comprehensive survey of 400 activation functions for neural networks. arXiv Preprint arXiv:2402.09092.\n\n\nShahab, O., El Kurdi, B., Shaukat, A., Nadkarni, G., & Soroush, A. (2024). Large language models: A primer and gastroenterology applications. Therapeutic Advances in Gastroenterology, 17, 17562848241227031.\n\n\nUrban, C. J., & Gates, K. M. (2021). Deep learning: A primer for psychologists. Psychological Methods, 26(6), 743.\n\n\nVaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., & Polosukhin, I. (2017). Attention is all you need. Advances in Neural Information Processing Systems, 30.\n\n\nZaheer, M., Kottur, S., Ravanbakhsh, S., Poczos, B., Salakhutdinov, R. R., & Smola, A. J. (2017). Deep Sets. Advances in Neural Information Processing Systems, 30."
   },
   {
     "objectID": "index.html",
