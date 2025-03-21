@@ -40,13 +40,17 @@ The exercises and projects require Python 3.10 -- 3.12, and installing necessary
 ```{.bash filename="Terminal"}
 # create a "bayesflow-seminar" conda environment with Python 3.11
 conda create --name bayesflow-seminar python=3.11.11
+
 # activate the environment
 conda activate bayesflow-seminar
+
+# kernel for running the jupyter notebooks
+conda install ipykernel --update-deps --force-reinstall
 
 # install packages
 pip install tensorflow
 pip install git+https://github.com/bayesflow-org/bayesflow@main
-pip install sklearn
+
 ```
 
 When running the exercise notebooks, remember to use the correct environment!
