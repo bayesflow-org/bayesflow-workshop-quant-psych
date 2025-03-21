@@ -114,21 +114,24 @@ For more info, see @radev2020bayesflow
 - Helper functions for simulation, configuration, training, validation, diagnostics,...
 
 
-## Old version [https://bayesflow.org/](https://bayesflow.org/)
+## Old version
 
 - Build on `TensorFlow`
 - Previous projects build with it
-- Bespoke syntax, not transparent
-- Stable, `pip install bayesflow`
+- Bespoke syntax, not that transparent
 - Stale development (no new features), being deprecated
+- [stable legacy branch on GitHub](https://github.com/bayesflow-org/bayesflow/tree/stable-legacy){target="_blank"}
+- `pip install git+https://github.com/bayesflow-org/bayesflow@stable-legacy`
 
 ## New version
 
 - Built on `keras`
   - `TensorFlow`, `JAX`, or `PyTorch` as a backend
 - Modern interface, more transparent, faster
-- Currently less stable, available from [GitHub](https://github.com/bayesflow-org/bayesflow/tree/dev?tab=readme-ov-file#install){target="_blank"}
+- Released very recently
 - Active development, future standard
+- [main branch on GitHub](https://github.com/bayesflow-org/bayesflow/){target="_blank"}
+- `pip install git+https://github.com/bayesflow-org/bayesflow@main`
 
 ## General workflow
 
@@ -283,7 +286,7 @@ inference_network = bf.networks.FlowMatching()
 ```
  </br>
 
-Various options available, see the [Two Moons Example](https://github.com/bayesflow-org/bayesflow/blob/dev/examples/Two_Moons_Starter.ipynb).
+Various options available, see the [Two Moons Example](https://github.com/bayesflow-org/bayesflow/blob/main/examples/Two_Moons_Starter.ipynb).
 
 ## What architecture to pick?
 
@@ -731,9 +734,9 @@ In addition to learning $p(\theta \mid x)$:
 
 Resources:
 
-- [BayesFlow website](https://bayesflow.org/): documentation, examples 
-- [BayesFlow forum](https://discuss.bayesflow.org/): ask questions about your use cases
-- [BayesFlow repository](https://github.com/bayesflow-org/bayesflow/tree/dev): contribute, submit bug reports, feature requests   
+- [BayesFlow website](https://bayesflow.org/){target="_blank"}: documentation, examples 
+- [BayesFlow forum](https://discuss.bayesflow.org/){target="_blank"}: ask questions about your use cases
+- [BayesFlow repository](https://github.com/bayesflow-org/bayesflow/){target="_blank"}: contribute, submit bug reports, feature requests   
 
 
 ## References {.smaller}

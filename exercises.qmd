@@ -54,7 +54,7 @@ Swiss roll mirrored along vertical or horizontal axes
 
 ## BayesFlow
 
-Please visit the BayesFlow repository to find a [bunch of examples](https://github.com/bayesflow-org/bayesflow/tree/dev?tab=readme-ov-file#getting-started) that can help you with BayesFlow. In addition, below are two exercise notebooks you can use to familiarize yourself with BayesFlow.
+Please visit the BayesFlow repository to find a [bunch of examples](https://github.com/bayesflow-org/bayesflow?tab=readme-ov-file#getting-started) that can help you with BayesFlow. In addition, below are two exercise notebooks you can use to familiarize yourself with BayesFlow.
 
 ### Estimating the mean and variance of a gaussian variable
 
