@@ -11,21 +11,21 @@ format:
                 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.2.1/dist/mermaid.min.js"></script>
 ---
 
+## Generative models
 
-## Probabilistic generative models
+Learn $p_X$ given a set of training data $x_i, \dots, x_n$
 
-We have samples of a random variable X, and we are interested in learning (approximating) it's probability distribution $p_X(X)$
+![](../figures/generative-models.png){width=100%, fig-align="center"}
 
-Uses:
-
-- **Evaluate** the density $p_X(X)$
-- **Sample** new data from the distribution, $X \sim p_X(X)$
+- Sampling $x \sim p_X$
+- Density evaluation $p_X(x)$
 
 ## Mixture model
 
-- The target distribution is modeled as a weighted sum of multiple simpler (e.g., Gaussian) distributions
-  - $p_X(X) = \sum_k^K w_k p_k(X)$
-- Sampling and evaluating is straightforward
+Weighted sum of multiple simpler distributions, e.g., Normal
+$$p_X(X) = \sum_k^K w_k \times \text{Normal}(X; \mu_k, \sigma_k)$$
+
+- Sampling and evaluating straightforward
 - Theoretically can represent any distribution
 - Practically, does not scale well
 
@@ -39,30 +39,70 @@ Uses:
 - **Normalizing flows** [@kobyzev2020normalizing;@papamakarios2021normalizing]
 - **Flow matching** [@lipman2022flow]
 
+## Common idea
+
+Map $p_X$ to a base distribution $p_Z$ through some operation $g$
+
+$$
+x \sim g(z) \text{ where } z \sim p_Z 
+$$
+
+![[Source: learnopencv.com](https://learnopencv.com/generative-and-discriminative-models/)](https://learnopencv.com/wp-content/uploads/2020/10/begin_gan.jpg){fig-align="center"}
+
 # Normalizing flows
 
 ## Normalizing flows
 
-Generative models build on invertible transformations of random variables
+Built on invertible transformations of random variables
 
-General characteristics:
+- Find $f$ such that $f(X) = Z \sim \text{Normal}(0, I)$
+  - $f$ *normalizes* $X$
 
-- Efficient to evaluate $p_X(x)$
-- Efficient fo sample from $p_X$
-- Expressive (flexible)
-- Can represent high-dimensional probability distributions
-- Easy to train (standard ML methods)
+::: {#fig-normalizing-flow layout="[[-10, 1, -10], [10, 1, 10]]"}
 
-## Change of variables
+$f$
 
-Transformations of random variables are described by "change of variables"
+![](../figures/normalizing-flow/x_1.svg)
 
-- $Z \sim p_Z(z)$
-- $Z = f(X)$ (or $X = f^{-1}(Z)$)
-- $p_X(x)?$
+$$\rightarrow$$ 
 
+![](../figures/normalizing-flow/x_4.svg)
 
-Express the density of $X$ using the density of $Z$ and the transform $f$
+Normalizing flow
+:::
+
+## Sampling
+
+- Sample $z \sim p_Z$ (e.g., Normal)
+- Obtain $x = f^{-1}(z)$
+
+</br>
+
+::: {#fig-normalizing-flow layout="[[-10, 1, -10], [10, 1, 10]]"}
+
+$f^{-1}$
+
+![](../figures/normalizing-flow/x_1.svg)
+
+$$\leftarrow$$ 
+
+![](../figures/normalizing-flow/x_4.svg)
+
+Normalizing flow in reverse direction
+:::
+
+## Density evaluation
+
+Change of variables formula
+
+$$
+p_X(x) = p_Z(f(x)) \left| \det{J}_f(x) \right|
+$$
+
+- Express $p_X$ using $p_Z$ and the transform $f$
+- $\left| \det{J}_f(x) \right|$: Absolute value of the determinant of the Jacobian matrix
+  - "Jacobian" for short 
+  - Volume correction term
 
 ## Change of variables - intuition
 
@@ -70,6 +110,10 @@ Express the density of $X$ using the density of $Z$ and the transform $f$
 
 ::: {.column width="50%"}
 $$Z \sim \text{Uniform}(0, 1)$$
+:::
+
+::: {.column width="50%"}
+
 :::
 
 ::::
@@ -82,6 +126,10 @@ $$Z \sim \text{Uniform}(0, 1)$$
 $$Z \sim \text{Uniform}(0, 1)$$
 
 ![](../figures/uniform.svg)
+:::
+
+::: {.column width="50%"}
+
 :::
 
 ::::
@@ -121,75 +169,43 @@ $$X = 2Z - 1$$
 
 ## Change of variables - affine transform
 
-- $f: Z = a X + b$
-  - shift by $b$: no effect
-  - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times b$
+$$f: Z = a X + b$$
+
+
+- shift by $b$: no effect
+- scale by a constant $a$: multiply by $a$
+
+$$p_X(x) = p_Z(f(x)) \times a$$
 
 ## Change of variables - affine transform
 
-- $f: Z = a X + b$
-  - shift by $b$: no effect
-  - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times a$
+</br>
 
-- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
-- $f: Z = \frac{(X - \mu)}{\sigma}$
+#### Example
 
-## Change of variables - affine transform
+:::: {.columns}
+::: {.column width="50%"}
+$$
+\scriptsize
+\begin{aligned}
+p_Z(z) & = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right) \\[10pt]
+f: Z & = \frac{(X - \mu)}{\sigma} \\
+\end{aligned}
+$$
+:::
 
-- $f: Z = a X + b$
-  - shift by $b$: no effect
-  - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times a$
+::: {.column width="50%"}
+$$
+\scriptsize
+\begin{aligned}
+p_X(x) & = p_Z(f(x)) \times a \\[10pt]
+ & = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} f(x)^2 \right) \times a \\[10pt]
+ & = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right)
+\end{aligned}
+$$
+:::
+::::
 
-- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
-- $f: Z = \frac{(X - \mu)}{\sigma}$
-- $p_X(x) = p_Z(f(x)) \times a$
-
-## Change of variables - affine transform
-
-- $f: Z = a X + b$
-  - shift by $b$: no effect
-  - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times a$
-
-- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
-- $f: Z = \frac{(X - \mu)}{\sigma}$
-- $p_X(x) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} f(x)^2 \right) \times a$
-
-## Change of variables - affine transform
-
-- $f: Z = a X + b$
-  - shift by $b$: no effect
-  - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times a$
-
-- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
-- $f: Z = \frac{(X - \mu)}{\sigma}$
-- $p_X(x) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right) \times a$
-
-## Change of variables - affine transform
-
-- $f: Z = a X + b$
-  - shift by $b$: no effect
-  - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times a$
-
-- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
-- $f: Z = \frac{(X - \mu)}{\sigma}$
-- $p_X(x) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right) \times \frac{1}{\sigma}$
-
-## Change of variables - affine transform
-
-- $f: Z = a X + b$
-  - shift by $b$: no effect
-  - scale by a constant $a$: multiply by $a$
-  - $p_X(x) = p_Z(f(x)) \times a$
-
-- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
-- $f: Z = \frac{(X - \mu)}{\sigma}$
-- $p_X(x) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{1}{2} \left(\frac{x-\mu}{\sigma}\right)^2 \right)$
 
 
 ## Change of variables - more formally
@@ -205,26 +221,38 @@ $$
 p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
 $$
 
-- $f: Z = \log(X)$
-- $\frac{d}{dx} f(x) = \frac{d}{dx} \log(x) = \frac{1}{x}$
+#### Example
 
-## Change of variables - more formally
+::::{.columns}
 
+:::{.column width="50%"}
 $$
-p_X(x) = p_Z(f(x))  \left| \frac{d}{dx} f(x) \right|
+\scriptsize
+\begin{align}
+f: Z & = \log(X) \\[10pt]
+p_Z(z) & = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)
+\end{align}
 $$
+:::
 
-- $f: Z = \log(X)$
-- $\frac{d}{dx} f(x) = \frac{d}{dx} \log(x) = \frac{1}{x}$
-
-- $p_Z(z) = \frac{1}{\sqrt{2\pi}} \exp\left(-\frac{1}{2} z^2 \right)$
-- $p_X(x) = \frac{1}{x\sqrt{2\pi}} \exp\left(-\frac{1}{2} \log(x)^2\right)$
+:::{.column width="50%"}
+$$
+\scriptsize
+\begin{align}
+\frac{d}{dx} f(x) & = \frac{d}{dx} \log(x) = \frac{1}{x} \\[10pt]
+p_X(x) & = \frac{1}{x\sqrt{2\pi}} \exp\left(-\frac{1}{2} \log(x)^2\right)
+\end{align}
+$$
+:::
+::::
 
 ## Change of variables - multivariate
 
 $$
 p_X(x) = p_Z(f(x)) \left| \det{J}_f(x) \right|
 $$
+
+</br>
 
 $$
 J_f(x) = \begin{bmatrix}
@@ -239,6 +267,8 @@ $$
 
 $$f\left(\begin{bmatrix}x_1 \\ x_2\end{bmatrix}\right) = \begin{bmatrix} x_1^2 x_2 \\ 3x_1 + \sin x_2 \end{bmatrix} = \begin{bmatrix}z_1 \\ z_2\end{bmatrix}$$
 
+</br>
+
 $$J_f(x) = \begin{bmatrix}
 \frac{\partial z_1}{\partial x_1} & \frac{\partial z_1}{\partial x_2} \\
 \frac{\partial z_2}{\partial x_1} & \frac{\partial z_2}{\partial x_2}
@@ -246,79 +276,35 @@ $$J_f(x) = \begin{bmatrix}
 $$
 
 
-## Normalizing flows
-
-- Given samples $X$
-- Find $f$ such that $f(X) = Z \sim \text{Normal}(0, \text{I})$
-- "$f$ *normalizes* $X$"
-
-
-## Normalizing flows
-
-- Given samples $X$
-- Find $f$ such that $f(X) = Z \sim \text{Normal}(0, \text{I})$
-- "$f$ *normalizes* $X$"
-
-:::: {.columns}
-
-:::{.column width="60%"}
-#### Density evaluation 
+## Normalizing flow
 
 $$
 p_X(x) = p_Z(f(x)) \left| \det{J}_f(x) \right|
 $$
-:::
 
-:::{.column width=40%}
+Define a $f$ as a neural network with trainable weights $\phi$
 
-:::
-::::
+</br>
 
-## Normalizing flows
+### Training
 
-- Given samples $X$
-- Find $f$ such that $f(X) = Z \sim \text{Normal}(0, \text{I})$
-- "$f$ *normalizes* $X$"
-
-:::: {.columns}
-
-:::{.column width="60%"}
-#### Density evaluation
+Maximum likelihood (or rather: negative log likelihood)
 
 $$
-p_X(x) = p_Z(f(x)) \left| \det{J}_f(x) \right|
+\arg \min_\phi - \sum_{i=1}^n \log p_Z(f(x_i \mid \phi)) + \log \left| \det{J}_f(x_i \mid \phi) \right|
 $$
-:::
 
-:::{.column width="40%"}
-#### Sampling
+## Flow $f$
 
-$$
-\begin{aligned}
-Z &\sim \text{Normal}(0, \text{I}) \\ 
-X & = f^{-1}(Z)
-\end{aligned}
-$$
-:::
-::::
+</br>
 
-## Training
+### Challenge
 
-Via maximum likelihood (or rather: negative log likelihood)
-
-$$
-\arg \min_\phi - \sum_{i=1}^n \log p_Z(f(x_i \mid \phi)) + \log \left| \det{J}_f(x_i \mid \phi) \right|,
-$$
-where $\phi$ are trainable weights of a neural network that implements $f$.
-
-## Challenge {.incremental}
-
-Flow $f$ is a parametric function that:
-
-  - is invertible ($f^{-1}$ exists)
-  - is differentiable
-  - has a Jacobian determinant $\left|\det{J}_f(x_i \mid \phi) \right|$ that is computationally efficient
-  - expressive enough to represent non-trivial distributions
+- Sampling: Invertible ($f^{-1}$)
+- Training: 
+  - Differentiable
+  - Computationally efficient jacobian
+- Expressive to represent non-trivial distributions
 
 ## Flow composition
 
@@ -425,11 +411,15 @@ $$
 3. Apply transformation to the other subset: $z_B = f(x_B \mid \theta(x_A))$
 4. Concatenate $z = (x_A, z_B)$
 
-## Coupling flow: forward
+## Coupling flow: Forward
+
+</br>
 
 ![](../figures/coupling-layer-forward.svg){fig-align="center"}
 
-## Coupling flow: backward
+## Coupling flow: Inverse
+
+</br>
 
 ![](../figures/coupling-layer-backward.svg){fig-align="center"}
 
@@ -456,21 +446,22 @@ $$
 - $f(x_B\mid\theta(x_A))$ needs to be differentiable and invertible
   - easy to calculate determinant Jacobian... 
 - $\theta(x_A)$ can be arbitrarily complex
-  - non-linear,...
+  - non-linear,
+  - non-invertible
   - $\rightarrow$ neural network
 
-- Stack multiple coupling blocks and permute $x_{A}$ and $x_B$
+</br>
+
+- Stack multiple coupling blocks and permute $x_{A}$ and $x_{B}$
 
 
-## Affine coupling
+## Affine coupling [@dinh2016density]
 
-:::{.incremental}
-- $\theta(x_A)$: Trainable coupling networks
+- $\theta(x_A)$: Trainable coupling networks, e.g., MLP
   - Output: Shift $\mu$ and scale $\sigma$ 
 - Linear (affine) transform function $f(x_B\mid\theta(x_A)) = \frac{x_B - \mu(x_A)}{\sigma(x_A)}$
 
-- log det Jacobian: $-\log{\sigma(x_A)}$
-:::
+- Jacobian: $-\log{\sigma(x_A)}$
 
 ## Spline coupling [@muller2019neural]
 
@@ -498,6 +489,8 @@ $$
 ## Exercise - Moons
 
 Build your own affine coupling normalizing flow!
+
+</br>
 
 :::: {.columns}
 
