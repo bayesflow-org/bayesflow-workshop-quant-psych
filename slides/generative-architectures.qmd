@@ -513,43 +513,92 @@ Build your own affine coupling normalizing flow!
 - Normalizing flows transform X into Z in a set of discrete steps
 - But why not take one smooth/continuous transformation?
 
-# Flow matching
+# Flow matching [@lipman2022flow]
+
+Essentials from an extensive tutorial by @lipman2024flowmatchingguidecode available at [https://neurips.cc/virtual/2024/tutorial/99531](https://neurips.cc/virtual/2024/tutorial/99531){target="_blank"}.
 
 ## Flow matching
 
 - Defines a flow that transforms a distribution over time
   - $p_{t=0} = p_z$ - Base distribution 
-  - $p_{t=1} = p_x$ - Data distribution
+  - $p_{t=1} = q = p_x$ - Data distribution
 
-![](../figures/flow-matching/two-dists.svg){fig-align="center"}
+</br>
 
-## Flow matching
+![@lipman2024flowmatchingguidecode](../figures/marginal-probability-path.png){fig-align="center"}
 
-- Flow defines position $X_t = \phi_t(X_0)$
+## Flow and velocity
+
+- Flow defines $X_t = \phi_t(X_0)$
 - Time dependent vector field: $\frac{d}{dt} \phi_t(x) = u_t(\phi_t(x))$
-- $X_0 \sim p_0(X_0)$
-- $X_t = \phi_t(X_0) \sim p_t(X_t)$
+- Model $u_t$ with a neural network
 
-![](../figures/flow-matching/two-dists-path.svg){fig-align="center"}
+</br>
+
+![@lipman2024flowmatchingguidecode](../figures/velocity.png){fig-align="center"}
 
 ## Flow matching
-
 $$
-\mathcal{L}_{\text{FM}}(\theta) = \mathbb{E}_{t, X_t}|| u_\theta(X_t \mid t) - u(X_t \mid t) ||^2, t\sim\text{Uniform}(0,1), X_t \sim p_t(X_t)
+\begin{aligned}
+\mathbb{E}_{t, X_t}|| u_{t,\theta}(X_t) - u_t(X_t) ||^2 \\ t\sim\text{Uniform}(0,1) \\ X_t \sim p_t(X_t)
+\end{aligned}
 $$
 
-![](../figures/flow-matching/two-dists-path.svg){fig-align="center"}
+![@lipman2024flowmatchingguidecode](https://raw.githubusercontent.com/facebookresearch/flow_matching/refs/heads/main/assets/teaser.png){fig-align="center"}
 
-## Flow matching
+## Conditional Flow Matching {.smaller}
 
-$X_t = (1-t) X_0 + t X_1$ 
+Linear probability path
 
-## Flow matching
+$$X_t = (1-t) X_0 + t X_1$$
 
-- Define a "probability path" $p_t(x) = \int p(x \mid z) p(z) dz$
+Velocity
 
-## Flow matching
+$$u_t(X_t \mid X_1, X_0) = X_1 - X_0$$
+
+![@lipman2024flowmatchingguidecode](../figures/linear-probability-path.png)
+
+## Conditional Flow Matching
+
+</br>
+$$
+\begin{aligned}
+\mathbb{E}_{t, X_t}|| u_{t,\theta}\big(\underbrace{(1-t) X_0 + t X_1)}_{X_t}\big) - (\underbrace{X_1-X_0}_{u_t}) ||^2 \\ t\sim\text{Uniform}(0,1) \\ X_0 \sim p_0 \\ X_1 \sim p_1
+\end{aligned}
+$$
+
+## Conditional vs Marginal paths
+
+::: {#fig-normalizing-flow layout="[10, 10]"}
+
+![Conditional path](https://mlg.eng.cam.ac.uk/blog/assets/images/flow-matching/vector-field-samples-cond.png)
+
+![Marginal path](https://mlg.eng.cam.ac.uk/blog/assets/images/flow-matching/vector-field-samples-marginal.png)
+
+@fjelde2024introduction
+:::
+
+## Optimal transport {.smaller}
+
+- Independent coupling $p(X_0, X_1) = p(X_0) p(X_1)$
+- Optimal transport coupling $p(X_0, X_1) = \pi(X_0, X_1)$
+  - Minimise transport cost (e.g., Wasserstein distance)
+  - For batches [@pooladian2023multisample]
+
+::: {#fig-optimal-transport}
+![](https://mlg.eng.cam.ac.uk/blog/assets/images/flow-matching/mog2mog-cond-paths-one-color-ot.png)
+
+@fjelde2024introduction
+
+:::
+
+## Exercise
 
 {{< video ../exercises/flow-matching-datasaurus.mp4 width="800">}}
 
+## Exercise
 
+![](../exercises/flow-matching-swiss-roll.png){fig-align="center"}
+
+
+## References
