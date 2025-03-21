@@ -756,7 +756,7 @@ $\rightarrow$ leverage properties of data to our advantage by building networks 
 
 ![[Source: Christopher Olah's blog](https://colah.github.io/posts/2015-08-Understanding-LSTMs/)](https://colah.github.io/posts/2015-08-Understanding-LSTMs/img/LSTM3-chain.png){fig-align="center"}
 
-## Attention mechanism
+## Attention [@vaswani2017attention]
 
 - Sequential updating is slow
 - Limited memory (even for LSTM)
@@ -813,7 +813,7 @@ $$
   - Permutation invariant
   - Interactions between elements
 
-## Deep Set
+## Deep Set [@zaheer_deep_2017]
 
 ::::{.columns}
 
