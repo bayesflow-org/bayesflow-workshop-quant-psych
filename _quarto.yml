@@ -41,3 +41,5 @@ format:
 bibliography: bibliography.bib
 csl: apa.csl
 
+execute:
+  freeze: auto
