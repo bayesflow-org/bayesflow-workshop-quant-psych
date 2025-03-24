@@ -942,7 +942,7 @@
     "href": "slides/amortized-inference.html#what-architecture-to-pick-2",
     "title": "Amortized Bayesian Inference",
     "section": "What architecture to pick?",
-    "text": "What architecture to pick?\nReflect symmetries in the data\nExchangeable data\n\nDeep Sets, Set Transformers,…\n\n\n\nPython\n\nsummary_network = bf.networks.DeepSet()\n\n\nTime series, Sequences, …\n\nRNNs, CNNs, Transformers, …\n\n\n\nPython\n\nsummary_network = bf.networks.LSTNet()"
+    "text": "What architecture to pick?\nReflect symmetries in the data\nExchangeable data\n\nDeep Sets, Set Transformers,…\n\n\n\nPython\n\nsummary_network = bf.networks.DeepSet()\n\nTime series, Sequences, …\n\nRNNs, CNNs, Transformers, …\n\n\n\nPython\n\nsummary_network = bf.networks.LSTNet()"
   },
   {
     "objectID": "slides/amortized-inference.html#adapter-main-purpose",
@@ -1180,14 +1180,14 @@
     "href": "slides/generative-architectures.html#normalizing-flows-1",
     "title": "Generative Neural Networks",
     "section": "Normalizing flows",
-    "text": "Normalizing flows\nBuilt on invertible transformations of random variables\n\nFind \\(f\\) such that \\(f(X) = Z \\sim \\text{Normal}(0, I)\\)\n\n\\(f\\) normalizes \\(X\\)\n\n\n\n\n\n\n\n \n\n\n\\(f\\)\n\n\n \n\n\n\n\n\n\n\n\\[\\rightarrow\\]\n\n\n\n\n\n\n\nFigure 1: Normalizing flow"
+    "text": "Normalizing flows\nBuilt on invertible transformations of random variables\n\nFind \\(f\\) such that \\(f(X) = Z \\sim \\text{Normal}(0, I)\\)\n\n\\(f\\) normalizes \\(X\\)\n\n\n\n\n\n\n\n \n\n\n\\(f\\)\n\n\n \n\n\n\n\n\n\n\n\\[\\rightarrow\\]\n\n\n\n\n\n\n\nFigure 1: Forward direction"
   },
   {
     "objectID": "slides/generative-architectures.html#sampling",
     "href": "slides/generative-architectures.html#sampling",
     "title": "Generative Neural Networks",
     "section": "Sampling",
-    "text": "Sampling\n\nSample \\(z \\sim p_Z\\) (e.g., Normal)\nObtain \\(x = f^{-1}(z)\\)\n\n\n\n\n\n\n\n \n\n\n\\(f^{-1}\\)\n\n\n \n\n\n\n\n\n\n\n\\[\\leftarrow\\]\n\n\n\n\n\n\n\nFigure 2: Normalizing flow in reverse direction"
+    "text": "Sampling\n\nSample \\(z \\sim p_Z\\) (e.g., Normal)\nObtain \\(x = f^{-1}(z)\\)\n\n\n\n\n\n\n\n \n\n\n\\(f^{-1}\\)\n\n\n \n\n\n\n\n\n\n\n\\[\\leftarrow\\]\n\n\n\n\n\n\n\nFigure 2: Backward direction"
   },
   {
     "objectID": "slides/generative-architectures.html#density-evaluation",

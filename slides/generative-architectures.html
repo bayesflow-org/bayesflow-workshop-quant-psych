@@ -11,6 +11,7 @@
 <link href="../site_libs/quarto-contrib/videojs/video-js.css" rel="stylesheet"><meta charset="utf-8">
   <meta name="generator" content="quarto-1.6.42">
 
+  <meta name="author" content="Šimon Kucharský">
   <title>Seminar in Amortized Bayesian Inference – Generative Neural Networks</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -142,7 +143,6 @@
       margin-right: 0; 
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.2.1/dist/mermaid.min.js"></script>
 <meta property="og:title" content="Generative Neural Networks – Seminar in Amortized Bayesian Inference">
 <meta property="og:site_name" content="Seminar in Amortized Bayesian Inference">
 </head>
@@ -154,6 +154,11 @@
   <h1 class="title">Generative Neural Networks</h1>
 
 <div class="quarto-title-authors">
+<div class="quarto-title-author">
+<div class="quarto-title-author-name">
+Šimon Kucharský 
+</div>
+</div>
 </div>
 
 </section>
@@ -236,7 +241,7 @@ x \sim g(z) \text{ where } z \sim p_Z
 </div>
 </div>
 <figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-normalizing-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;1: Normalizing flow
+Figure&nbsp;1: Forward direction
 </figcaption>
 </figure>
 </div>
@@ -248,9 +253,9 @@ Figure&nbsp;1: Normalizing flow
 <li>Obtain <span class="math inline">\(x = f^{-1}(z)\)</span></li>
 </ul>
 <p><br></p>
-<div id="fig-normalizing-flow" class="quarto-layout-panel">
+<div id="fig-normalizing-flow-rev" class="quarto-layout-panel">
 <figure class="quarto-float quarto-float-fig">
-<div aria-describedby="fig-normalizing-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+<div aria-describedby="fig-normalizing-flow-rev-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
 <div class="quarto-layout-row">
 <div class="quarto-figure-spacer quarto-layout-cell" style="flex-basis: 47.6%;justify-content: flex-start;">
 <p>&nbsp;</p>
@@ -274,8 +279,8 @@ Figure&nbsp;1: Normalizing flow
 </div>
 </div>
 </div>
-<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-normalizing-flow-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
-Figure&nbsp;2: Normalizing flow in reverse direction
+<figcaption class="quarto-float-caption-bottom quarto-float-caption quarto-float-fig" id="fig-normalizing-flow-rev-caption-0ceaefa1-69ba-4598-a22c-09a6ac19f8ca">
+Figure&nbsp;2: Backward direction
 </figcaption>
 </figure>
 </div>
@@ -870,8 +875,9 @@ Song, Y., Sohl-Dickstein, J., Kingma, D. P., Kumar, A., Ermon, S., &amp; Poole, 
 </section></section>
     </div>
   <div class="quarto-auto-generated-content" style="display: none;">
+<p><img src="../figures/bayesflow-logo.png" class="slide-logo"></p>
 <div class="footer footer-default">
-
+<p>Amortized Bayesian Inference</p>
 </div>
 </div></div>
 
