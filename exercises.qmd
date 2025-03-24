@@ -2,8 +2,6 @@
 title: "Exercises"
 ---
 
-<!-- ## Basics of Deep Learning in Python -->
-
 ## Generative neural networks
 
 Here you can download example notebooks related to creating your own generative neural network architectures.
@@ -26,8 +24,8 @@ Normalizing flow
 
 ### Flow matching - Datasaurus
 
-- Peek online: [here](./exercises/flow-matching-datasaurus.ipynb){target="_blank"}.
-- Download notebook: [here](./exercises/flow-matching-datasaurus.ipynb){download="flow-matching-datasaurus.ipynb"}.
+- Peek online: [here](./exercises/flow-matching-datasaurus.ipynb){target="_blank"}
+- Download notebook: [here](./exercises/flow-matching-datasaurus.ipynb){download="flow-matching-datasaurus.ipynb"}
 - Download data: [here](./data/datasaurus.csv){download="datasaurus.csv"}
 
 In this exercise, you will build a flow matching model using `keras` that transports a standard normal distribution into a distribution based on the [datasaurus](https://en.wikipedia.org/wiki/Datasaurus_dozen).
@@ -41,8 +39,8 @@ Flow matching
 
 ### Flow matching - mirroring the Swiss roll
 
-- Peek online: [here](./exercises/flow-matching-swiss-roll.ipynb){target="_blank"}.
-- Download notebook: [here](./exercises/flow-matching-swiss-roll.ipynb){download="flow-matching-swiss-roll.ipynb"}.
+- Peek online: [here](./exercises/flow-matching-swiss-roll.ipynb){target="_blank"}
+- Download notebook: [here](./exercises/flow-matching-swiss-roll.ipynb){download="flow-matching-swiss-roll.ipynb"}
 
 In this exercise, you will expand the flow matching model so that you can condition the distribution on contextual variables. This will enable you to learn a flow that transports a doghnut distribution into the [swiss roll distribution](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_swiss_roll.html), mirrored along horizontal and vertical axes, depending on the context.
 
@@ -58,12 +56,12 @@ Please visit the BayesFlow repository to find a [bunch of examples](https://gith
 
 ### Estimating the mean and variance of a gaussian variable
 
-- Peek online: [here](./exercises/bayesflow-normal.ipynb){target="_blank"}.
-- Download notebook: [here](./exercises/bayesflow-normal.ipynb){download="bayesflow-normal.ipynb"}.
+- Peek online: [here](./exercises/bayesflow-normal.ipynb){target="_blank"}
+- Download notebook: [here](./exercises/bayesflow-normal.ipynb){download="bayesflow-normal.ipynb"}
 
 This notebook provides you with the very basics of the BayesFlow workflow - starting with defining simulators, through defining and training the neural approximators, and ending with network validation and inference.
 
-### Diffusion decision model
+### Wald response times, Racing diffusion model
 
 - Peek online: [here](./exercises/bayesflow-diffusion.ipynb){target="_blank"}
 - Download notebook: [here](./exercises/bayesflow-diffusion.ipynb){download="bayesflow-diffusion.ipynb"}
