@@ -1,14 +1,14 @@
 ---
 title: "Generative Neural Networks"
+author: "Šimon Kucharský"
 format:
     revealjs: 
         theme: default
         slide-number: true
         html-math-method: mathjax
         highlight-style: github
-        include-in-header:
-            text: |
-                <script src="https://cdn.jsdelivr.net/npm/mermaid@11.2.1/dist/mermaid.min.js"></script>
+        footer: "Amortized Bayesian Inference"
+        logo: ../figures/bayesflow-logo.png
 ---
 
 ## Generative models
@@ -68,7 +68,7 @@ $$\rightarrow$$
 
 ![](../figures/normalizing-flow/x_4.svg)
 
-Normalizing flow
+Forward direction
 :::
 
 ## Sampling
@@ -78,7 +78,7 @@ Normalizing flow
 
 </br>
 
-::: {#fig-normalizing-flow layout="[[-10, 1, -10], [10, 1, 10]]"}
+::: {#fig-normalizing-flow-rev layout="[[-10, 1, -10], [10, 1, 10]]"}
 
 $f^{-1}$
 
@@ -88,7 +88,7 @@ $$\leftarrow$$
 
 ![](../figures/normalizing-flow/x_4.svg)
 
-Normalizing flow in reverse direction
+Backward direction
 :::
 
 ## Density evaluation

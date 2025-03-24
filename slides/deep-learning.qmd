@@ -1,12 +1,15 @@
 ---
 title: "Deep Learning"
 subtitle: "Introduction"
+author: "Šimon Kucharský"
 format:
     revealjs: 
         theme: default
         slide-number: true
         html-math-method: mathjax
         highlight-style: github
+        footer: "Amortized Bayesian Inference"
+        logo: ../figures/bayesflow-logo.png
 csl: ../apa.csl
 bibliography: ../bibliography.bib
 ---
