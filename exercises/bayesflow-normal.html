@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Simulator – Seminar in Amortized Bayesian Inference</title>
+<title>Simple example – Seminar in Amortized Bayesian Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -103,7 +103,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <link rel="stylesheet" href="../styles.css">
-<meta property="og:title" content="Simulator – Seminar in Amortized Bayesian Inference">
+<meta property="og:title" content="Simple example – Seminar in Amortized Bayesian Inference">
 <meta property="og:image" content="https://Kucharssim.github.io/bayesflow-seminar/exercises/bayesflow-normal_files/figure-html/cell-6-output-1.png">
 <meta property="og:site_name" content="Seminar in Amortized Bayesian Inference">
 <meta property="og:image:height" content="496">
@@ -175,7 +175,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#prior-predictives" id="toc-prior-predictives" class="nav-link active" data-scroll-target="#prior-predictives">Prior predictives</a></li>
+  <li><a href="#simulator" id="toc-simulator" class="nav-link active" data-scroll-target="#simulator">Simulator</a>
+  <ul class="collapse">
+  <li><a href="#prior-predictives" id="toc-prior-predictives" class="nav-link" data-scroll-target="#prior-predictives">Prior predictives</a></li>
+  </ul></li>
   <li><a href="#approximator" id="toc-approximator" class="nav-link" data-scroll-target="#approximator">Approximator</a></li>
   <li><a href="#validation" id="toc-validation" class="nav-link" data-scroll-target="#validation">Validation</a></li>
   <li><a href="#inference" id="toc-inference" class="nav-link" data-scroll-target="#inference">Inference</a></li>
@@ -185,6 +188,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#validation-1" id="toc-validation-1" class="nav-link" data-scroll-target="#validation-1">Validation</a></li>
   <li><a href="#inference-1" id="toc-inference-1" class="nav-link" data-scroll-target="#inference-1">Inference</a></li>
   </ul></li>
+  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.dev/Kucharssim/bayesflow-seminar/blob/main/exercises/bayesflow-normal.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/Kucharssim/bayesflow-seminar/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -193,7 +197,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Simulator</h1>
+<h1 class="title">Simple example</h1>
 </div>
 
 
@@ -218,6 +222,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<section id="simulator" class="level2">
+<h2 class="anchored" data-anchor-id="simulator">Simulator</h2>
 <div id="cell-3" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> context(batch_size, n<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> n <span class="kw">is</span> <span class="va">None</span>:</span>
@@ -263,6 +269,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
+</section>
 <section id="approximator" class="level2">
 <h2 class="anchored" data-anchor-id="approximator">Approximator</h2>
 <div id="cell-9" class="cell" data-execution_count="6">
@@ -277,20 +284,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="cell-10" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>adapter(data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
-<pre><code>{'inference_conditions': array([[74.        ,  0.76694314,  1.39422227],
-        [74.        , -0.6229432 ,  3.08988216],
-        [74.        ,  0.44475618,  2.75734839],
+<pre><code>{'inference_conditions': array([[40.        ,  1.14834128,  3.1105106 ],
+        [40.        ,  0.13910936,  3.11815168],
+        [40.        , -1.10680061,  3.2639641 ],
         ...,
-        [74.        ,  0.17871722,  1.68871381],
-        [74.        ,  0.42637994,  1.1742368 ],
-        [74.        , -0.22511094,  1.84774964]]),
- 'inference_variables': array([[ 0.84486274,  1.37260244],
-        [-0.34209391,  3.25960583],
-        [ 0.22161927,  2.77719178],
+        [40.        , -1.73994389,  2.28913783],
+        [40.        ,  0.80585333,  1.42037749],
+        [40.        ,  1.18997696,  0.6292014 ]]),
+ 'inference_variables': array([[ 1.2641924 ,  2.715853  ],
+        [-1.01831639,  3.1689373 ],
+        [-0.45304487,  3.04768361],
         ...,
-        [-0.25682988,  1.46655423],
-        [ 0.48404955,  0.72521255],
-        [-0.21675392,  1.62647277]])}</code></pre>
+        [-1.43358309,  2.04178001],
+        [ 0.5870799 ,  0.91035713],
+        [ 1.16655367, -0.21248415]])}</code></pre>
 </div>
 </div>
 <div id="cell-11" class="cell" data-execution_count="8">
@@ -324,25 +331,25 @@ INFO:bayesflow:Building on a test batch.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Epoch 1/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 8s 14ms/step - loss: 3.4837 - loss/inference_loss: 3.4837
+100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 12ms/step - loss: 3.4689 - loss/inference_loss: 3.4689
 Epoch 2/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 18ms/step - loss: 2.0692 - loss/inference_loss: 2.0692
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 18ms/step - loss: 2.4439 - loss/inference_loss: 2.4439
 Epoch 3/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 1.5248 - loss/inference_loss: 1.5248
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 18ms/step - loss: 1.5144 - loss/inference_loss: 1.5144
 Epoch 4/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 1.6958 - loss/inference_loss: 1.6958
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 20ms/step - loss: 1.3702 - loss/inference_loss: 1.3702
 Epoch 5/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 19ms/step - loss: 0.8813 - loss/inference_loss: 0.8813
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.9980 - loss/inference_loss: 0.9980
 Epoch 6/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 18ms/step - loss: 0.4748 - loss/inference_loss: 0.4748
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.5172 - loss/inference_loss: 0.5172
 Epoch 7/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 18ms/step - loss: 0.4894 - loss/inference_loss: 0.4894
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.3742 - loss/inference_loss: 0.3742
 Epoch 8/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 18ms/step - loss: 0.0512 - loss/inference_loss: 0.0512
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.0789 - loss/inference_loss: 0.0789
 Epoch 9/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.1660 - loss/inference_loss: 0.1660
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.1717 - loss/inference_loss: 0.1717
 Epoch 10/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 18ms/step - loss: 0.0928 - loss/inference_loss: 0.0928</code></pre>
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.1194 - loss/inference_loss: 0.1194</code></pre>
 </div>
 </div>
 <div id="cell-16" class="cell" data-execution_count="13">
@@ -454,25 +461,25 @@ INFO:bayesflow:Building on a test batch.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Epoch 1/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 13s 36ms/step - loss: 3.2360 - loss/inference_loss: 2.8069 - loss/summary_loss: 0.4291
+100/100 ━━━━━━━━━━━━━━━━━━━━ 13s 39ms/step - loss: 3.2052 - loss/inference_loss: 2.7499 - loss/summary_loss: 0.4553
 Epoch 2/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 5s 54ms/step - loss: 1.7409 - loss/inference_loss: 1.4738 - loss/summary_loss: 0.2671
+100/100 ━━━━━━━━━━━━━━━━━━━━ 5s 55ms/step - loss: 1.7881 - loss/inference_loss: 1.5033 - loss/summary_loss: 0.2848
 Epoch 3/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 5s 54ms/step - loss: 1.1521 - loss/inference_loss: 0.9118 - loss/summary_loss: 0.2404
+100/100 ━━━━━━━━━━━━━━━━━━━━ 5s 53ms/step - loss: 0.9579 - loss/inference_loss: 0.7278 - loss/summary_loss: 0.2301
 Epoch 4/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 59ms/step - loss: 0.7384 - loss/inference_loss: 0.5291 - loss/summary_loss: 0.2093
+100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 67ms/step - loss: 0.7740 - loss/inference_loss: 0.5643 - loss/summary_loss: 0.2098
 Epoch 5/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 64ms/step - loss: 0.5829 - loss/inference_loss: 0.3884 - loss/summary_loss: 0.1945
+100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 74ms/step - loss: 0.5151 - loss/inference_loss: 0.3133 - loss/summary_loss: 0.2018
 Epoch 6/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 59ms/step - loss: 0.4831 - loss/inference_loss: 0.2973 - loss/summary_loss: 0.1858
+100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 74ms/step - loss: 0.4264 - loss/inference_loss: 0.2281 - loss/summary_loss: 0.1983
 Epoch 7/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 59ms/step - loss: 0.4428 - loss/inference_loss: 0.2589 - loss/summary_loss: 0.1839
+100/100 ━━━━━━━━━━━━━━━━━━━━ 8s 83ms/step - loss: 0.3567 - loss/inference_loss: 0.1636 - loss/summary_loss: 0.1930
 Epoch 8/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 57ms/step - loss: 0.2853 - loss/inference_loss: 0.1048 - loss/summary_loss: 0.1806
+100/100 ━━━━━━━━━━━━━━━━━━━━ 8s 76ms/step - loss: 0.3467 - loss/inference_loss: 0.1558 - loss/summary_loss: 0.1910
 Epoch 9/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 56ms/step - loss: 0.3235 - loss/inference_loss: 0.1441 - loss/summary_loss: 0.1793
+100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 74ms/step - loss: 0.2869 - loss/inference_loss: 0.0963 - loss/summary_loss: 0.1907
 Epoch 10/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 61ms/step - loss: 0.3194 - loss/inference_loss: 0.1401 - loss/summary_loss: 0.1793</code></pre>
+100/100 ━━━━━━━━━━━━━━━━━━━━ 8s 78ms/step - loss: 0.2596 - loss/inference_loss: 0.0695 - loss/summary_loss: 0.1901</code></pre>
 </div>
 </div>
 </section>
@@ -543,7 +550,7 @@ Epoch 10/10
 <div id="cell-39" class="cell" data-execution_count="31">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>summary(inference_data[<span class="st">"y"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="31">
-<pre><code>{'mean': 1.088498213383434, 'sd': 0.5756757855259478}</code></pre>
+<pre><code>{'mean': 1.001872416814181, 'sd': 0.6719715732550592}</code></pre>
 </div>
 </div>
 <div id="cell-40" class="cell" data-execution_count="32">
@@ -590,9 +597,16 @@ Epoch 10/10
 </div>
 </div>
 </div>
-
-
 </section>
+</section>
+<section id="exercises" class="level1">
+<h1>Exercises</h1>
+<ol type="1">
+<li>Train a BayesFlow model that estimates the mean vector and a variance-covariance matrix of a 2D Gaussian.</li>
+<li>Train a BayesFlow model that estimates parameter of any other distribution. You are free to choose which (some examples: Gamma, Negative binomial, Weibull,…)</li>
+</ol>
+
+
 </section>
 
 </main> <!-- /main -->
