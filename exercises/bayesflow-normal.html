@@ -101,9 +101,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../styles.css">
 <meta property="og:title" content="Simple example – Seminar in Amortized Bayesian Inference">
+<meta property="og:description" content="Materials for learning working with BayesFlow">
 <meta property="og:image" content="https://Kucharssim.github.io/bayesflow-seminar/exercises/bayesflow-normal_files/figure-html/cell-6-output-1.png">
 <meta property="og:site_name" content="Seminar in Amortized Bayesian Inference">
 <meta property="og:image:height" content="496">
@@ -188,7 +218,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#validation-1" id="toc-validation-1" class="nav-link" data-scroll-target="#validation-1">Validation</a></li>
   <li><a href="#inference-1" id="toc-inference-1" class="nav-link" data-scroll-target="#inference-1">Inference</a></li>
   </ul></li>
-  <li><a href="#exercises" id="toc-exercises" class="nav-link" data-scroll-target="#exercises">Exercises</a></li>
+  <li><a href="#further-exercises" id="toc-further-exercises" class="nav-link" data-scroll-target="#further-exercises">Further exercises</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.dev/Kucharssim/bayesflow-seminar/blob/main/exercises/bayesflow-normal.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/Kucharssim/bayesflow-seminar/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -284,20 +314,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="cell-10" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>adapter(data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
-<pre><code>{'inference_conditions': array([[40.        ,  1.14834128,  3.1105106 ],
-        [40.        ,  0.13910936,  3.11815168],
-        [40.        , -1.10680061,  3.2639641 ],
+<pre><code>{'inference_conditions': array([[73.        ,  1.381657  ,  3.85591274],
+        [73.        ,  0.90622716,  1.00719286],
+        [73.        , -2.77730036,  4.33643363],
         ...,
-        [40.        , -1.73994389,  2.28913783],
-        [40.        ,  0.80585333,  1.42037749],
-        [40.        ,  1.18997696,  0.6292014 ]]),
- 'inference_variables': array([[ 1.2641924 ,  2.715853  ],
-        [-1.01831639,  3.1689373 ],
-        [-0.45304487,  3.04768361],
+        [73.        , -0.13047037,  4.11316637],
+        [73.        ,  0.40518583,  2.82834065],
+        [73.        , -1.27264041,  3.35956661]]),
+ 'inference_variables': array([[ 0.968659  ,  4.0861463 ],
+        [ 0.82871011,  0.58605403],
+        [-2.90676811,  4.49144078],
         ...,
-        [-1.43358309,  2.04178001],
-        [ 0.5870799 ,  0.91035713],
-        [ 1.16655367, -0.21248415]])}</code></pre>
+        [-0.81516309,  3.78075495],
+        [ 0.82690483,  3.10789223],
+        [-1.49724828,  3.64749529]])}</code></pre>
 </div>
 </div>
 <div id="cell-11" class="cell" data-execution_count="8">
@@ -331,25 +361,25 @@ INFO:bayesflow:Building on a test batch.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Epoch 1/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 12ms/step - loss: 3.4689 - loss/inference_loss: 3.4689
+100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 19ms/step - loss: 3.5436 - loss/inference_loss: 3.5436
 Epoch 2/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 18ms/step - loss: 2.4439 - loss/inference_loss: 2.4439
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 20ms/step - loss: 2.0986 - loss/inference_loss: 2.0986
 Epoch 3/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 18ms/step - loss: 1.5144 - loss/inference_loss: 1.5144
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 22ms/step - loss: 1.4638 - loss/inference_loss: 1.4638
 Epoch 4/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 20ms/step - loss: 1.3702 - loss/inference_loss: 1.3702
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 1.2809 - loss/inference_loss: 1.2809
 Epoch 5/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.9980 - loss/inference_loss: 0.9980
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 1.6875 - loss/inference_loss: 1.6875
 Epoch 6/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.5172 - loss/inference_loss: 0.5172
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.5779 - loss/inference_loss: 0.5779
 Epoch 7/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.3742 - loss/inference_loss: 0.3742
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.7878 - loss/inference_loss: 0.7878
 Epoch 8/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.0789 - loss/inference_loss: 0.0789
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.2678 - loss/inference_loss: 0.2678
 Epoch 9/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.1717 - loss/inference_loss: 0.1717
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.3275 - loss/inference_loss: 0.3275
 Epoch 10/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.1194 - loss/inference_loss: 0.1194</code></pre>
+100/100 ━━━━━━━━━━━━━━━━━━━━ 2s 17ms/step - loss: 0.1682 - loss/inference_loss: 0.1682</code></pre>
 </div>
 </div>
 <div id="cell-16" class="cell" data-execution_count="13">
@@ -461,25 +491,25 @@ INFO:bayesflow:Building on a test batch.</code></pre>
 </div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Epoch 1/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 13s 39ms/step - loss: 3.2052 - loss/inference_loss: 2.7499 - loss/summary_loss: 0.4553
+100/100 ━━━━━━━━━━━━━━━━━━━━ 13s 42ms/step - loss: 3.0740 - loss/inference_loss: 2.6350 - loss/summary_loss: 0.4390
 Epoch 2/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 5s 55ms/step - loss: 1.7881 - loss/inference_loss: 1.5033 - loss/summary_loss: 0.2848
+100/100 ━━━━━━━━━━━━━━━━━━━━ 5s 52ms/step - loss: 1.5398 - loss/inference_loss: 1.1950 - loss/summary_loss: 0.3447
 Epoch 3/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 5s 53ms/step - loss: 0.9579 - loss/inference_loss: 0.7278 - loss/summary_loss: 0.2301
+100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 60ms/step - loss: 1.3264 - loss/inference_loss: 1.0392 - loss/summary_loss: 0.2872
 Epoch 4/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 67ms/step - loss: 0.7740 - loss/inference_loss: 0.5643 - loss/summary_loss: 0.2098
+100/100 ━━━━━━━━━━━━━━━━━━━━ 8s 75ms/step - loss: 1.0972 - loss/inference_loss: 0.8270 - loss/summary_loss: 0.2702
 Epoch 5/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 74ms/step - loss: 0.5151 - loss/inference_loss: 0.3133 - loss/summary_loss: 0.2018
+100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 57ms/step - loss: 0.9700 - loss/inference_loss: 0.7157 - loss/summary_loss: 0.2543
 Epoch 6/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 74ms/step - loss: 0.4264 - loss/inference_loss: 0.2281 - loss/summary_loss: 0.1983
+100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 61ms/step - loss: 0.6537 - loss/inference_loss: 0.4025 - loss/summary_loss: 0.2512
 Epoch 7/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 8s 83ms/step - loss: 0.3567 - loss/inference_loss: 0.1636 - loss/summary_loss: 0.1930
+100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 58ms/step - loss: 0.5761 - loss/inference_loss: 0.3296 - loss/summary_loss: 0.2465
 Epoch 8/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 8s 76ms/step - loss: 0.3467 - loss/inference_loss: 0.1558 - loss/summary_loss: 0.1910
+100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 56ms/step - loss: 0.5641 - loss/inference_loss: 0.3201 - loss/summary_loss: 0.2440
 Epoch 9/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 7s 74ms/step - loss: 0.2869 - loss/inference_loss: 0.0963 - loss/summary_loss: 0.1907
+100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 57ms/step - loss: 0.5001 - loss/inference_loss: 0.2567 - loss/summary_loss: 0.2434
 Epoch 10/10
-100/100 ━━━━━━━━━━━━━━━━━━━━ 8s 78ms/step - loss: 0.2596 - loss/inference_loss: 0.0695 - loss/summary_loss: 0.1901</code></pre>
+100/100 ━━━━━━━━━━━━━━━━━━━━ 6s 60ms/step - loss: 0.4218 - loss/inference_loss: 0.1785 - loss/summary_loss: 0.2433</code></pre>
 </div>
 </div>
 </section>
@@ -550,7 +580,7 @@ Epoch 10/10
 <div id="cell-39" class="cell" data-execution_count="31">
 <div class="sourceCode cell-code" id="cb36"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>summary(inference_data[<span class="st">"y"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="31">
-<pre><code>{'mean': 1.001872416814181, 'sd': 0.6719715732550592}</code></pre>
+<pre><code>{'mean': 0.9441024694516434, 'sd': 0.47151318569371836}</code></pre>
 </div>
 </div>
 <div id="cell-40" class="cell" data-execution_count="32">
@@ -599,12 +629,16 @@ Epoch 10/10
 </div>
 </section>
 </section>
-<section id="exercises" class="level1">
-<h1>Exercises</h1>
+<section id="further-exercises" class="level1">
+<h1>Further exercises</h1>
 <ol type="1">
 <li>Train a BayesFlow model that estimates the mean vector and a variance-covariance matrix of a 2D Gaussian.</li>
 <li>Train a BayesFlow model that estimates parameter of any other distribution. You are free to choose which (some examples: Gamma, Negative binomial, Weibull,…)</li>
+<li>The implementation of the normal model imposes one particular configuration of the priors on the parameters <code>"mu"</code> and <code>"sigma"</code>. This is relatively impractical, because not every time such priors would be reasonable. It is also relatively common to fit a model with different priors to investigate how robust are your inferences against prior specification. To do this, it is handy if you train a single BayesFlow model that can make inferences with different prior specifications. You can do this by varying the prior specification during simulations. For example,</li>
 </ol>
+<div class="sourceCode" id="cb44"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>hyper_mu_mu <span class="op">=</span> np.random.uniform(<span class="op">-</span><span class="dv">100</span>, <span class="dv">100</span>)</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>mu <span class="op">=</span> np.random.normal(hyper_mu_mu)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>would generate different priors for mu, depending on the value of the hyperparameter <span class="math inline">\(\mu_\mu\)</span>. If you condition the network on the values of the hyperparameters, you can train the networks to be able to use different priors during inference. Try to implement such a network.</p>
 
 
 </section>

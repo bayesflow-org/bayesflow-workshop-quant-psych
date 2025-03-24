@@ -208,6 +208,7 @@ window.Quarto = {
   <li><a href="#the-data" id="toc-the-data" class="nav-link active" data-scroll-target="#the-data">The data</a></li>
   <li><a href="#the-model" id="toc-the-model" class="nav-link" data-scroll-target="#the-model">The model</a></li>
   <li><a href="#training" id="toc-training" class="nav-link" data-scroll-target="#training">Training</a></li>
+  <li><a href="#further-exercises" id="toc-further-exercises" class="nav-link" data-scroll-target="#further-exercises">Further exercises</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.dev/Kucharssim/bayesflow-seminar/blob/main/exercises/flow-matching-swiss-roll.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/Kucharssim/bayesflow-seminar/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -411,7 +412,7 @@ window.Quarto = {
 <p>Similarly as in the datasaurus exercise, we will use a dataset object to do our sampling. Here, we will always generate a fresh batch of new data - from the swiss roll distribution, and from the ring distribution.</p>
 <p>We will also make a twist: We will randomly sample values of 1 or -1 for the x and y coordinate, which we use to scale the swiss roll data. This will produce 4 different variations of the swiss roll data, reflected along and <span class="math inline">\(x\)</span> or <span class="math inline">\(y\)</span> axis. The values of this scale will be passed to the velocity network as <code>condition</code>.</p>
 <p>Otherwise, the rest is the same as with the datasaurus.</p>
-<div id="cell-13" class="cell" data-execution_count="7">
+<div id="cell-13" class="cell">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> DataSet(keras.utils.PyDataset):</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, batch_size, n_batches):</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        <span class="bu">super</span>().<span class="fu">__init__</span>()</span>
@@ -424,17 +425,18 @@ window.Quarto = {
 <span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__getitem__</span>(<span class="va">self</span>, index):</span>
 <span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        data, _ <span class="op">=</span> make_swiss_roll(<span class="va">self</span>.batch_size, noise<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        data <span class="op">=</span> data[:,[<span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>]]</span>
-<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>        condition <span class="op">=</span> np.random.choice([<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>], size<span class="op">=</span>(batch_size, <span class="dv">2</span>))</span>
-<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        data <span class="op">=</span> condition <span class="op">*</span> data</span>
-<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>        base<span class="op">=</span> make_ring(data.shape[<span class="dv">0</span>])</span>
-<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>        </span>
-<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> np.random.uniform(low<span class="op">=</span><span class="dv">0</span>, high<span class="op">=</span><span class="dv">1</span>, size<span class="op">=</span>data.shape[<span class="dv">0</span>])</span>
-<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> np.repeat(t[:,np.newaxis], repeats<span class="op">=</span>data.shape[<span class="dv">1</span>], axis<span class="op">=</span><span class="dv">1</span>)</span>
-<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>        target <span class="op">=</span> data <span class="op">-</span> base</span>
-<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">dict</span>(x_0<span class="op">=</span>base, x_1<span class="op">=</span>data, t<span class="op">=</span>t, condition<span class="op">=</span>condition), target</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>data[:,[<span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>]]</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        condition<span class="op">=</span>np.random.choice([<span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>], size<span class="op">=</span>(batch_size, <span class="dv">2</span>))</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        data<span class="op">=</span>condition <span class="op">*</span> data</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>        base<span class="op">=</span>make_ring(data.shape[<span class="dv">0</span>])</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>        t<span class="op">=</span>np.random.uniform(low<span class="op">=</span><span class="dv">0</span>, high<span class="op">=</span><span class="dv">1</span>, size<span class="op">=</span>data.shape[<span class="dv">0</span>])</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>        t<span class="op">=</span>np.repeat(t[:,np.newaxis], repeats<span class="op">=</span>data.shape[<span class="dv">1</span>], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>        target <span class="op">=</span> data <span class="op">-</span> base</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">dict</span>(x_0<span class="op">=</span>base, x_1<span class="op">=</span>data, t<span class="op">=</span>t, condition<span class="op">=</span>condition), target</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Next, we instantiate the dataset object, and define our schedule and optimizer, and compile the model.</p>
 <div id="cell-15" class="cell" data-execution_count="8">
@@ -527,6 +529,13 @@ Epoch 20/20
 </div>
 </div>
 </div>
+</section>
+<section id="further-exercises" class="level2">
+<h2 class="anchored" data-anchor-id="further-exercises">Further exercises</h2>
+<ol type="1">
+<li>Here we only scaled the data by 2 values (-1 or 1) in two directions (<span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span>). However, there is nothing that can stop us from using different values. Try to replace the line <code>condition=np.random.choice([1, -1], size=(batch_size, 2))</code> with some other transformation (for example, generate values from a uniform distribution between -1 and 1). What do you think the network will learn? Try it for yourself.</li>
+<li>The swiss roll distribution generates 3D data. In this exercise, we only used 2 of the axes and neglected the third one. Try to change to model so that you can actually reproduce the swiss role in 3D (note: you will also need to change the base distribution to be 3D).</li>
+</ol>
 
 
 </section>
