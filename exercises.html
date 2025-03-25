@@ -67,6 +67,35 @@ ul.task-list li input[type="checkbox"] {
   }
 }</script>
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="styles.css">
 <meta property="og:title" content="Exercises – Seminar in Amortized Bayesian Inference">
@@ -150,7 +179,7 @@ ul.task-list li input[type="checkbox"] {
   </ul></li>
   <li><a href="#bayesflow" id="toc-bayesflow" class="nav-link" data-scroll-target="#bayesflow">BayesFlow</a>
   <ul class="collapse">
-  <li><a href="#estimating-the-mean-and-variance-of-a-gaussian-variable" id="toc-estimating-the-mean-and-variance-of-a-gaussian-variable" class="nav-link" data-scroll-target="#estimating-the-mean-and-variance-of-a-gaussian-variable">Estimating the mean and variance of a gaussian variable</a></li>
+  <li><a href="#estimating-parameters-of-a-normal-distribution" id="toc-estimating-parameters-of-a-normal-distribution" class="nav-link" data-scroll-target="#estimating-parameters-of-a-normal-distribution">Estimating parameters of a normal distribution</a></li>
   <li><a href="#wald-response-times-racing-diffusion-model" id="toc-wald-response-times-racing-diffusion-model" class="nav-link" data-scroll-target="#wald-response-times-racing-diffusion-model">Wald response times, Racing diffusion model</a></li>
   </ul></li>
   </ul>
@@ -178,14 +207,14 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<p>To run the exercise notebooks, download them first: Open the notebook on this website, then click on “Other formats” <span class="math inline">\(\rightarrow\)</span> “Jupyter” on the right side of the page.</p>
 <section id="generative-neural-networks" class="level2">
 <h2 class="anchored" data-anchor-id="generative-neural-networks">Generative neural networks</h2>
 <p>Here you can download example notebooks related to creating your own generative neural network architectures.</p>
 <section id="normalizing-flow" class="level3">
 <h3 class="anchored" data-anchor-id="normalizing-flow">Normalizing flow</h3>
 <ul>
-<li>Peek online: <a href="./exercises/normalizing-flow.html" target="_blank">here</a></li>
-<li>Download notebook: <a href="./exercises/normalizing-flow.html" download="normalizing-flow.ipynb">here</a></li>
+<li>Notebook <a href="./exercises/normalizing-flow.html" target="_blank">here</a></li>
 </ul>
 <p>In this exercise, you will build a normalizing flow based on affine coupling from scratch using <code>keras</code>, that will learn to transform the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_moons.html">moons distribution</a> into a standard normal.</p>
 <div id="fig-nf" class="quarto-layout-panel">
@@ -219,8 +248,7 @@ Figure&nbsp;1: Normalizing flow
 <section id="flow-matching---datasaurus" class="level3">
 <h3 class="anchored" data-anchor-id="flow-matching---datasaurus">Flow matching - Datasaurus</h3>
 <ul>
-<li>Peek online: <a href="./exercises/flow-matching-datasaurus.html" target="_blank">here</a></li>
-<li>Download notebook: <a href="./exercises/flow-matching-datasaurus.html" download="flow-matching-datasaurus.ipynb">here</a></li>
+<li>Notebook <a href="./exercises/flow-matching-datasaurus.html" target="_blank">here</a></li>
 <li>Download data: <a href="./data/datasaurus.csv" download="datasaurus.csv">here</a></li>
 </ul>
 <p>In this exercise, you will build a flow matching model using <code>keras</code> that transports a standard normal distribution into a distribution based on the <a href="https://en.wikipedia.org/wiki/Datasaurus_dozen">datasaurus</a>.</p>
@@ -238,7 +266,7 @@ Figure&nbsp;2: Flow matching
 <section id="flow-matching---mirroring-the-swiss-roll" class="level3">
 <h3 class="anchored" data-anchor-id="flow-matching---mirroring-the-swiss-roll">Flow matching - mirroring the Swiss roll</h3>
 <ul>
-<li>Peek online: <a href="./exercises/flow-matching-swiss-roll.html" target="_blank">here</a></li>
+<li>Notebook <a href="./exercises/flow-matching-swiss-roll.html" target="_blank">here</a></li>
 <li>Download notebook: <a href="./exercises/flow-matching-swiss-roll.html" download="flow-matching-swiss-roll.ipynb">here</a></li>
 </ul>
 <p>In this exercise, you will expand the flow matching model so that you can condition the distribution on contextual variables. This will enable you to learn a flow that transports a doghnut distribution into the <a href="https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_swiss_roll.html">swiss roll distribution</a>, mirrored along horizontal and vertical axes, depending on the context.</p>
@@ -257,19 +285,17 @@ Figure&nbsp;3: Swiss roll mirrored along vertical or horizontal axes
 <section id="bayesflow" class="level2">
 <h2 class="anchored" data-anchor-id="bayesflow">BayesFlow</h2>
 <p>Please visit the BayesFlow repository to find a <a href="https://github.com/bayesflow-org/bayesflow?tab=readme-ov-file#getting-started">bunch of examples</a> that can help you with BayesFlow. In addition, below are two exercise notebooks you can use to familiarize yourself with BayesFlow.</p>
-<section id="estimating-the-mean-and-variance-of-a-gaussian-variable" class="level3">
-<h3 class="anchored" data-anchor-id="estimating-the-mean-and-variance-of-a-gaussian-variable">Estimating the mean and variance of a gaussian variable</h3>
+<section id="estimating-parameters-of-a-normal-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="estimating-parameters-of-a-normal-distribution">Estimating parameters of a normal distribution</h3>
 <ul>
-<li>Peek online: <a href="./exercises/bayesflow-normal.html" target="_blank">here</a></li>
-<li>Download notebook: <a href="./exercises/bayesflow-normal.html" download="bayesflow-normal.ipynb">here</a></li>
+<li>Notebook <a href="./exercises/bayesflow-normal.html" target="_blank">here</a></li>
 </ul>
 <p>This notebook provides you with the very basics of the BayesFlow workflow - starting with defining simulators, through defining and training the neural approximators, and ending with network validation and inference.</p>
 </section>
 <section id="wald-response-times-racing-diffusion-model" class="level3">
 <h3 class="anchored" data-anchor-id="wald-response-times-racing-diffusion-model">Wald response times, Racing diffusion model</h3>
 <ul>
-<li>Peek online: <a href="./exercises/bayesflow-diffusion.html" target="_blank">here</a></li>
-<li>Download notebook: <a href="./exercises/bayesflow-diffusion.html" download="bayesflow-diffusion.ipynb">here</a></li>
+<li>Notebook <a href="./exercises/bayesflow-diffusion.html" target="_blank">here</a></li>
 <li>Download data: <a href="./data/forstmann.csv" download="forstmann.csv">here</a></li>
 </ul>
 <p>This notebook provides you with a basic application of BayesFlow in the context of models of decision making - the Wald model of simple response times, and the racing diffusion model.</p>

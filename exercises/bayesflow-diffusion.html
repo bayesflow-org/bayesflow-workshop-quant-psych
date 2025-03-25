@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Simple response time (Wald model) – Seminar in Amortized Bayesian Inference</title>
+<title>Wald response times, Racing diffusion model – Seminar in Amortized Bayesian Inference</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -132,8 +132,7 @@ window.Quarto = {
 </script>
 
 <link rel="stylesheet" href="../styles.css">
-<meta property="og:title" content="Simple response time (Wald model) – Seminar in Amortized Bayesian Inference">
-<meta property="og:description" content="Materials for learning working with BayesFlow">
+<meta property="og:title" content="Wald response times, Racing diffusion model – Seminar in Amortized Bayesian Inference">
 <meta property="og:image" content="https://Kucharssim.github.io/bayesflow-seminar/exercises/bayesflow-diffusion_files/figure-html/cell-3-output-2.png">
 <meta property="og:site_name" content="Seminar in Amortized Bayesian Inference">
 <meta property="og:image:height" content="434">
@@ -205,23 +204,27 @@ window.Quarto = {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#two-choice-task-racing-diffusion-model" id="toc-two-choice-task-racing-diffusion-model" class="nav-link active" data-scroll-target="#two-choice-task-racing-diffusion-model">Two choice task (Racing diffusion model)</a>
+  <li><a href="#diffusion-models-in-bayesflow" id="toc-diffusion-models-in-bayesflow" class="nav-link active" data-scroll-target="#diffusion-models-in-bayesflow">Diffusion models in BayesFlow</a>
+  <ul class="collapse">
+  <li><a href="#simple-response-time-wald-model" id="toc-simple-response-time-wald-model" class="nav-link" data-scroll-target="#simple-response-time-wald-model">Simple response time (Wald model)</a></li>
+  <li><a href="#two-choice-task-racing-diffusion-model" id="toc-two-choice-task-racing-diffusion-model" class="nav-link" data-scroll-target="#two-choice-task-racing-diffusion-model">Two choice task (Racing diffusion model)</a>
   <ul class="collapse">
   <li><a href="#application-to-real-data" id="toc-application-to-real-data" class="nav-link" data-scroll-target="#application-to-real-data">Application to real data</a></li>
+  </ul></li>
   </ul></li>
   <li><a href="#further-exercises" id="toc-further-exercises" class="nav-link" data-scroll-target="#further-exercises">Further exercises</a>
   <ul class="collapse">
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   </ul></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.dev/Kucharssim/bayesflow-seminar/blob/main/exercises/bayesflow-diffusion.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/Kucharssim/bayesflow-seminar/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.dev/Kucharssim/bayesflow-seminar/blob/main/exercises/bayesflow-diffusion.ipynb" class="toc-action"><i class="bi bi-github"></i>Edit this page</a></li><li><a href="https://github.com/Kucharssim/bayesflow-seminar/issues/new" class="toc-action"><i class="bi empty"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="bayesflow-diffusion.out.ipynb" download="bayesflow-diffusion.out.ipynb"><i class="bi bi-journal-code"></i>Jupyter</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Simple response time (Wald model)</h1>
+<h1 class="title">Wald response times, Racing diffusion model</h1>
 </div>
 
 
@@ -238,7 +241,9 @@ window.Quarto = {
 </header>
 
 
-<div id="cell-1" class="cell" data-execution_count="1">
+<section id="diffusion-models-in-bayesflow" class="level1">
+<h1>Diffusion models in BayesFlow</h1>
+<div id="cell-2" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>os.environ[<span class="st">"KERAS_BACKEND"</span>] <span class="op">=</span> <span class="st">"tensorflow"</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> keras</span>
@@ -248,7 +253,7 @@ window.Quarto = {
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
 <span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> scipy <span class="im">import</span> stats</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-2" class="cell" data-execution_count="2">
+<div id="cell-3" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> evidence_accumulation(nu, max_t, dt):</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    timesteps <span class="op">=</span> <span class="bu">int</span>(max_t <span class="op">/</span> dt)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    t <span class="op">=</span> np.linspace(<span class="dv">0</span>, max_t, timesteps)</span>
@@ -274,8 +279,10 @@ window.Quarto = {
 </div>
 </div>
 </div>
+<section id="simple-response-time-wald-model" class="level2">
+<h2 class="anchored" data-anchor-id="simple-response-time-wald-model">Simple response time (Wald model)</h2>
 <p>Here we will train a simple response time model based on a single accumulator that diffuses with a drift <span class="math inline">\(\nu\)</span> to a decision threshold <span class="math inline">\(\alpha\)</span>. For more background about the Wald model, see Anders, Alario, &amp; van Maanen (2016). Here we will estimate only the drift and decision threshold, no non-decision time or variability in starting point. In this case, the mean and a standard deviation of the response times are sufficient statistics, so we do not need a summary network.</p>
-<div id="cell-4" class="cell" data-execution_count="3">
+<div id="cell-5" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> prior():</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># drift rate</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    nu<span class="op">=</span>np.random.gamma(shape<span class="op">=</span><span class="dv">10</span>, scale<span class="op">=</span><span class="fl">0.25</span>)</span>
@@ -309,10 +316,10 @@ window.Quarto = {
 <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>simulator <span class="op">=</span> bf.make_simulator([prior, likelihood, summary])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-5" class="cell" data-execution_count="4">
+<div id="cell-6" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>df <span class="op">=</span> simulator.sample(<span class="dv">1_000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-6" class="cell" data-execution_count="5">
+<div id="cell-7" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>f<span class="op">=</span>bf.diagnostics.pairs_samples(</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    df, </span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    variable_keys<span class="op">=</span>[<span class="st">"nu"</span>, <span class="st">"alpha"</span>, <span class="st">"mean"</span>, <span class="st">"sd"</span>],</span>
@@ -325,7 +332,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<div id="cell-7" class="cell" data-execution_count="6">
+<div id="cell-8" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>adapter <span class="op">=</span> (bf.Adapter()</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>    .constrain([<span class="st">"nu"</span>, <span class="st">"alpha"</span>], lower<span class="op">=</span><span class="dv">0</span>)</span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    .concatenate([<span class="st">"nu"</span>, <span class="st">"alpha"</span>], into<span class="op">=</span><span class="st">"inference_variables"</span>)</span>
@@ -333,7 +340,7 @@ window.Quarto = {
 <span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    .drop(<span class="st">"rt"</span>)</span>
 <span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-8" class="cell" data-execution_count="7">
+<div id="cell-9" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>workflow <span class="op">=</span> bf.BasicWorkflow(</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    simulator <span class="op">=</span> simulator,</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    adapter <span class="op">=</span> adapter,</span>
@@ -342,11 +349,11 @@ window.Quarto = {
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    inference_conditions <span class="op">=</span> [<span class="st">"mean"</span>, <span class="st">"sd"</span>]</span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-9" class="cell" data-execution_count="8">
+<div id="cell-10" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>train_data <span class="op">=</span> simulator.sample(<span class="dv">5_000</span>)</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>validation_data <span class="op">=</span> simulator.sample(<span class="dv">1_000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-10" class="cell" data-execution_count="9">
+<div id="cell-11" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>history<span class="op">=</span>workflow.fit_offline(</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>train_data, </span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    epochs<span class="op">=</span><span class="dv">50</span>, </span>
@@ -460,7 +467,7 @@ Epoch 50/50
 20/20 ━━━━━━━━━━━━━━━━━━━━ 0s 16ms/step - loss: -1.3586 - loss/inference_loss: -1.3586 - val_loss: -1.3565 - val_loss/inference_loss: -1.3565</code></pre>
 </div>
 </div>
-<div id="cell-11" class="cell" data-execution_count="10">
+<div id="cell-12" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> simulator.sample(<span class="dv">1_000</span>)</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>plots<span class="op">=</span>workflow.plot_default_diagnostics(test_data<span class="op">=</span>test_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
@@ -492,12 +499,13 @@ Epoch 50/50
 </div>
 </div>
 </div>
+</section>
 <section id="two-choice-task-racing-diffusion-model" class="level2">
 <h2 class="anchored" data-anchor-id="two-choice-task-racing-diffusion-model">Two choice task (Racing diffusion model)</h2>
 <p>We’ll assume a simple RDM with two choice alternatives (Tillman et al., 2020).</p>
 <p>Here we will simplify the model to include no bias, no variability in starting points. Instead of modeling one accumulator for each of [left, right] responses, we will simply model one accumulator for “incorrect” and one accumulator for “correct” response. This makes it a bit easier to simulate from (we do not need to simulate stimuli).</p>
 <p>The model has four parameters: 2 drift rates (incorrect - <span class="math inline">\(\nu_0\)</span>, correct <span class="math inline">\(\nu_1\)</span>), decision threshold <span class="math inline">\(\alpha\)</span>, and non-decision time <span class="math inline">\(\tau\)</span>.</p>
-<div id="cell-13" class="cell" data-execution_count="11">
+<div id="cell-14" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> context(n<span class="op">=</span><span class="va">None</span>):</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> n <span class="kw">is</span> <span class="va">None</span>:</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> np.random.randint(<span class="dv">200</span>, <span class="dv">351</span>)</span>
@@ -551,7 +559,7 @@ Epoch 50/50
 <span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>simulator <span class="op">=</span> bf.make_simulator([context, prior, likelihood])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-14" class="cell" data-execution_count="12">
+<div id="cell-15" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>adapter <span class="op">=</span> (bf.Adapter()</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    .as_set([<span class="st">"rt"</span>, <span class="st">"response"</span>, <span class="st">"observed"</span>])</span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    .constrain([<span class="st">"nu"</span>, <span class="st">"alpha"</span>, <span class="st">"tau"</span>], lower<span class="op">=</span><span class="dv">0</span>)</span>
@@ -563,7 +571,7 @@ Epoch 50/50
 <span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    .rename(<span class="st">"n"</span>, <span class="st">"inference_conditions"</span>)</span>
 <span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-15" class="cell" data-execution_count="13">
+<div id="cell-16" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>workflow <span class="op">=</span> bf.BasicWorkflow(</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    simulator <span class="op">=</span> simulator,</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>    adapter <span class="op">=</span> adapter,</span>
@@ -580,11 +588,11 @@ Epoch 50/50
 <span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    summary_variables <span class="op">=</span> [<span class="st">"rt"</span>, <span class="st">"response"</span>, <span class="st">"observed"</span>]</span>
 <span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-16" class="cell" data-execution_count="14">
+<div id="cell-17" class="cell" data-execution_count="14">
 <div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>train_data <span class="op">=</span> simulator.sample(<span class="dv">5_000</span>)</span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>validation_data <span class="op">=</span> simulator.sample(<span class="dv">1_000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-17" class="cell" data-execution_count="15">
+<div id="cell-18" class="cell" data-execution_count="15">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>history<span class="op">=</span>workflow.fit_offline(</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>    data<span class="op">=</span>train_data, </span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    epochs<span class="op">=</span><span class="dv">100</span>, </span>
@@ -798,7 +806,7 @@ Epoch 100/100
 20/20 ━━━━━━━━━━━━━━━━━━━━ 13s 637ms/step - loss: 0.5406 - loss/inference_loss: 0.3977 - loss/summary_loss: 0.1429 - val_loss: 0.6171 - val_loss/inference_loss: 0.4793 - val_loss/summary_loss: 0.1378</code></pre>
 </div>
 </div>
-<div id="cell-18" class="cell" data-execution_count="16">
+<div id="cell-19" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>test_data <span class="op">=</span> simulator.sample(<span class="dv">1_000</span>)</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>plots<span class="op">=</span>workflow.plot_default_diagnostics(test_data<span class="op">=</span>test_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
@@ -833,19 +841,19 @@ Epoch 100/100
 <section id="application-to-real-data" class="level3">
 <h3 class="anchored" data-anchor-id="application-to-real-data">Application to real data</h3>
 <p>Here we will work with data from Fortmann, et al.&nbsp;(2008), that is also included in the R package <code>EMC2</code> (Stevenson, Donzallaz, &amp; Heathcote, 2025). Here we use a slightly reshaped dataset where each combination of subject x condition is extended to a length of 350 trials (the missing trials are filled with 0s). This allows us to estimate the posterior for each subject in each condition with a single pass through the posterior approximator.</p>
-<div id="cell-20" class="cell" data-execution_count="17">
+<div id="cell-21" class="cell" data-execution_count="17">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>data_inference <span class="op">=</span> pd.read_csv(<span class="st">"forstmann.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-21" class="cell" data-execution_count="18">
+<div id="cell-22" class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>data_inference[<span class="st">'condition'</span>].unique()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="18">
 <pre><code>array(['accuracy', 'speed', 'neutral'], dtype=object)</code></pre>
 </div>
 </div>
-<div id="cell-22" class="cell" data-execution_count="19">
+<div id="cell-23" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>data_inference_grouped <span class="op">=</span> data_inference.groupby([<span class="st">"subject"</span>, <span class="st">"condition"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-23" class="cell" data-execution_count="20">
+<div id="cell-24" class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>data_inference_dict <span class="op">=</span> {</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    key: np.array([group[key].values.reshape(<span class="dv">350</span>, <span class="dv">1</span>) <span class="cf">for</span> _, group <span class="kw">in</span> data_inference_grouped]) </span>
 <span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>             <span class="cf">for</span> key <span class="kw">in</span> [<span class="st">'rt'</span>, <span class="st">'response'</span>, <span class="st">'observed'</span>]}</span>
@@ -855,15 +863,15 @@ Epoch 100/100
 <pre><code>{'rt': (57, 350, 1), 'response': (57, 350, 1), 'observed': (57, 350, 1), 'n': (57, 1)}</code></pre>
 </div>
 </div>
-<div id="cell-24" class="cell" data-execution_count="21">
+<div id="cell-25" class="cell" data-execution_count="21">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>posterior_samples <span class="op">=</span> workflow.sample(conditions<span class="op">=</span>data_inference_dict, num_samples<span class="op">=</span><span class="dv">1_000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-25" class="cell" data-execution_count="22">
+<div id="cell-26" class="cell" data-execution_count="22">
 <div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># pick the first participant, first condition</span></span>
 <span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>posterior <span class="op">=</span> {key: value[<span class="dv">0</span>] <span class="cf">for</span> key, value <span class="kw">in</span> posterior_samples.items()}</span>
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> data_inference_grouped.get_group((<span class="st">'as1t'</span>, <span class="st">'accuracy'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-26" class="cell" data-execution_count="23">
+<div id="cell-27" class="cell" data-execution_count="23">
 <div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>f<span class="op">=</span>bf.diagnostics.pairs_posterior(estimates<span class="op">=</span>posterior)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
 <div>
@@ -873,7 +881,7 @@ Epoch 100/100
 </div>
 </div>
 </div>
-<div id="cell-27" class="cell" data-execution_count="24">
+<div id="cell-28" class="cell" data-execution_count="24">
 <div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ecdf(rt, response, observed, <span class="op">**</span>kwargs):</span>
 <span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    observed_mask <span class="op">=</span> (observed <span class="op">==</span> <span class="dv">1</span>)</span>
 <span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    response_0_mask <span class="op">=</span> ((response <span class="op">==</span> <span class="dv">0</span>) <span class="op">&amp;</span> observed_mask)</span>
@@ -891,20 +899,20 @@ Epoch 100/100
 <span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> response_0_ecdf, response_1_ecdf</span>
 <span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-28" class="cell" data-execution_count="25">
+<div id="cell-29" class="cell" data-execution_count="25">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>plot_data <span class="op">=</span> ecdf(<span class="op">**</span>data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-29" class="cell" data-execution_count="26">
+<div id="cell-30" class="cell" data-execution_count="26">
 <div class="sourceCode cell-code" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>posterior_predictives <span class="op">=</span> simulator.sample(<span class="dv">1000</span>, <span class="op">**</span>posterior)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-30" class="cell" data-execution_count="27">
+<div id="cell-31" class="cell" data-execution_count="27">
 <div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>plot_data_predictive <span class="op">=</span> []</span>
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1000</span>):</span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> { key: value[i:i<span class="op">+</span><span class="dv">1</span>,...] <span class="cf">for</span> key, value <span class="kw">in</span> posterior_predictives.items()}</span>
 <span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    plot_data_predictive.append(ecdf(<span class="op">**</span>x))</span>
 <span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>plot_data_predictive <span class="op">=</span> np.array(plot_data_predictive)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-31" class="cell" data-execution_count="28">
+<div id="cell-32" class="cell" data-execution_count="28">
 <div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>plot_data_quantiles <span class="op">=</span> np.quantile(</span>
 <span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    plot_data_predictive, </span>
 <span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    q <span class="op">=</span> [<span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span>],</span>
@@ -915,7 +923,7 @@ Epoch 100/100
 <pre><code>(3, 2, 101)</code></pre>
 </div>
 </div>
-<div id="cell-32" class="cell" data-execution_count="29">
+<div id="cell-33" class="cell" data-execution_count="29">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.linspace(<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">101</span>)</span>
 <span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>cols <span class="op">=</span> [<span class="st">"red"</span>, <span class="st">"blue"</span>]</span>
 <span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, lab <span class="kw">in</span> <span class="bu">enumerate</span>([<span class="st">"Incorrect"</span>, <span class="st">"Correct"</span>]):</span>
@@ -938,6 +946,7 @@ Epoch 100/100
 </div>
 </div>
 </div>
+</section>
 </section>
 </section>
 <section id="further-exercises" class="level1">
