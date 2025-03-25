@@ -2,14 +2,15 @@
 title: "Exercises"
 ---
 
+To run the exercise notebooks, download them first: Open the notebook on this website, then click on "Other formats" $\rightarrow$ "Jupyter" on the right side of the page.
+
 ## Generative neural networks
 
 Here you can download example notebooks related to creating your own generative neural network architectures.
 
 ### Normalizing flow
 
-- Peek online: [here](./exercises/normalizing-flow.ipynb){target="_blank"}
-- Download notebook: [here](./exercises/normalizing-flow.ipynb){download="normalizing-flow.ipynb"}
+- Notebook [here](./exercises/normalizing-flow.ipynb){target="_blank"}
 
 In this exercise, you will build a normalizing flow based on affine coupling from scratch using `keras`, that will learn to transform the [moons distribution](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_moons.html) into a standard normal.
 
@@ -24,8 +25,7 @@ Normalizing flow
 
 ### Flow matching - Datasaurus
 
-- Peek online: [here](./exercises/flow-matching-datasaurus.ipynb){target="_blank"}
-- Download notebook: [here](./exercises/flow-matching-datasaurus.ipynb){download="flow-matching-datasaurus.ipynb"}
+- Notebook [here](./exercises/flow-matching-datasaurus.ipynb){target="_blank"}
 - Download data: [here](./data/datasaurus.csv){download="datasaurus.csv"}
 
 In this exercise, you will build a flow matching model using `keras` that transports a standard normal distribution into a distribution based on the [datasaurus](https://en.wikipedia.org/wiki/Datasaurus_dozen).
@@ -39,7 +39,7 @@ Flow matching
 
 ### Flow matching - mirroring the Swiss roll
 
-- Peek online: [here](./exercises/flow-matching-swiss-roll.ipynb){target="_blank"}
+- Notebook [here](./exercises/flow-matching-swiss-roll.ipynb){target="_blank"}
 - Download notebook: [here](./exercises/flow-matching-swiss-roll.ipynb){download="flow-matching-swiss-roll.ipynb"}
 
 In this exercise, you will expand the flow matching model so that you can condition the distribution on contextual variables. This will enable you to learn a flow that transports a doghnut distribution into the [swiss roll distribution](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.make_swiss_roll.html), mirrored along horizontal and vertical axes, depending on the context.
@@ -54,17 +54,15 @@ Swiss roll mirrored along vertical or horizontal axes
 
 Please visit the BayesFlow repository to find a [bunch of examples](https://github.com/bayesflow-org/bayesflow?tab=readme-ov-file#getting-started) that can help you with BayesFlow. In addition, below are two exercise notebooks you can use to familiarize yourself with BayesFlow.
 
-### Estimating the mean and variance of a gaussian variable
+### Estimating parameters of a normal distribution
 
-- Peek online: [here](./exercises/bayesflow-normal.ipynb){target="_blank"}
-- Download notebook: [here](./exercises/bayesflow-normal.ipynb){download="bayesflow-normal.ipynb"}
+- Notebook [here](./exercises/bayesflow-normal.ipynb){target="_blank"}
 
 This notebook provides you with the very basics of the BayesFlow workflow - starting with defining simulators, through defining and training the neural approximators, and ending with network validation and inference.
 
 ### Wald response times, Racing diffusion model
 
-- Peek online: [here](./exercises/bayesflow-diffusion.ipynb){target="_blank"}
-- Download notebook: [here](./exercises/bayesflow-diffusion.ipynb){download="bayesflow-diffusion.ipynb"}
+- Notebook [here](./exercises/bayesflow-diffusion.ipynb){target="_blank"}
 - Download data: [here](./data/forstmann.csv){download="forstmann.csv"}
 
 This notebook provides you with a basic application of BayesFlow in the context of models of decision making - the Wald model of simple response times, and the racing diffusion model.
