@@ -119,760 +119,123 @@
     "text": "Two choice task (Racing diffusion model)\nWe’ll assume a simple RDM with two choice alternatives (Tillman et al., 2020).\nHere we will simplify the model to include no bias, no variability in starting points. Instead of modeling one accumulator for each of [left, right] responses, we will simply model one accumulator for “incorrect” and one accumulator for “correct” response. This makes it a bit easier to simulate from (we do not need to simulate stimuli).\nAdditionally, we assume that the decision threshold is a function of time. Specifically, this means that the decision threshold decreases linearly with trial number, according to threshold = \\(\\alpha\\) + \\(\\beta\\)*trial.\nThe model has four parameters: 2 drift rates (incorrect - \\(\\nu_0\\), correct \\(\\nu_1\\)), decision threshold intercept \\(\\alpha\\), decision threshold slope \\(\\beta\\)#, and non-decision time \\(\\tau\\).\n\ndef evidence_accumulation(nu, max_t, dt):\n    timesteps = int(max_t / dt)\n    t = np.linspace(0, max_t, timesteps)\n\n    noise = np.random.normal(0, 1, size=timesteps) * np.sqrt(dt)\n    evidence = nu * t + np.cumsum(noise)\n\n    return t, evidence\n\ndef context(n=None):\n    if n is None:\n        n = np.random.randint(200, 201)\n    return dict(n=n)\n\ndef prior(nu=None, alpha=None, beta=None, tau=None):\n    if nu is None:\n        nu=np.random.dirichlet([2, 2])\n        nu=np.random.gamma(shape=5, scale=0.5) * nu\n    if alpha is None:\n        alpha=np.random.gamma(shape=5, scale=0.2)\n    if beta is None:\n        beta=np.random.beta(a=1, b=1)* -0.01\n    if tau is None:\n        tau=np.random.exponential(0.15)\n    else:\n        tau=tau.item()\n\n    return dict(nu=nu, alpha=alpha, beta=beta, tau=tau)\n\n# generate data for a single trial\ndef trial(nu, alpha, tau, max_t, dt):\n    response = -1\n    min_t = max_t\n    # loop over accumulators\n    # if an accumulator has a smaller passage time than the current minimum\n    # save it as the fastest accumulator (response)\n    for resp, drift in enumerate(nu):\n        t, evidence = evidence_accumulation(drift, max_t, dt)\n        passage = np.argmax(evidence &gt; alpha)\n        t = max_t if passage==0 else t[passage]\n        \n        if t &lt; min_t:\n            min_t = t\n            response = resp\n            \n    return min_t+tau, response\n\n# generate data for n trials\n# keep the data.shape always to max_n\n# the rest is filled with 0s\ndef likelihood(n, nu, alpha, beta, tau, max_t=3.0, dt=0.02, max_n=200):\n    rt = np.zeros(max_n)\n    response = np.zeros(max_n)\n    observed = np.zeros(max_n)\n    for i in range(n):\n        threshold = alpha + beta * i # LvM: the threshold is a function of the trial number\n        # if the treshold is below zero, the participant storms out of the lab because they ran out of patience\n        if threshold &lt; 0:\n            break\n        result = trial(nu, threshold, tau, max_t, dt)\n        rt[i] = result[0]\n        response[i] = result[1]\n        observed[i] = 1\n\n    return dict(rt=rt, response=response, trial=range(n), observed=observed)\n\nsimulator = bf.make_simulator([context, prior, likelihood])\n\n\nadapter = (bf.Adapter()\n    .as_set([\"rt\", \"response\", \"trial\", \"observed\"])\n    .constrain([\"nu\", \"alpha\", \"tau\"], lower=0)\n    .standardize(include=\"nu\",    mean= 0.7, std=1.2 )\n    .standardize(include=\"alpha\", mean= 0.5, std=0.7 )\n    .standardize(include=\"beta\",  mean= -.05, std=0.02 )\n    .standardize(include=\"tau\",   mean=-2.5, std=1.3 )\n    .standardize(include=\"trial\", mean= 100,  std=60  )\n    .concatenate([\"nu\", \"alpha\",\"beta\", \"tau\"], into=\"inference_variables\")\n    .concatenate([\"rt\", \"response\", \"trial\", \"observed\"], into=\"summary_variables\")\n    .rename(\"n\", \"inference_conditions\")\n)\n\n\nworkflow = bf.BasicWorkflow(\n    simulator = simulator,\n    adapter = adapter,\n    inference_network = bf.networks.CouplingFlow(\n        depth=15,\n        subnet_kwargs=dict(dropout=False)\n    ),\n    summary_network=bf.networks.DeepSet(\n        depth=15,\n        base_distribution=\"normal\",\n        dropout=False\n    ),\n    initial_learning_rate = 1e-3,\n    inference_variables = [\"nu\", \"alpha\", \"beta\", \"tau\"],\n    inference_conditions = [\"n\"],\n    summary_variables = [\"rt\", \"response\",\"trial\",\"observed\"]\n)\n\n\ntrain_data = simulator.sample(2_500)\nvalidation_data = simulator.sample(500)\ntest_data = simulator.sample(500)\n\n\nhistory=workflow.fit_offline(\n    data=train_data, \n    epochs=50, \n    batch_size=250, \n    validation_data=validation_data\n)\n\nINFO:bayesflow:Fitting on dataset instance of OfflineDataset.\nINFO:bayesflow:Building on a test batch.\n\n\nEpoch 1/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 447s 10s/step - loss: 2481876.2500 - loss/inference_loss: 2481875.7500 - loss/summary_loss: 0.7316 - val_loss: 463.8929 - val_loss/inference_loss: 463.2145 - val_loss/summary_loss: 0.6784\nEpoch 2/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 79s 8s/step - loss: 59.6651 - loss/inference_loss: 58.9418 - loss/summary_loss: 0.7233 - val_loss: 11.2292 - val_loss/inference_loss: 10.7928 - val_loss/summary_loss: 0.4364\nEpoch 3/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 79s 8s/step - loss: 7.9351 - loss/inference_loss: 7.6685 - loss/summary_loss: 0.2666 - val_loss: 6.5161 - val_loss/inference_loss: 6.3241 - val_loss/summary_loss: 0.1920\nEpoch 4/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 6.3099 - loss/inference_loss: 6.1192 - loss/summary_loss: 0.1907 - val_loss: 5.9470 - val_loss/inference_loss: 5.7425 - val_loss/summary_loss: 0.2046\nEpoch 5/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 81s 8s/step - loss: 5.9675 - loss/inference_loss: 5.7735 - loss/summary_loss: 0.1940 - val_loss: 6.3504 - val_loss/inference_loss: 6.1765 - val_loss/summary_loss: 0.1739\nEpoch 6/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 6.5348 - loss/inference_loss: 6.2088 - loss/summary_loss: 0.3259 - val_loss: 6.0203 - val_loss/inference_loss: 5.7255 - val_loss/summary_loss: 0.2947\nEpoch 7/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 77s 8s/step - loss: 6.0858 - loss/inference_loss: 5.7369 - loss/summary_loss: 0.3489 - val_loss: 6.0578 - val_loss/inference_loss: 5.7619 - val_loss/summary_loss: 0.2960\nEpoch 8/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 75s 8s/step - loss: 5.7880 - loss/inference_loss: 5.5090 - loss/summary_loss: 0.2790 - val_loss: 5.7461 - val_loss/inference_loss: 5.5063 - val_loss/summary_loss: 0.2398\nEpoch 9/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 76s 8s/step - loss: 5.6276 - loss/inference_loss: 5.3413 - loss/summary_loss: 0.2863 - val_loss: 5.7012 - val_loss/inference_loss: 5.4693 - val_loss/summary_loss: 0.2319\nEpoch 10/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 77s 8s/step - loss: 5.5524 - loss/inference_loss: 5.2789 - loss/summary_loss: 0.2735 - val_loss: 5.5155 - val_loss/inference_loss: 5.2490 - val_loss/summary_loss: 0.2665\nEpoch 11/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 5.4444 - loss/inference_loss: 5.1554 - loss/summary_loss: 0.2891 - val_loss: 6.0276 - val_loss/inference_loss: 5.8132 - val_loss/summary_loss: 0.2143\nEpoch 12/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 77s 8s/step - loss: 5.4726 - loss/inference_loss: 5.1981 - loss/summary_loss: 0.2746 - val_loss: 5.7865 - val_loss/inference_loss: 5.4634 - val_loss/summary_loss: 0.3231\nEpoch 13/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 79s 8s/step - loss: 5.5793 - loss/inference_loss: 5.2628 - loss/summary_loss: 0.3165 - val_loss: 5.5894 - val_loss/inference_loss: 5.3168 - val_loss/summary_loss: 0.2726\nEpoch 14/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 82s 8s/step - loss: 5.4236 - loss/inference_loss: 5.1230 - loss/summary_loss: 0.3005 - val_loss: 5.0572 - val_loss/inference_loss: 4.8010 - val_loss/summary_loss: 0.2563\nEpoch 15/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 5.2587 - loss/inference_loss: 4.9706 - loss/summary_loss: 0.2881 - val_loss: 6.0406 - val_loss/inference_loss: 5.8010 - val_loss/summary_loss: 0.2396\nEpoch 16/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 79s 8s/step - loss: 5.3925 - loss/inference_loss: 5.1212 - loss/summary_loss: 0.2713 - val_loss: 5.2179 - val_loss/inference_loss: 4.9951 - val_loss/summary_loss: 0.2227\nEpoch 17/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 5.2271 - loss/inference_loss: 4.9291 - loss/summary_loss: 0.2980 - val_loss: 5.3982 - val_loss/inference_loss: 5.1697 - val_loss/summary_loss: 0.2285\nEpoch 18/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 83s 8s/step - loss: 5.1509 - loss/inference_loss: 4.8469 - loss/summary_loss: 0.3040 - val_loss: 4.9293 - val_loss/inference_loss: 4.6883 - val_loss/summary_loss: 0.2410\nEpoch 19/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 4.9497 - loss/inference_loss: 4.6393 - loss/summary_loss: 0.3105 - val_loss: 4.9728 - val_loss/inference_loss: 4.7078 - val_loss/summary_loss: 0.2650\nEpoch 20/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 76s 8s/step - loss: 5.2719 - loss/inference_loss: 4.9577 - loss/summary_loss: 0.3142 - val_loss: 5.7347 - val_loss/inference_loss: 5.4575 - val_loss/summary_loss: 0.2772\nEpoch 21/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 78s 8s/step - loss: 4.9919 - loss/inference_loss: 4.6927 - loss/summary_loss: 0.2992 - val_loss: 5.3573 - val_loss/inference_loss: 5.1180 - val_loss/summary_loss: 0.2393\nEpoch 22/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 4.8316 - loss/inference_loss: 4.5589 - loss/summary_loss: 0.2728 - val_loss: 4.4284 - val_loss/inference_loss: 4.2041 - val_loss/summary_loss: 0.2243\nEpoch 23/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 82s 8s/step - loss: 4.8698 - loss/inference_loss: 4.5886 - loss/summary_loss: 0.2812 - val_loss: 4.3555 - val_loss/inference_loss: 4.1169 - val_loss/summary_loss: 0.2386\nEpoch 24/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 76s 8s/step - loss: 4.6208 - loss/inference_loss: 4.3398 - loss/summary_loss: 0.2809 - val_loss: 4.8037 - val_loss/inference_loss: 4.4913 - val_loss/summary_loss: 0.3123\nEpoch 25/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 79s 8s/step - loss: 4.4561 - loss/inference_loss: 4.1520 - loss/summary_loss: 0.3041 - val_loss: 4.3030 - val_loss/inference_loss: 4.0572 - val_loss/summary_loss: 0.2458\nEpoch 26/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 4.2359 - loss/inference_loss: 3.9303 - loss/summary_loss: 0.3056 - val_loss: 4.0600 - val_loss/inference_loss: 3.8294 - val_loss/summary_loss: 0.2306\nEpoch 27/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 81s 8s/step - loss: 4.3664 - loss/inference_loss: 4.0516 - loss/summary_loss: 0.3148 - val_loss: 4.3168 - val_loss/inference_loss: 4.0267 - val_loss/summary_loss: 0.2901\nEpoch 28/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 77s 8s/step - loss: 4.6645 - loss/inference_loss: 4.3383 - loss/summary_loss: 0.3262 - val_loss: 5.2905 - val_loss/inference_loss: 4.9483 - val_loss/summary_loss: 0.3422\nEpoch 29/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 78s 8s/step - loss: 4.7504 - loss/inference_loss: 4.3712 - loss/summary_loss: 0.3792 - val_loss: 4.3816 - val_loss/inference_loss: 4.0359 - val_loss/summary_loss: 0.3456\nEpoch 30/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 79s 8s/step - loss: 4.0697 - loss/inference_loss: 3.6948 - loss/summary_loss: 0.3749 - val_loss: 4.3868 - val_loss/inference_loss: 4.0687 - val_loss/summary_loss: 0.3181\nEpoch 31/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 3.8667 - loss/inference_loss: 3.4951 - loss/summary_loss: 0.3716 - val_loss: 3.5801 - val_loss/inference_loss: 3.2828 - val_loss/summary_loss: 0.2973\nEpoch 32/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 3.8138 - loss/inference_loss: 3.4788 - loss/summary_loss: 0.3350 - val_loss: 3.9115 - val_loss/inference_loss: 3.6640 - val_loss/summary_loss: 0.2475\nEpoch 33/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 78s 8s/step - loss: 4.2117 - loss/inference_loss: 3.9011 - loss/summary_loss: 0.3106 - val_loss: 3.7474 - val_loss/inference_loss: 3.5055 - val_loss/summary_loss: 0.2419\nEpoch 34/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 3.6181 - loss/inference_loss: 3.3031 - loss/summary_loss: 0.3150 - val_loss: 3.6324 - val_loss/inference_loss: 3.3973 - val_loss/summary_loss: 0.2351\nEpoch 35/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 77s 8s/step - loss: 3.3222 - loss/inference_loss: 2.9961 - loss/summary_loss: 0.3261 - val_loss: 3.5649 - val_loss/inference_loss: 3.2783 - val_loss/summary_loss: 0.2866\nEpoch 36/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 3.1659 - loss/inference_loss: 2.8447 - loss/summary_loss: 0.3212 - val_loss: 3.3711 - val_loss/inference_loss: 3.0596 - val_loss/summary_loss: 0.3115\nEpoch 37/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 78s 8s/step - loss: 3.2770 - loss/inference_loss: 2.9556 - loss/summary_loss: 0.3214 - val_loss: 3.1489 - val_loss/inference_loss: 2.8473 - val_loss/summary_loss: 0.3016\nEpoch 38/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 81s 8s/step - loss: 3.0455 - loss/inference_loss: 2.7263 - loss/summary_loss: 0.3192 - val_loss: 3.1324 - val_loss/inference_loss: 2.8601 - val_loss/summary_loss: 0.2723\nEpoch 39/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 2.9168 - loss/inference_loss: 2.5954 - loss/summary_loss: 0.3214 - val_loss: 3.0987 - val_loss/inference_loss: 2.8284 - val_loss/summary_loss: 0.2703\nEpoch 40/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 79s 8s/step - loss: 2.7912 - loss/inference_loss: 2.4690 - loss/summary_loss: 0.3222 - val_loss: 3.0236 - val_loss/inference_loss: 2.7303 - val_loss/summary_loss: 0.2933\nEpoch 41/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 79s 8s/step - loss: 2.6836 - loss/inference_loss: 2.3553 - loss/summary_loss: 0.3282 - val_loss: 2.8232 - val_loss/inference_loss: 2.5458 - val_loss/summary_loss: 0.2774\nEpoch 42/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 82s 8s/step - loss: 2.5994 - loss/inference_loss: 2.2767 - loss/summary_loss: 0.3227 - val_loss: 3.1882 - val_loss/inference_loss: 2.9103 - val_loss/summary_loss: 0.2779\nEpoch 43/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 83s 8s/step - loss: 2.5226 - loss/inference_loss: 2.1888 - loss/summary_loss: 0.3339 - val_loss: 2.5523 - val_loss/inference_loss: 2.2820 - val_loss/summary_loss: 0.2703\nEpoch 44/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 81s 8s/step - loss: 2.4778 - loss/inference_loss: 2.1490 - loss/summary_loss: 0.3288 - val_loss: 2.8602 - val_loss/inference_loss: 2.5891 - val_loss/summary_loss: 0.2712\nEpoch 45/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 2.4191 - loss/inference_loss: 2.0947 - loss/summary_loss: 0.3243 - val_loss: 2.9102 - val_loss/inference_loss: 2.6145 - val_loss/summary_loss: 0.2957\nEpoch 46/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 80s 8s/step - loss: 2.3937 - loss/inference_loss: 2.0576 - loss/summary_loss: 0.3361 - val_loss: 2.7691 - val_loss/inference_loss: 2.5065 - val_loss/summary_loss: 0.2626\nEpoch 47/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 76s 8s/step - loss: 2.3785 - loss/inference_loss: 2.0467 - loss/summary_loss: 0.3318 - val_loss: 2.7930 - val_loss/inference_loss: 2.4943 - val_loss/summary_loss: 0.2987\nEpoch 48/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 95s 10s/step - loss: 2.3532 - loss/inference_loss: 2.0243 - loss/summary_loss: 0.3288 - val_loss: 2.6434 - val_loss/inference_loss: 2.3573 - val_loss/summary_loss: 0.2861\nEpoch 49/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 4652s 511s/step - loss: 2.3410 - loss/inference_loss: 2.0102 - loss/summary_loss: 0.3307 - val_loss: 2.5182 - val_loss/inference_loss: 2.2583 - val_loss/summary_loss: 0.2600\nEpoch 50/50\n10/10 ━━━━━━━━━━━━━━━━━━━━ 81s 8s/step - loss: 2.3267 - loss/inference_loss: 1.9953 - loss/summary_loss: 0.3313 - val_loss: 2.7635 - val_loss/inference_loss: 2.5100 - val_loss/summary_loss: 0.2535\n\n\n\nplots=workflow.plot_default_diagnostics(test_data=test_data)\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nApplication to data\nHere we will work with data from Katsimpokis et al (2021), Experiment 2. In this experiment, participants are asked to indicate which of two flashing circles has the higher flash rate. Additionally, they are either asked to be Fast or Accurate, and to respond before a deadline or not, in a full factorial manner. The file flash.csv only contains data from the Accuracy instruction.\n\ndata_inference = pd.read_csv(\"flash.csv\")\n\n\ndata_inference['condition'].unique()\n\narray(['Deadline', 'No Deadline'], dtype=object)\n\n\n\ndata_inference_grouped = data_inference.groupby([\"subject\", \"condition\"])\n\n\ndata_inference_dict = {\n    key: np.array([group[key].values.reshape(200, 1) for _, group in data_inference_grouped]) \n             for key in ['rt', 'response', 'trial','observed']}\ndata_inference_dict[\"n\"] = np.sum(data_inference_dict[\"observed\"], axis=1)\nprint({key: value.shape for key, value in data_inference_dict.items()})\n\n{'rt': (48, 200, 1), 'response': (48, 200, 1), 'trial': (48, 200, 1), 'observed': (48, 200, 1), 'n': (48, 1)}\n\n\n\nposterior_samples = workflow.sample(conditions=data_inference_dict, num_samples=1000)\n\n\n# pick the first participant, first condition\nposterior = {key: value[0] for key, value in posterior_samples.items()}\nposterior['nu'].shape\n\n(1000, 2)\n\n\n\npriors = dict(nu=test_data[\"nu\"], alpha=test_data[\"alpha\"], beta=test_data[\"beta\"], tau=test_data[\"tau\"])\nf=bf.diagnostics.pairs_posterior(estimates=posterior, priors=priors)\n\n\n\n\n\n\n\n\nThe model is still quite uncertain about the parameter estimates, shown by the large ovelap between prior and posterior. There is a bit of a trade-off in this case between the \\(\\alpha\\) and \\(\\beta\\) parameters (but not as big as I expected). This is because they jointly explain the same aspect of the data (response caution). A higher \\(\\alpha\\) means that on the first trial a participant is more conservative. So to get to the same average level of conservativeness, the \\(\\beta\\) needs to be more negative, hence the negative relation.\nLet’s look at another participant:\n\n# pick second participant, second condition\nposterior = {key: value[3] for key, value in posterior_samples.items()}\nf=bf.diagnostics.pairs_posterior(estimates=posterior, priors=priors)\n\n\n\n\n\n\n\n\n\ndef ecdf(rt, response, observed, **kwargs):\n    observed_mask = (observed == 1)\n    response_0_mask = ((response == 0) & observed_mask)\n    response_1_mask = ((response == 1) & observed_mask)\n\n    response_0_prop = np.sum(response_0_mask) / np.sum(observed_mask)\n    response_1_prop = np.sum(response_1_mask) / np.sum(observed_mask)\n\n    response_0_ecdf = stats.ecdf(rt[response_0_mask]).cdf\n    response_0_ecdf = response_0_prop * response_0_ecdf.evaluate(np.linspace(0, 1, 101))\n\n    response_1_ecdf = stats.ecdf(rt[response_1_mask]).cdf\n    response_1_ecdf = response_1_prop * response_1_ecdf.evaluate(np.linspace(0, 1, 101))\n\n    return response_0_ecdf, response_1_ecdf\n\nSelect a participant for whom to display the goodness-of-fit:\n\ndata = data_inference_grouped.get_group((1, 'No Deadline'))\nplot_data = ecdf(**data)\n\n\nposterior_predictives = simulator.sample(500, **posterior)\n\n\nplot_data_predictive = []\nfor i in range(100):\n    x = { key: value[i:i+1,...] for key, value in posterior_predictives.items()}\n    plot_data_predictive.append(ecdf(**x))\n    \nplot_data_predictive = np.array(plot_data_predictive)\n\n\nplot_data_quantiles = np.quantile(\n    plot_data_predictive, \n    q = [0.25, 0.5, 0.75],\n    axis=0\n)\nplot_data_quantiles.shape\n\n(3, 2, 101)\n\n\n\nt = np.linspace(0, 1, 101)\ncols = [\"red\", \"blue\"]\nfor i, lab in enumerate([\"Incorrect\", \"Correct\"]):\n    plt.plot(t, plot_data[i], label=lab, color=cols[i])\n    plt.plot(t, plot_data_quantiles[1, i, :], color=cols[i], alpha=0.5, label=\"median predictive\")\n    plt.fill_between(\n        t,\n        plot_data_quantiles[0,  i,:],\n        plot_data_quantiles[-1, i,:],\n        label=\"50% predictive interval\",\n        color=cols[i],\n        alpha=0.3\n    )\nf=plt.legend()\n\n\n\n\n\n\n\n\nThe model fits the data of this participant reasonably well. If you change the participant id or condition, you will see that this is not the case for all here."
   },
   {
-    "objectID": "slides/generative-architectures.html#generative-models",
-    "href": "slides/generative-architectures.html#generative-models",
-    "title": "Generative Neural Networks",
-    "section": "Generative models",
-    "text": "Generative models\nLearn \\(p_X\\) given a set of training data \\(x_i, \\dots, x_n\\)\n\n\nSampling \\(x \\sim p_X\\)\nDensity evaluation \\(p_X(x)\\)"
+    "objectID": "about.html",
+    "href": "about.html",
+    "title": "About",
+    "section": "",
+    "text": "About this site"
   },
   {
-    "objectID": "slides/generative-architectures.html#mixture-model",
-    "href": "slides/generative-architectures.html#mixture-model",
-    "title": "Generative Neural Networks",
-    "section": "Mixture model",
-    "text": "Mixture model\nWeighted sum of multiple simpler distributions, e.g., Normal \\[p_X(X) = \\sum_k^K w_k \\times \\text{Normal}(X; \\mu_k, \\sigma_k)\\]\n\nSampling and evaluating straightforward\nTheoretically can represent any distribution\nPractically, does not scale well"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#many-architectures",
-    "href": "slides/generative-architectures.html#many-architectures",
-    "title": "Generative Neural Networks",
-    "section": "Many architectures",
-    "text": "Many architectures\n\nMarkov random fields (Li, 2009)\nGenerative adversarial networks (GAN, Goodfellow et al., 2014)\nVariational autoencoders (VAE, Kingma et al., 2013)\nDiffusion models (Song et al., 2020)\nConsistency models (Song et al., 2023)\nNormalizing flows (Kobyzev et al., 2020; Papamakarios et al., 2021)\nFlow matching (Lipman et al., 2022)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#common-idea",
-    "href": "slides/generative-architectures.html#common-idea",
-    "title": "Generative Neural Networks",
-    "section": "Common idea",
-    "text": "Common idea\nMap \\(p_X\\) to a base distribution \\(p_Z\\) through some operation \\(g\\)\n\\[\nx \\sim g(z) \\text{ where } z \\sim p_Z\n\\]\n\nSource: learnopencv.com"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#normalizing-flows-1",
-    "href": "slides/generative-architectures.html#normalizing-flows-1",
-    "title": "Generative Neural Networks",
-    "section": "Normalizing flows",
-    "text": "Normalizing flows\nBuilt on invertible transformations of random variables\n\nFind \\(f\\) such that \\(f(X) = Z \\sim \\text{Normal}(0, I)\\)\n\n\\(f\\) normalizes \\(X\\)\n\n\n\n\n\n\n\n \n\n\n\\(f\\)\n\n\n \n\n\n\n\n\n\n\n\\[\\rightarrow\\]\n\n\n\n\n\n\n\nFigure 1: Forward direction"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#sampling",
-    "href": "slides/generative-architectures.html#sampling",
-    "title": "Generative Neural Networks",
-    "section": "Sampling",
-    "text": "Sampling\n\nSample \\(z \\sim p_Z\\) (e.g., Normal)\nObtain \\(x = f^{-1}(z)\\)\n\n\n\n\n\n\n\n \n\n\n\\(f^{-1}\\)\n\n\n \n\n\n\n\n\n\n\n\\[\\leftarrow\\]\n\n\n\n\n\n\n\nFigure 2: Backward direction"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#density-evaluation",
-    "href": "slides/generative-architectures.html#density-evaluation",
-    "title": "Generative Neural Networks",
-    "section": "Density evaluation",
-    "text": "Density evaluation\nChange of variables formula\n\\[\np_X(x) = p_Z(f(x)) \\left| \\det{J}_f(x) \\right|\n\\]\n\nExpress \\(p_X\\) using \\(p_Z\\) and the transform \\(f\\)\n\\(\\left| \\det{J}_f(x) \\right|\\): Absolute value of the determinant of the Jacobian matrix\n\n“Jacobian” for short\nVolume correction term"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#change-of-variables---intuition",
-    "href": "slides/generative-architectures.html#change-of-variables---intuition",
-    "title": "Generative Neural Networks",
-    "section": "Change of variables - intuition",
-    "text": "Change of variables - intuition\n\n\n\\[Z \\sim \\text{Uniform}(0, 1)\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#change-of-variables---intuition-1",
-    "href": "slides/generative-architectures.html#change-of-variables---intuition-1",
-    "title": "Generative Neural Networks",
-    "section": "Change of variables - intuition",
-    "text": "Change of variables - intuition\n\n\n\\[Z \\sim \\text{Uniform}(0, 1)\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#change-of-variables---intuition-2",
-    "href": "slides/generative-architectures.html#change-of-variables---intuition-2",
-    "title": "Generative Neural Networks",
-    "section": "Change of variables - intuition",
-    "text": "Change of variables - intuition\n\n\n\\[Z \\sim \\text{Uniform}(0, 1)\\]\n\n\n\\[X = 2Z - 1\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#change-of-variables---intuition-3",
-    "href": "slides/generative-architectures.html#change-of-variables---intuition-3",
-    "title": "Generative Neural Networks",
-    "section": "Change of variables - intuition",
-    "text": "Change of variables - intuition\n\n\n\\[Z \\sim \\text{Uniform}(0, 1)\\]\n\n\n\\[X = 2Z - 1\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#change-of-variables---affine-transform",
-    "href": "slides/generative-architectures.html#change-of-variables---affine-transform",
-    "title": "Generative Neural Networks",
-    "section": "Change of variables - affine transform",
-    "text": "Change of variables - affine transform\n\\[f: Z = a X + b\\]\n\nshift by \\(b\\): no effect\nscale by a constant \\(a\\): multiply by \\(a\\)\n\n\\[p_X(x) = p_Z(f(x)) \\times a\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#change-of-variables---affine-transform-1",
-    "href": "slides/generative-architectures.html#change-of-variables---affine-transform-1",
-    "title": "Generative Neural Networks",
-    "section": "Change of variables - affine transform",
-    "text": "Change of variables - affine transform\n\nExample\n\n\n\\[\n\\scriptsize\n\\begin{aligned}\np_Z(z) & = \\frac{1}{\\sqrt{2\\pi}} \\exp\\left(-\\frac{1}{2} z^2 \\right) \\\\[10pt]\nf: Z & = \\frac{(X - \\mu)}{\\sigma} \\\\\n\\end{aligned}\n\\]\n\n\\[\n\\scriptsize\n\\begin{aligned}\np_X(x) & = p_Z(f(x)) \\times a \\\\[10pt]\n& = \\frac{1}{\\sqrt{2\\pi}} \\exp\\left(-\\frac{1}{2} f(x)^2 \\right) \\times a \\\\[10pt]\n& = \\frac{1}{\\sigma\\sqrt{2\\pi}} \\exp\\left(-\\frac{1}{2} \\left(\\frac{x-\\mu}{\\sigma}\\right)^2 \\right)\n\\end{aligned}\n\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#change-of-variables---more-formally",
-    "href": "slides/generative-architectures.html#change-of-variables---more-formally",
-    "title": "Generative Neural Networks",
-    "section": "Change of variables - more formally",
-    "text": "Change of variables - more formally\n\\[\np_X(x) = p_Z(f(x))  \\left| \\frac{d}{dx} f(x) \\right|\n\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#change-of-variables---more-formally-1",
-    "href": "slides/generative-architectures.html#change-of-variables---more-formally-1",
-    "title": "Generative Neural Networks",
-    "section": "Change of variables - more formally",
-    "text": "Change of variables - more formally\n\\[\np_X(x) = p_Z(f(x))  \\left| \\frac{d}{dx} f(x) \\right|\n\\]\nExample\n\n\n\\[\n\\scriptsize\n\\begin{align}\nf: Z & = \\log(X) \\\\[10pt]\np_Z(z) & = \\frac{1}{\\sqrt{2\\pi}} \\exp\\left(-\\frac{1}{2} z^2 \\right)\n\\end{align}\n\\]\n\n\\[\n\\scriptsize\n\\begin{align}\n\\frac{d}{dx} f(x) & = \\frac{d}{dx} \\log(x) = \\frac{1}{x} \\\\[10pt]\np_X(x) & = \\frac{1}{x\\sqrt{2\\pi}} \\exp\\left(-\\frac{1}{2} \\log(x)^2\\right)\n\\end{align}\n\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#change-of-variables---multivariate",
-    "href": "slides/generative-architectures.html#change-of-variables---multivariate",
-    "title": "Generative Neural Networks",
-    "section": "Change of variables - multivariate",
-    "text": "Change of variables - multivariate\n\\[\np_X(x) = p_Z(f(x)) \\left| \\det{J}_f(x) \\right|\n\\]\n\n\\[\nJ_f(x) = \\begin{bmatrix}\n\\frac{\\partial z_1}{\\partial x_1} & \\dots & \\frac{\\partial z_1}{\\partial x_K} \\\\\n\\vdots & \\ddots & \\vdots \\\\\n\\frac{\\partial z_K}{\\partial x_1} & \\dots & \\frac{\\partial z_K}{\\partial x_K}\n\\end{bmatrix}\n\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#change-of-variables---multivariate-1",
-    "href": "slides/generative-architectures.html#change-of-variables---multivariate-1",
-    "title": "Generative Neural Networks",
-    "section": "Change of variables - multivariate",
-    "text": "Change of variables - multivariate\n\\[f\\left(\\begin{bmatrix}x_1 \\\\ x_2\\end{bmatrix}\\right) = \\begin{bmatrix} x_1^2 x_2 \\\\ 3x_1 + \\sin x_2 \\end{bmatrix} = \\begin{bmatrix}z_1 \\\\ z_2\\end{bmatrix}\\]\n\n\\[J_f(x) = \\begin{bmatrix}\n\\frac{\\partial z_1}{\\partial x_1} & \\frac{\\partial z_1}{\\partial x_2} \\\\\n\\frac{\\partial z_2}{\\partial x_1} & \\frac{\\partial z_2}{\\partial x_2}\n\\end{bmatrix} = \\begin{bmatrix} 2x_1x_2 & x_1^2 \\\\ 3 & \\cos x_2 \\end{bmatrix}\n\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#normalizing-flow",
-    "href": "slides/generative-architectures.html#normalizing-flow",
-    "title": "Generative Neural Networks",
-    "section": "Normalizing flow",
-    "text": "Normalizing flow\n\\[\np_X(x) = p_Z(f(x)) \\left| \\det{J}_f(x) \\right|\n\\]\nDefine a \\(f\\) as a neural network with trainable weights \\(\\phi\\)\n\nTraining\nMaximum likelihood (or rather: negative log likelihood)\n\\[\n\\arg \\min_\\phi - \\sum_{i=1}^n \\log p_Z(f(x_i \\mid \\phi)) + \\log \\left| \\det{J}_f(x_i \\mid \\phi) \\right|\n\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#flow-f",
-    "href": "slides/generative-architectures.html#flow-f",
-    "title": "Generative Neural Networks",
-    "section": "Flow \\(f\\)",
-    "text": "Flow \\(f\\)\n\nChallenge\n\nSampling: Invertible (\\(f^{-1}\\))\nTraining:\n\nDifferentiable\nComputationally efficient jacobian\n\nExpressive to represent non-trivial distributions"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#flow-composition",
-    "href": "slides/generative-architectures.html#flow-composition",
-    "title": "Generative Neural Networks",
-    "section": "Flow composition",
-    "text": "Flow composition\nInvertible and differentiable functions are “closed” under composition\n\\[\nf = f_L \\circ f_{L-1} \\circ \\dots \\circ f_1 \\\\\n\\]\n\n\n\n\n\n \n\n\n\\(f_1\\)\n\n\n \n\n\n\\(f_2\\)\n\n\n \n\n\n\\(f_3\\)\n\n\n \n\n\n\n\n\n\n\n\\(\\rightarrow\\)\n\n\n\n\n\n\\(\\rightarrow\\)\n\n\n\n\n\n\\(\\rightarrow\\)\n\n\n\n\n\n\n\nFigure 3: Flow composition in forward direction"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#flow-composition---inverse",
-    "href": "slides/generative-architectures.html#flow-composition---inverse",
-    "title": "Generative Neural Networks",
-    "section": "Flow composition - inverse",
-    "text": "Flow composition - inverse\nTo invert a flow composition, we invert individual flows and run them in the opposite order\n\\[\nf^{-1} = f_1^{-1} \\circ f_2 ^{-1} \\circ \\dots \\circ f_L^{-1} \\\\\n\\]\n\n\n\n\n\n \n\n\n\\(f_1^{-1}\\)\n\n\n \n\n\n\\(f_2^{-1}\\)\n\n\n \n\n\n\\(f_3^{-1}\\)\n\n\n \n\n\n\n\n\n\n\n\\(\\leftarrow\\)\n\n\n\n\n\n\\(\\leftarrow\\)\n\n\n\n\n\n\\(\\leftarrow\\)\n\n\n\n\n\n\n\nFigure 4: Flow composition in backward (inverse) direction"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#flow-composition---jacobian",
-    "href": "slides/generative-architectures.html#flow-composition---jacobian",
-    "title": "Generative Neural Networks",
-    "section": "Flow composition - Jacobian",
-    "text": "Flow composition - Jacobian\n\nChain rule \\[\n\\left| \\det{J}_f(x) \\right| = \\left| \\det \\prod_{l=1}^L J_{f_l}(x)\\right| = \\prod_{l=1}^L \\left| \\det{J}_{f_l}(x)\\right|\n\\]\nif we have a Jacobian for each individual transformation, then we have a Jacobian for their composition \\[\n\\arg \\min_\\phi \\sum_{i=1}^n \\log p_Z(f(x_i \\mid \\phi)) + \\sum_{l=1}^L \\log \\left| \\det{J}_{f_l}(x_i \\mid \\phi) \\right|\n\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#linear-flow",
-    "href": "slides/generative-architectures.html#linear-flow",
-    "title": "Generative Neural Networks",
-    "section": "Linear flow",
-    "text": "Linear flow\n\n\\[\nf(x) = Ax + b\n\\]\n\ninverse: \\(f^{-1}(z) = A^{-1}(x - b)\\)\nJacobian: \\(\\left| \\det{J}_f(x) \\right| = \\left| \\det{A} \\right|\\)\nLimitations:\n\nNot expressive (composition of linear functions is a linear function)\nJacobian/inverse may be in \\(\\mathcal{O}(p^3)\\)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#coupling-flows",
-    "href": "slides/generative-architectures.html#coupling-flows",
-    "title": "Generative Neural Networks",
-    "section": "Coupling flows",
-    "text": "Coupling flows\n\nIncreasing expresiveness while potentially decreasing computational costs\nA coupling flow is a way to construct non-linear flows\n\n\nSplit the data in two disjoint subsets: \\(x = (x_A, x_B)\\)\nCompute parameters conditionally on one subset: \\(\\theta(x_A)\\)\nApply transformation to the other subset: \\(z_B = f(x_B \\mid \\theta(x_A))\\)\nConcatenate \\(z = (x_A, z_B)\\)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#coupling-flow-forward",
-    "href": "slides/generative-architectures.html#coupling-flow-forward",
-    "title": "Generative Neural Networks",
-    "section": "Coupling flow: Forward",
-    "text": "Coupling flow: Forward"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#coupling-flow-inverse",
-    "href": "slides/generative-architectures.html#coupling-flow-inverse",
-    "title": "Generative Neural Networks",
-    "section": "Coupling flow: Inverse",
-    "text": "Coupling flow: Inverse"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#coupling-flow-trick",
-    "href": "slides/generative-architectures.html#coupling-flow-trick",
-    "title": "Generative Neural Networks",
-    "section": "Coupling flow trick",
-    "text": "Coupling flow trick\n\nJacobian\n\n\\[ J_f =\n\\begin{bmatrix}\n\\text{I} & 0 \\\\\n\\frac{\\partial}{\\partial x_A}f(x_B \\mid \\theta(x_A)) & J_f(x_B \\mid \\theta(x_A))\n\\end{bmatrix}\n\\]\n\nDeterminant\n\n\\[\n\\det{J}_f = \\det(\\text{I}) \\times \\det{J}_f(x_B \\mid \\theta(x_A)) = \\det{J}_f(x_B \\mid \\theta(x_A))\n\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#coupling-flow-trick-1",
-    "href": "slides/generative-architectures.html#coupling-flow-trick-1",
-    "title": "Generative Neural Networks",
-    "section": "Coupling flow trick",
-    "text": "Coupling flow trick\n\n\\(f(x_B\\mid\\theta(x_A))\\) needs to be differentiable and invertible\n\neasy to calculate determinant Jacobian…\n\n\\(\\theta(x_A)\\) can be arbitrarily complex\n\nnon-linear,\nnon-invertible\n\\(\\rightarrow\\) neural network\n\n\n\n\nStack multiple coupling blocks and permute \\(x_{A}\\) and \\(x_{B}\\)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#affine-coupling-dinh2016density",
-    "href": "slides/generative-architectures.html#affine-coupling-dinh2016density",
-    "title": "Generative Neural Networks",
-    "section": "Affine coupling (Dinh et al., 2016)",
-    "text": "Affine coupling (Dinh et al., 2016)\n\n\\(\\theta(x_A)\\): Trainable coupling networks, e.g., MLP\n\nOutput: Shift \\(\\mu\\) and scale \\(\\sigma\\)\n\nLinear (affine) transform function \\(f(x_B\\mid\\theta(x_A)) = \\frac{x_B - \\mu(x_A)}{\\sigma(x_A)}\\)\nJacobian: \\(-\\log{\\sigma(x_A)}\\)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#spline-coupling-muller2019neural",
-    "href": "slides/generative-architectures.html#spline-coupling-muller2019neural",
-    "title": "Generative Neural Networks",
-    "section": "Spline coupling (Müller et al., 2019)",
-    "text": "Spline coupling (Müller et al., 2019)\n\n\n\nTransformation: Splines\n\n“Piecewise polynomials”\n\nMore expressive\nEasier to overfit\nSlower at training and inference\n\n\n\n\n\nFigure from Durkan et al. (2019)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#exercise---moons",
-    "href": "slides/generative-architectures.html#exercise---moons",
-    "title": "Generative Neural Networks",
-    "section": "Exercise - Moons",
-    "text": "Exercise - Moons\nBuild your own affine coupling normalizing flow!\n\n\n\nForward\n\n\nBackward"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#idea",
-    "href": "slides/generative-architectures.html#idea",
-    "title": "Generative Neural Networks",
-    "section": "Idea",
-    "text": "Idea\n\nNormalizing flows transform X into Z in a set of discrete steps\nBut why not take one smooth/continuous transformation?"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#flow-matching",
-    "href": "slides/generative-architectures.html#flow-matching",
-    "title": "Generative Neural Networks",
-    "section": "Flow matching",
-    "text": "Flow matching\n\nDefines a flow that transforms a distribution over time\n\n\\(p_{t=0} = p_z\\) - Base distribution\n\\(p_{t=1} = q = p_x\\) - Data distribution\n\n\n\n\nLipman et al. (2024)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#flow-and-velocity",
-    "href": "slides/generative-architectures.html#flow-and-velocity",
-    "title": "Generative Neural Networks",
-    "section": "Flow and velocity",
-    "text": "Flow and velocity\n\nFlow defines \\(X_t = \\phi_t(X_0)\\)\nTime dependent vector field: \\(\\frac{d}{dt} \\phi_t(x) = u_t(\\phi_t(x))\\)\nModel \\(u_t\\) with a neural network\n\n\n\nLipman et al. (2024)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#flow-matching-1",
-    "href": "slides/generative-architectures.html#flow-matching-1",
-    "title": "Generative Neural Networks",
-    "section": "Flow matching",
-    "text": "Flow matching\n\\[\n\\begin{aligned}\n\\mathbb{E}_{t, X_t}|| u_{t,\\theta}(X_t) - u_t(X_t) ||^2 \\\\ t\\sim\\text{Uniform}(0,1) \\\\ X_t \\sim p_t(X_t)\n\\end{aligned}\n\\]\n\nLipman et al. (2024)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#conditional-flow-matching",
-    "href": "slides/generative-architectures.html#conditional-flow-matching",
-    "title": "Generative Neural Networks",
-    "section": "Conditional Flow Matching",
-    "text": "Conditional Flow Matching\nLinear probability path\n\\[X_t = (1-t) X_0 + t X_1\\]\nVelocity\n\\[u_t(X_t \\mid X_1, X_0) = X_1 - X_0\\]\n\nLipman et al. (2024)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#conditional-flow-matching-1",
-    "href": "slides/generative-architectures.html#conditional-flow-matching-1",
-    "title": "Generative Neural Networks",
-    "section": "Conditional Flow Matching",
-    "text": "Conditional Flow Matching\n \\[\n\\begin{aligned}\n\\mathbb{E}_{t, X_t}|| u_{t,\\theta}\\big(\\underbrace{(1-t) X_0 + t X_1)}_{X_t}\\big) - (\\underbrace{X_1-X_0}_{u_t}) ||^2 \\\\ t\\sim\\text{Uniform}(0,1) \\\\ X_0 \\sim p_0 \\\\ X_1 \\sim p_1\n\\end{aligned}\n\\]"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#conditional-vs-marginal-paths",
-    "href": "slides/generative-architectures.html#conditional-vs-marginal-paths",
-    "title": "Generative Neural Networks",
-    "section": "Conditional vs Marginal paths",
-    "text": "Conditional vs Marginal paths\n\n\n\n\n\n\n\n\nConditional path\n\n\n\n\n\n\n\nMarginal path\n\n\n\n\n\n\nFigure 5: Fjelde et al. (2024)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#optimal-transport",
-    "href": "slides/generative-architectures.html#optimal-transport",
-    "title": "Generative Neural Networks",
-    "section": "Optimal transport",
-    "text": "Optimal transport\n\nIndependent coupling \\(p(X_0, X_1) = p(X_0) p(X_1)\\)\nOptimal transport coupling \\(p(X_0, X_1) = \\pi(X_0, X_1)\\)\n\nMinimise transport cost (e.g., Wasserstein distance)\nFor batches (Pooladian et al., 2023)\n\n\n\n\nFigure 6: Fjelde et al. (2024)"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#exercise",
-    "href": "slides/generative-architectures.html#exercise",
-    "title": "Generative Neural Networks",
-    "section": "Exercise",
-    "text": "Exercise"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#exercise-1",
-    "href": "slides/generative-architectures.html#exercise-1",
-    "title": "Generative Neural Networks",
-    "section": "Exercise",
-    "text": "Exercise"
-  },
-  {
-    "objectID": "slides/generative-architectures.html#references",
-    "href": "slides/generative-architectures.html#references",
-    "title": "Generative Neural Networks",
-    "section": "References",
-    "text": "References\n\n\n\n\nDinh, L., Sohl-Dickstein, J., & Bengio, S. (2016). Density estimation using real nvp. arXiv Preprint arXiv:1605.08803.\n\n\nDurkan, C., Bekasov, A., Murray, I., & Papamakarios, G. (2019). Neural spline flows. Advances in Neural Information Processing Systems, 32.\n\n\nFjelde, T., Mathieu, E., & Dutordoir, V. (2024). An Introduction to Flow Matching. https://mlg.eng.cam.ac.uk/blog/2024/01/20/flow-matching.html\n\n\nGoodfellow, I. J., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D., Ozair, S., Courville, A., & Bengio, Y. (2014). Generative adversarial nets. Advances in Neural Information Processing Systems, 27.\n\n\nKingma, D. P., Welling, M., et al. (2013). Auto-encoding variational bayes. Banff, Canada.\n\n\nKobyzev, I., Prince, S. J., & Brubaker, M. A. (2020). Normalizing flows: An introduction and review of current methods. IEEE Transactions on Pattern Analysis and Machine Intelligence, 43(11), 3964–3979.\n\n\nLi, S. Z. (2009). Markov random field modeling in image analysis. Springer Science & Business Media.\n\n\nLipman, Y., Chen, R. T., Ben-Hamu, H., Nickel, M., & Le, M. (2022). Flow matching for generative modeling. arXiv Preprint arXiv:2210.02747.\n\n\nLipman, Y., Havasi, M., Holderrieth, P., Shaul, N., Le, M., Karrer, B., Chen, R. T. Q., Lopez-Paz, D., Ben-Hamu, H., & Gat, I. (2024). Flow matching guide and code. https://arxiv.org/abs/2412.06264\n\n\nMüller, T., McWilliams, B., Rousselle, F., Gross, M., & Novák, J. (2019). Neural importance sampling. ACM Transactions on Graphics (ToG), 38(5), 1–19.\n\n\nPapamakarios, G., Nalisnick, E., Rezende, D. J., Mohamed, S., & Lakshminarayanan, B. (2021). Normalizing flows for probabilistic modeling and inference. Journal of Machine Learning Research, 22(57), 1–64.\n\n\nPooladian, A.-A., Ben-Hamu, H., Domingo-Enrich, C., Amos, B., Lipman, Y., & Chen, R. T. (2023). Multisample flow matching: Straightening flows with minibatch couplings. arXiv Preprint arXiv:2304.14772.\n\n\nSong, Y., Dhariwal, P., Chen, M., & Sutskever, I. (2023). Consistency models.\n\n\nSong, Y., Sohl-Dickstein, J., Kingma, D. P., Kumar, A., Ermon, S., & Poole, B. (2020). Score-based generative modeling through stochastic differential equations. arXiv Preprint arXiv:2011.13456."
-  },
-  {
-    "objectID": "slides/amortized-inference.html#recap",
-    "href": "slides/amortized-inference.html#recap",
+    "objectID": "slides/intro.html#section",
+    "href": "slides/intro.html#section",
     "title": "Amortized Bayesian Inference",
-    "section": "Recap",
-    "text": "Recap\nProblem\nWe want to approximate \\(p(\\theta \\mid x)\\) or \\(p(x \\mid \\theta)\\)\n\\[\np(\\theta \\mid x) = \\frac{p(\\theta) \\times p(x \\mid \\theta)}{p(x)}\n\\]\n\nEvaluating \\(p(\\theta)\\), \\(p(x \\mid \\theta)\\) and \\(p(x)\\) may not be tractable\nBut we are able to sample \\((x^{(s)}, \\theta^{(s)}) \\sim p(x, \\theta)\\)\n\nSolution\nUse generative neural networks"
+    "section": "",
+    "text": "Artificial Intelligence has two goals. First, AI is directed toward getting computers to be smart and do smart things so that human beings don’t have to do them. And second, AI […] is also directed at using computers to simulate human beings, so that we can find out how humans work.\n\nSimon (1983, p. 27), van Rooij et al. (2024)"
   },
   {
-    "objectID": "slides/amortized-inference.html#inference-network",
-    "href": "slides/amortized-inference.html#inference-network",
+    "objectID": "slides/intro.html#parameter-estimation",
+    "href": "slides/intro.html#parameter-estimation",
     "title": "Amortized Bayesian Inference",
-    "section": "Inference network",
-    "text": "Inference network\n\nA generative neural network \\(q_\\phi(\\theta \\mid x)\\)\n\nNormalizing flow, flow matching, …\nModel the distribution of parameters, conditioned on data\n\n\nGoal:\n\\[p(\\theta \\mid x) \\approx q_\\phi(\\theta \\mid x)\\]"
+    "section": "Parameter estimation",
+    "text": "Parameter estimation\nWhat are the values of the model parameters \\(\\theta\\), given observed data \\(x\\)?\nBayes’ theorem\n\\[\n\\begin{aligned}\np(\\theta \\mid x) & = \\frac{p(\\theta, x)}{p(x)} \\\\\n& = \\frac{p(\\theta) \\times p(x \\mid \\theta)}{\\int p(\\theta) \\times p(x \\mid \\theta) d\\theta}\n\\end{aligned}\n\\]"
   },
   {
-    "objectID": "slides/amortized-inference.html#role-of-data",
-    "href": "slides/amortized-inference.html#role-of-data",
+    "objectID": "slides/intro.html#marginal-likelihood",
+    "href": "slides/intro.html#marginal-likelihood",
     "title": "Amortized Bayesian Inference",
-    "section": "Role of “data”",
-    "text": "Role of “data”\n\n\\(x\\) conditions the generative network\n\nNormalizing flows: Input to coupling network (usually MLP)\nFlow matching: Input to the vector field network (usually MLP)\n\n\n\\(\\rightarrow\\) Must be of fixed dimensions"
+    "section": "Marginal likelihood",
+    "text": "Marginal likelihood\n\\[\np(x) = \\int p(\\theta) \\times p(x \\mid \\theta) d\\theta\n\\]\n\ndifficult to evaluate\noften intractable"
   },
   {
-    "objectID": "slides/amortized-inference.html#data-of-varying-dimensions",
-    "href": "slides/amortized-inference.html#data-of-varying-dimensions",
+    "objectID": "slides/intro.html#classic-alternatives",
+    "href": "slides/intro.html#classic-alternatives",
     "title": "Amortized Bayesian Inference",
-    "section": "Data of varying dimensions",
-    "text": "Data of varying dimensions\n\nSample sizes, study design, resolution, …\n\n\\(\\rightarrow\\) Summary statistics\n\nHandcrafted: Mean, SD, Correlation,…\nSummary networks"
+    "section": "Classic alternatives",
+    "text": "Classic alternatives\n\nApproximate \\(p(\\theta \\mid x)\\)\n\nMarkov Chain Monte Carlo (MCMC): \\(\\theta \\propto p(\\theta) \\times p(x \\mid \\theta)\\)\n\nObtain point estimates:\n\nMaximum likelihood: \\(\\hat{\\theta} = \\operatorname*{argmax}_{\\theta} p(x \\mid \\theta)\\)\nMaximum aposteriori: \\(\\hat{\\theta} = \\operatorname*{argmax}_{\\theta} p(\\theta) \\times p(x \\mid \\theta)\\)\n\nNone of the methods require \\(p(x)\\)\nBut all require evaluating \\(p(x \\mid \\theta)\\)"
   },
   {
-    "objectID": "slides/amortized-inference.html#summary-network-h_psi",
-    "href": "slides/amortized-inference.html#summary-network-h_psi",
+    "objectID": "slides/intro.html#simulation-based-inference-sbi",
+    "href": "slides/intro.html#simulation-based-inference-sbi",
     "title": "Amortized Bayesian Inference",
-    "section": "Summary network \\(h_\\psi\\)",
-    "text": "Summary network \\(h_\\psi\\)\n\nTakes input of variable size\nOutputs fixed size embedding\n\n\n\\(\\rightarrow\\) Condition the inference network on the output of the summary network\n\\[p(\\theta \\mid x) \\approx q_\\phi(\\theta \\mid h_\\psi(x))\\]"
+    "section": "Simulation-based inference (SBI)",
+    "text": "Simulation-based inference (SBI)\n\n“Likelihood-free”\nCannot evaluate \\(p(x \\mid \\theta)\\) or \\(p(\\theta)\\)\nApproximate using sampling\n\nExamples\n\nSurrogate Likelihood\nRejection Sampling\nApproximate Bayesian Computation\n\nModern overview: Cranmer et al. (2020)"
   },
   {
-    "objectID": "slides/amortized-inference.html#learning-the-posterior",
-    "href": "slides/amortized-inference.html#learning-the-posterior",
+    "objectID": "slides/intro.html#surrogate-likelihood",
+    "href": "slides/intro.html#surrogate-likelihood",
     "title": "Amortized Bayesian Inference",
-    "section": "Learning the posterior",
-    "text": "Learning the posterior\n\\[\n\\begin{aligned}\n\\hat{\\phi}, \\hat{\\psi} = \\operatorname*{argmin}_{\\phi, \\psi} & \\mathbb{E}_{x \\sim p(x)} \\mathbb{KL}\\big[p(\\theta \\mid x) || q_\\phi(\\theta \\mid h_\\psi(x))\\big] = \\\\\n= \\operatorname*{argmin}_{\\phi, \\psi} & \\mathbb{E}_{x \\sim p(x)} \\mathbb{E}_{\\theta \\sim p(\\theta \\mid x)} \\log \\frac{p(\\theta \\mid x)}{q_\\phi(\\theta \\mid h_\\psi(x))} \\propto \\\\\n\\propto \\operatorname*{argmin}_{\\phi, \\psi} & - \\mathbb{E}_{(x, \\theta) \\sim p(x, \\theta)} \\log q_\\phi(\\theta \\mid h_\\psi(x)) \\approx\\\\\n\\approx \\operatorname*{argmin}_{\\phi, \\psi} & - \\frac{1}{S}\\sum_{s=1}^S \\log q_\\phi(\\theta^{(s)} \\mid h_\\psi(x^{(s)}))\n\\end{aligned}\n\\]\n\\(\\rightarrow\\) must be able to generate samples \\((x^{(s)}, \\theta^{(s)}) \\sim p(x, \\theta)\\)"
+    "section": "Surrogate likelihood",
+    "text": "Surrogate likelihood\n\nFor a given parameter value \\(\\theta\\), simulate many samples of \\(x\\)\nEstimate the density \\(p(x\\mid\\theta)\\) (e.g., kernel density estimation)\n\nUsed for approximate MLE/MAP, or within MCMC"
   },
   {
-    "objectID": "slides/amortized-inference.html#training-the-networks",
-    "href": "slides/amortized-inference.html#training-the-networks",
+    "objectID": "slides/intro.html#rejection-sampling",
+    "href": "slides/intro.html#rejection-sampling",
     "title": "Amortized Bayesian Inference",
-    "section": "Training the networks",
-    "text": "Training the networks\n\nDefine a generative statistical model\n\n\\(p(x, \\theta)\\), typically \\(p(\\theta) \\times p(x \\mid \\theta)\\)\n\nDefine inference and (optional) summary networks\n\n\\(q_\\phi(x \\mid h_\\psi(x))\\)\n\nTrain the networks\n\nSample from \\((x^{(s)}, \\theta^{(s)}) \\sim p(x, \\theta)\\)\nOptimize weights \\(\\phi\\) and \\(\\psi\\) so that \\(p(\\theta \\mid x) \\approx q_\\phi(\\theta \\mid h_\\psi(x))\\)"
+    "section": "Rejection sampling",
+    "text": "Rejection sampling\n\\[\n\\begin{aligned}\np(\\theta, x) & = p(\\theta) p(x \\mid \\theta)\\\\\n\\end{aligned}\n\\]"
   },
   {
-    "objectID": "slides/amortized-inference.html#inference",
-    "href": "slides/amortized-inference.html#inference",
+    "objectID": "slides/intro.html#rejection-sampling-1",
+    "href": "slides/intro.html#rejection-sampling-1",
     "title": "Amortized Bayesian Inference",
-    "section": "Inference",
-    "text": "Inference\n\nOnce the networks are trained, they can be used for inference\nMost of computational resources are used during training\nInference is fast (only requires a simple pass through the network)\n\n\\(\\rightarrow\\) Amortized inference: Pay upfront the cost of inference during training, making subsequent inference effective"
+    "section": "Rejection sampling",
+    "text": "Rejection sampling\n\\[\n\\begin{aligned}\np(\\theta, x) & = p(\\theta) p(x \\mid \\theta)\\\\\n\\end{aligned}\n\\]"
   },
   {
-    "objectID": "slides/amortized-inference.html#amortized-bayesian-inference",
-    "href": "slides/amortized-inference.html#amortized-bayesian-inference",
+    "objectID": "slides/intro.html#rejection-sampling-2",
+    "href": "slides/intro.html#rejection-sampling-2",
     "title": "Amortized Bayesian Inference",
-    "section": "Amortized Bayesian Inference",
-    "text": "Amortized Bayesian Inference\n \nFor more info, see Radev et al. (2020)"
+    "section": "Rejection sampling",
+    "text": "Rejection sampling\n\\[\n\\begin{aligned}\n\\theta^{(s)} & \\sim \\text{Beta}(1, 1)\\\\\nx^{(s)} &\\sim \\text{Binomial}(\\theta^{(s)}, 10)\\\\\n\\\\[0.1em]\n\\theta \\mid x^{\\text{obs}}=7 & \\approx \\text{Samples from } \\theta^{(s)} \\text{ where } x^{(s)} = 7\n\\end{aligned}\n\\]\n\n\nPython\n\nprior = np.random.beta(1, 1, size=5000)\nx = np.random.binomial(n=10, p=prior)\n\nobserved = 7\nposterior = prior[x == observed]"
   },
   {
-    "objectID": "slides/amortized-inference.html#bayesflow-radev2023bayesflow",
-    "href": "slides/amortized-inference.html#bayesflow-radev2023bayesflow",
+    "objectID": "slides/intro.html#approximate-bayesian-computation-abc",
+    "href": "slides/intro.html#approximate-bayesian-computation-abc",
     "title": "Amortized Bayesian Inference",
-    "section": "BayesFlow (Radev, Schmitt, Schumacher, et al., 2023)",
-    "text": "BayesFlow (Radev, Schmitt, Schumacher, et al., 2023)\n\nPython library\nImplementation of common neural architectures to make ABI easier\nHelper functions for simulation, configuration, training, validation, diagnostics,…"
+    "section": "Approximate Bayesian Computation (ABC)",
+    "text": "Approximate Bayesian Computation (ABC)\n\nGeneralization of rejection sampling\nGiven a sampled parameter value \\(\\theta\\), generate a data set \\(x\\)\nCompare the simulated data set to observed \\(x^{\\text{obs}}\\)\nRetain the parameter if the data sets are not too dissimilar\n\n\\[\n\\rho(s(x), s(x^{\\text{obs}})) \\leq \\epsilon\n\\]"
   },
   {
-    "objectID": "slides/amortized-inference.html#old-version",
-    "href": "slides/amortized-inference.html#old-version",
+    "objectID": "slides/intro.html#issues",
+    "href": "slides/intro.html#issues",
     "title": "Amortized Bayesian Inference",
-    "section": "Old version",
-    "text": "Old version\n\nBuild on TensorFlow\nPrevious projects build with it\nBespoke syntax, not that transparent\nStale development (no new features), being deprecated\nstable legacy branch on GitHub\npip install git+https://github.com/bayesflow-org/bayesflow@stable-legacy"
+    "section": "Issues",
+    "text": "Issues\n\nCurse of dimensionality\nComputationally expensive\nHandcrafted summary statistics"
   },
   {
-    "objectID": "slides/amortized-inference.html#new-version",
-    "href": "slides/amortized-inference.html#new-version",
+    "objectID": "slides/intro.html#neural-estimation",
+    "href": "slides/intro.html#neural-estimation",
     "title": "Amortized Bayesian Inference",
-    "section": "New version",
-    "text": "New version\n\nBuilt on keras\n\nTensorFlow, JAX, or PyTorch as a backend\n\nModern interface, more transparent, faster\nReleased very recently\nActive development, future standard\nmain branch on GitHub\npip install git+https://github.com/bayesflow-org/bayesflow@main"
+    "section": "Neural estimation",
+    "text": "Neural estimation\n\nApproximate using generative neural networks\n\nDeep learning architecture that approximates a probability distribution\n\n\n\n\n\nNeural likelihood estimation (NLE)\n\nLearn \\(p(x \\mid \\theta)\\)\nSurrogate likelihood\n\n\nNeural posterior estimation (NPE)\n\nLearn \\(p(\\theta \\mid x)\\)\nObtain posterior directly"
   },
   {
-    "objectID": "slides/amortized-inference.html#general-workflow",
-    "href": "slides/amortized-inference.html#general-workflow",
+    "objectID": "slides/intro.html#amortized-bayesian-inference-abi",
+    "href": "slides/intro.html#amortized-bayesian-inference-abi",
     "title": "Amortized Bayesian Inference",
-    "section": "General workflow",
-    "text": "General workflow"
+    "section": "Amortized Bayesian Inference (ABI)",
+    "text": "Amortized Bayesian Inference (ABI)\n\nGenerative neural networks\n\nProduce a distribution \\(q(\\theta \\mid x)\\)\n\nTrain them on simulated pairs \\((\\theta^{(s)}, x^{(s)}) \\sim p(\\theta, x)\\)\n\nLearn \\(q(\\theta \\mid x) \\approx p(\\theta \\mid x)\\)\n\nOnce trained, can be used on observed data \\(x^\\text{obs}\\)\n\n\\(q(\\theta \\mid x^\\text{obs}) \\approx p(\\theta \\mid x^\\text{obs})\\)"
   },
   {
-    "objectID": "slides/amortized-inference.html#ingredients",
-    "href": "slides/amortized-inference.html#ingredients",
+    "objectID": "slides/intro.html#amortized-bayesian-inference-abi-1",
+    "href": "slides/intro.html#amortized-bayesian-inference-abi-1",
     "title": "Amortized Bayesian Inference",
-    "section": "Ingredients",
-    "text": "Ingredients\n\nSimulator\n\nSimulate data from the statistical model\n\nAdapter\n\nConfigure the data\n\nSummary network (optional)\n\nGet summary embeddings\n\nInference network\n\nApproximate the posterior"
+    "section": "Amortized Bayesian Inference (ABI)",
+    "text": "Amortized Bayesian Inference (ABI)\nPay the cost of inference upfront during training, receive benefits later\n\n\nTraining\n\nTrain neural networks\nSimulated data and parameters\nLearn the maping between data and parameters\nSlow, resource consuming process\n\n\nInference\n\nApply pretrained networks\nObserved data\nPosterior distribution of parameters\nFast, cheap process"
   },
   {
-    "objectID": "slides/amortized-inference.html#quality-of-life",
-    "href": "slides/amortized-inference.html#quality-of-life",
+    "objectID": "slides/intro.html#amortized-bayesian-inference-abi-2",
+    "href": "slides/intro.html#amortized-bayesian-inference-abi-2",
     "title": "Amortized Bayesian Inference",
-    "section": "Quality of life",
-    "text": "Quality of life\n\nDiagnostics\n\nPlots and statistics to evaluate the approximation\n\nApproximator\n\nHold ingredients necessary for approximation together\nAdapter, Summary network, Inference network\n\nWorkflow\n\nHold ingredients for the entire pipeline together\nSimulator, Adapter, Summary network Inference network, Diagnostics"
+    "section": "Amortized Bayesian Inference (ABI)",
+    "text": "Amortized Bayesian Inference (ABI)\nUsing deep learning generative neural networks to make Bayesian inference.\n\n\n\nAdvantages\n\nFast inference\nSimulation based – intractable models\n\n\nDisatvantages\n\nNeed for training\nSimulation based – weaker guarantees"
   },
   {
-    "objectID": "slides/amortized-inference.html#general-pipeline",
-    "href": "slides/amortized-inference.html#general-pipeline",
-    "title": "Amortized Bayesian Inference",
-    "section": "General pipeline",
-    "text": "General pipeline\n\nDefine the statistical model (through simulator)\nDefine the approximator (through neural networks)\nTrain the neural networks\nValidate the approximator\nInference and diagnostics"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#define-the-simulator",
-    "href": "slides/amortized-inference.html#define-the-simulator",
-    "title": "Amortized Bayesian Inference",
-    "section": "Define the simulator",
-    "text": "Define the simulator\n\nDefine the “statistical” model in terms of a simulator\nbayesflow expects “batched” simulations\n\n\n\nPython\n\nclass Simulator(bf.simulators.Simulator):\n    def sample(self, batch_size):\n        theta = np.random.beta(1, 1, size=batch_size)\n        x = np.random.binomial(n=10, p=theta)\n        return dict(theta=theta, x=x)\n\nsimulator = Simulator()\ndataset = simulator.sample(100)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#define-the-simulator-1",
-    "href": "slides/amortized-inference.html#define-the-simulator-1",
-    "title": "Amortized Bayesian Inference",
-    "section": "Define the simulator",
-    "text": "Define the simulator\n\nDefine the “statistical” model in terms of a simulator\nbayesflow expects “batched” simulations\nmake_simulator: Convenient interface for “auto batching”\n\n\n\nPython\n\ndef prior():\n    return dict(mu = np.random.normal(0, 1))\n\ndef likelihood(mu):\n    return dict(x = np.random.normal(mu, 1, size=20))\n\nsimulator = bf.make_simulator([prior, likelihood])\n\nsimulator.sample(10)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#simulator-data-of-varying-size",
-    "href": "slides/amortized-inference.html#simulator-data-of-varying-size",
-    "title": "Amortized Bayesian Inference",
-    "section": "Simulator: Data of varying size",
-    "text": "Simulator: Data of varying size\n\nThe shape of data must be the same within each batch\n\nStrategies:\n\nPad vectors to be the same length\nVary data shapes between batches"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#padmask-vectors",
-    "href": "slides/amortized-inference.html#padmask-vectors",
-    "title": "Amortized Bayesian Inference",
-    "section": "Pad/mask vectors",
-    "text": "Pad/mask vectors\n\n\nPython\n\ndef context():\n    return dict(n = np.random.randint(10, 101))\n\ndef prior():\n    return dict(mu = np.random.normal(0, 1))\n\ndef likelihood(mu, n):\n    observed = np.zeros(0)\n    observed[:n] = 1\n\n    x = np.zeros(100)\n    x[:n] = np.random.normal(mu, 1, size=n)\n    return dict(observed=observed, x=x)\n\nsimulator = bf.make_simulator([context, prior, likelihood])\n\nsimulator.sample(10)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#vary-data-shape-between-batches",
-    "href": "slides/amortized-inference.html#vary-data-shape-between-batches",
-    "title": "Amortized Bayesian Inference",
-    "section": "Vary data shape between batches",
-    "text": "Vary data shape between batches\n\n\nPython\n\ndef context(batch_size):\n    return dict(n = np.random.randint(10, 101))\n\ndef prior():\n    return dict(mu = np.random.normal(0, 1))\n\ndef likelihood(mu, n):\n    x = np.random.normal(mu, 1, size=n)\n    return dict(x=x)\n\nsimulator = bf.make_simulator([prior, likelihood], meta_fn=context)\n\nsimulator.sample(10)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#padding-vs-batched-context",
-    "href": "slides/amortized-inference.html#padding-vs-batched-context",
-    "title": "Amortized Bayesian Inference",
-    "section": "Padding vs batched context",
-    "text": "Padding vs batched context\n\nBoth approaches work\nBatched context is a bit cleaner\n\nDo not have to fiddle with masking\nLimited useability (cannot effectivelly use in offline mode)\n\nPadding\n\nMore verbose\nMore general"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#approximator",
-    "href": "slides/amortized-inference.html#approximator",
-    "title": "Amortized Bayesian Inference",
-    "section": "Approximator",
-    "text": "Approximator\n\nInference network\n\nGenerates distributions\n\n(Optional) summary network\n\nGenerates summary embeddings\n\nAdapter\n\nReshapes data to be passed into networks"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#inference-network-1",
-    "href": "slides/amortized-inference.html#inference-network-1",
-    "title": "Amortized Bayesian Inference",
-    "section": "Inference network",
-    "text": "Inference network\n\n\nPython\n\ninference_network = bf.networks.CouplingFlow()\n\n\n\n\nPython\n\ninference_network = bf.networks.FlowMatching()\n\n\nVarious options available, see the Two Moons Example."
-  },
-  {
-    "objectID": "slides/amortized-inference.html#what-architecture-to-pick",
-    "href": "slides/amortized-inference.html#what-architecture-to-pick",
-    "title": "Amortized Bayesian Inference",
-    "section": "What architecture to pick?",
-    "text": "What architecture to pick?\n\n\n\nCoupling flow\n\nSlow training\nLess expressive\nFaster during inference\n\n\nFlow matching\n\nFast training\nMore expressive\nSlow inference on CPU"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#what-architecture-to-pick-1",
-    "href": "slides/amortized-inference.html#what-architecture-to-pick-1",
-    "title": "Amortized Bayesian Inference",
-    "section": "What architecture to pick?",
-    "text": "What architecture to pick?\n\nAffine coupling for low-dimensional, uni-modal posteriors\nSpline coupling for harder posteriors, including multi-modal\nFlow matching for highly complex posteriors\n\nor when inference speed is not of concern\nor if GPUs available"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#summary-network",
-    "href": "slides/amortized-inference.html#summary-network",
-    "title": "Amortized Bayesian Inference",
-    "section": "Summary network",
-    "text": "Summary network\n\nExtract all relevant information from the variable-sized data\nOutput fixed sized embeddings\n“Sufficient statistics”\nRule of thumb: output size should be at least \\(2\\times\\) the number of parameters"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#what-architecture-to-pick-2",
-    "href": "slides/amortized-inference.html#what-architecture-to-pick-2",
-    "title": "Amortized Bayesian Inference",
-    "section": "What architecture to pick?",
-    "text": "What architecture to pick?\nReflect symmetries in the data\nExchangeable data\n\nDeep Sets, Set Transformers,…\n\n\n\nPython\n\nsummary_network = bf.networks.DeepSet()\n\nTime series, Sequences, …\n\nRNNs, CNNs, Transformers, …\n\n\n\nPython\n\nsummary_network = bf.networks.LSTNet()"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#adapter-main-purpose",
-    "href": "slides/amortized-inference.html#adapter-main-purpose",
-    "title": "Amortized Bayesian Inference",
-    "section": "Adapter: Main purpose",
-    "text": "Adapter: Main purpose\n\nReshapes data to be passed into networks\nA hub that handles what is passed into what network\n\nMain keywords:\n\n\"inference_variables\": What are the variables that the inference network should learn about?\n\n\\(q(\\theta \\mid x) \\rightarrow\\) parameters \\(\\theta\\)\n\n\"inference_conditions\": What are the variables that the inference network should be directly conditioned on?\n\n\\(q(\\theta \\mid x) \\rightarrow\\) data \\(x\\)\n\n\"summary_variables\": What are the variables that are supposed to be passed into the summary network?\n\n\\(q(\\theta \\mid f(x)) \\rightarrow\\) data \\(x\\)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#adapter",
-    "href": "slides/amortized-inference.html#adapter",
-    "title": "Amortized Bayesian Inference",
-    "section": "Adapter",
-    "text": "Adapter\n\n\nPython\n\nadapter = (bf.Adapter()\n  .concatenate([\"mu\", \"sigma\"], into = \"inference_variables\")\n  .rename([\"n\"], \"inference_conditions\")\n  .concatenate([\"x\", \"observed\"], into = \"summary_variables\")\n)\n\n\nTransform variables\n\n.standardize\n.sqrt, .log\n.constrain\n\nReshape variables\n\n.as_set, .as_time_series\n.broadcast\n.one_hot\n\n… and many more operations"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#approximator-1",
-    "href": "slides/amortized-inference.html#approximator-1",
-    "title": "Amortized Bayesian Inference",
-    "section": "Approximator",
-    "text": "Approximator\n\nHolds ingredients used for inference\n\n\n\nPython\n\napproximator = bf.approximators.ContinuousApproximator(\n    inference_network=inference_network,\n    summary_network=summary_network\n    adapter=adapter\n)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#workflow-optional",
-    "href": "slides/amortized-inference.html#workflow-optional",
-    "title": "Amortized Bayesian Inference",
-    "section": "Workflow (optional)",
-    "text": "Workflow (optional)\n\nHold all ingredients used for training, inference, and diagnostics\n\n\n\nPython\n\nworkflow = bf.BasicWorkflow(\n    inference_network=inference_network,\n    summary_network=summary_network\n    adapter=adapter,\n    simulator=simulator\n)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#network-training",
-    "href": "slides/amortized-inference.html#network-training",
-    "title": "Amortized Bayesian Inference",
-    "section": "Network training",
-    "text": "Network training\n\nIn principle, training as any other model in keras\n\napproximator.fit\n\nDefine optimizer (e.g., keras.optimizers.Adam)\n\n(optional) define schedule, early stopping,…\n\nDefine training budget and regime\n\nNumber of epochs\nBatch size, Number of batches\nSimulate data or supply simulator\n\nCompile and train the model until convergence\nBasicWorkflow makes fitting easier, comes with some predefined reasonable settings\n\ne.g. workflow.fit_online"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#training-regimes",
-    "href": "slides/amortized-inference.html#training-regimes",
-    "title": "Amortized Bayesian Inference",
-    "section": "Training regimes",
-    "text": "Training regimes\n\n\nOnline\n\nGenerate data during training\nSlower to train\nPrevents overfitting\n\n\nOffline\n\nTrain on fixed data\nFaster to train\nRisk of overfitting\n\n\nFrom disk\n\nOffline training\nLarge data that does not fit into memory\nRead data on demand during training"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#goals",
-    "href": "slides/amortized-inference.html#goals",
-    "title": "Amortized Bayesian Inference",
-    "section": "Goals",
-    "text": "Goals\n\nIs the neural approximator doing a good job at approximating the true posterior?\n\n“Computational faithfulness”\nAssesses the quality of approximator\n\nHow much can we expect to learn given data?\n\nParameter recovery, posterior contraction, posterior z-score\nAssesses how the statistical model interacts with data\n\n\nFor general discussion, see Schad et al. (2021)."
-  },
-  {
-    "objectID": "slides/amortized-inference.html#procedure",
-    "href": "slides/amortized-inference.html#procedure",
-    "title": "Amortized Bayesian Inference",
-    "section": "Procedure",
-    "text": "Procedure\n\nDraw fresh validation data from the simulator\nExtract the parameter samples from the prior\nSample from the posterior\n\n\n\nPython\n\ndataset = simulator.sample(1_000)\nprior = {k: v if k in param_keys for k, v in dataset.items()}\nposterior = approximator.sample(500, conditions = dataset)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#simulation-based-calibration-sbc-talts2018validating",
-    "href": "slides/amortized-inference.html#simulation-based-calibration-sbc-talts2018validating",
-    "title": "Amortized Bayesian Inference",
-    "section": "Simulation-based calibration (SBC, Talts et al., 2018)",
-    "text": "Simulation-based calibration (SBC, Talts et al., 2018)\n\nTesting computational faithfulness of a posterior approximator\nPosterior distribution averaged over prior predictive distribution is the same as the prior distribution\n\n\\[\np(\\theta) = \\int \\int p(\\theta \\mid \\tilde{y}) \\underbrace{p(\\tilde{y} \\mid \\tilde{\\theta}) p(\\tilde{\\theta})}_{\\text{Prior predictives}} d\\tilde{\\theta} d \\tilde{y}\n\\]"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#simulation-based-calibration",
-    "href": "slides/amortized-inference.html#simulation-based-calibration",
-    "title": "Amortized Bayesian Inference",
-    "section": "Simulation-based calibration",
-    "text": "Simulation-based calibration\n\nDraw \\(N\\) prior predictive datasets \\((\\theta_i^{\\text{sim}}, y_i^{\\text{sim}}) \\sim p(\\theta, y)\\)\nFor each data set \\(y_i\\), draw \\(M\\) samples from the approximate posterior: \\(\\theta_{ij} \\sim q(\\theta \\mid y_i^{\\text{sim}})\\)\nCalculate rank statistic \\(r_i = \\sum_{j=1}^M \\text{I}\\big(\\theta_{ij} &lt; \\theta_i^{\\text{sim}}\\big)\\)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#simulation-based-calibration-1",
-    "href": "slides/amortized-inference.html#simulation-based-calibration-1",
-    "title": "Amortized Bayesian Inference",
-    "section": "Simulation-based calibration",
-    "text": "Simulation-based calibration\n\n\nSimulate\n\\[\n\\begin{aligned}\n\\theta^{\\text{sim}} & \\sim p(\\theta) \\\\\ny^{\\text{sim}} &\\sim p(y \\mid \\theta^{\\text{sim}})\n\\end{aligned}\n\\]\n\nBy symmetry\n\\[\n\\begin{aligned}\n(\\theta^{\\text{sim}}, y^{\\text{sim}}) & \\sim p(\\theta, y) \\\\\n\\theta^{\\text{sim}} &\\sim p(\\theta \\mid y^{\\text{sim}})\n\\end{aligned}\n\\]\n\nCompute\n\\[\n\\begin{aligned}\n\\theta_1, \\dots, \\theta_M & \\sim q(\\theta \\mid y^{\\text{sim}}) \\\\\n\\end{aligned}\n\\]\nIf \\(q(\\theta \\mid y^{\\text{sim}}) = p(\\theta \\mid y^{\\text{sim}})\\), then the rank statistic of \\(\\theta^{\\text{sim}}\\) is uniform."
-  },
-  {
-    "objectID": "slides/amortized-inference.html#visualizing-sbc",
-    "href": "slides/amortized-inference.html#visualizing-sbc",
-    "title": "Amortized Bayesian Inference",
-    "section": "Visualizing SBC",
-    "text": "Visualizing SBC\n\nHistograms\nECDF\nECDF difference"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#sbc-histograms",
-    "href": "slides/amortized-inference.html#sbc-histograms",
-    "title": "Amortized Bayesian Inference",
-    "section": "SBC Histograms",
-    "text": "SBC Histograms\n\n\nPython\n\nfig=bf.diagnostics.calibration_histogram(\n    estimates=posterior, \n    targets=prior)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#sbc-ecdf",
-    "href": "slides/amortized-inference.html#sbc-ecdf",
-    "title": "Amortized Bayesian Inference",
-    "section": "SBC ECDF",
-    "text": "SBC ECDF\n\n\nPython\n\nfig=bf.diagnostics.calibration_ecdf(\n    estimates=posterior, \n    targets=prior)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#sbc-ecdf-difference",
-    "href": "slides/amortized-inference.html#sbc-ecdf-difference",
-    "title": "Amortized Bayesian Inference",
-    "section": "SBC ECDF Difference",
-    "text": "SBC ECDF Difference\n\n\nPython\n\nfig=bf.diagnostics.calibration_ecdf(\n    estimates=posterior, \n    targets=prior,\n    difference=True)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#sbc-interpretation",
-    "href": "slides/amortized-inference.html#sbc-interpretation",
-    "title": "Amortized Bayesian Inference",
-    "section": "SBC interpretation",
-    "text": "SBC interpretation\n\nNecessary but not sufficient condition\n\n✅ All faithful approximators should pass the SBC check\n⚠️ An unfaithful approximator may pass the SBC check\n\nDepends on\n\nSimulation budget (how many datasets)\nApproximation precision (how many posterior draws per data set)\n\\(\\rightarrow\\) degree/ways of miscalibration, rather than ok/not ok"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#what-if-sbc-check-fails",
-    "href": "slides/amortized-inference.html#what-if-sbc-check-fails",
-    "title": "Amortized Bayesian Inference",
-    "section": "What if SBC check fails?",
-    "text": "What if SBC check fails?\n\nPossible causes:\n\nUnderfitting \\(\\rightarrow\\) increase expresiveness of inference or summary network, increase training budget\nOverfitting \\(\\rightarrow\\) decrease expressiveness of inference or summary network, increase training budget\nCoding error \\(\\rightarrow\\) check for errors in the simulator, setting up the approximator\nFundamental problem with the statistical model \\(\\rightarrow\\) change the statistical model"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#posterior-z-score",
-    "href": "slides/amortized-inference.html#posterior-z-score",
-    "title": "Amortized Bayesian Inference",
-    "section": "Posterior z-score",
-    "text": "Posterior z-score\n\nHow well does the estimated posterior mean match the true parameter used for simulating the data?\n\n\\[\nz = \\frac{\\text{mean}(\\theta_i) - \\theta^{\\text{sim}}}{\\text{sd}(\\theta_i)}\n\\]"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#posterior-contraction",
-    "href": "slides/amortized-inference.html#posterior-contraction",
-    "title": "Amortized Bayesian Inference",
-    "section": "Posterior contraction",
-    "text": "Posterior contraction\n\nHow much uncertainty is removed after updating the prior to posterior?\n\n\\[\n\\text{contraction} = 1 - \\frac{\\text{sd}(\\theta_i)}{\\text{sd}(\\theta^{\\text{sim}})}\n\\]"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#z-score-vs.-contraction-plot",
-    "href": "slides/amortized-inference.html#z-score-vs.-contraction-plot",
-    "title": "Amortized Bayesian Inference",
-    "section": "Z-score vs. contraction plot",
-    "text": "Z-score vs. contraction plot\n\n\nPython\n\nfig=bf.diagnostics.plots.z_score_contraction(\n    estimates=posterior, \n    targets=prior)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#parameter-recovery",
-    "href": "slides/amortized-inference.html#parameter-recovery",
-    "title": "Amortized Bayesian Inference",
-    "section": "Parameter recovery",
-    "text": "Parameter recovery\n\nPlot the true parameter values \\(\\theta^{\\text{sim}}\\) against a posterior point estimate (mean, median)\n\n\n\nPython\n\nfig=bf.diagnostics.plots.recovery(estimates=posterior, targets=prior)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#what-if-i-get-poor-results",
-    "href": "slides/amortized-inference.html#what-if-i-get-poor-results",
-    "title": "Amortized Bayesian Inference",
-    "section": "What if I get poor results",
-    "text": "What if I get poor results\n\nPossible causes:\n\nPoor calibration of the approximator \\(\\rightarrow\\) see SBC\nPoor identification of the parameters\n\nUse more informative priors\nChange the model\nAdd more data (sample size, additional variables)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#obtain-posterior-samples",
-    "href": "slides/amortized-inference.html#obtain-posterior-samples",
-    "title": "Amortized Bayesian Inference",
-    "section": "Obtain posterior samples",
-    "text": "Obtain posterior samples\n\n\n\nPython\n\ndata = dict(y = ...)\nposterior = approximator.sample(1000, conditions=data)\n\nfig=bf.diagnostics.plots.pairs_posterior(estimates=posterior)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#model-misspecification",
-    "href": "slides/amortized-inference.html#model-misspecification",
-    "title": "Amortized Bayesian Inference",
-    "section": "Model misspecification",
-    "text": "Model misspecification\n\nPrior misspecification\nLikelihood misspecification\n\n\\(\\rightarrow\\) Approximator may not be trusted"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#posterior-predictive-checks",
-    "href": "slides/amortized-inference.html#posterior-predictive-checks",
-    "title": "Amortized Bayesian Inference",
-    "section": "Posterior predictive checks",
-    "text": "Posterior predictive checks\n\nUse posterior parameter posterior to simulate data from the simulator\nCompare simulated data to observed data\n\nVisual checks - histograms, ecdf plots, scatter plots, …\nComparing summary statistics - means, variances, …"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#use-summary-space",
-    "href": "slides/amortized-inference.html#use-summary-space",
-    "title": "Amortized Bayesian Inference",
-    "section": "Use summary space",
-    "text": "Use summary space\n\nAdd a base distribution to the summary network, e.g.\n\n\n\nPython\n\nsummary_network = bf.networks.Deepset(base_distribution=\"normal\")\n\n\nSchmitt et al. (2023)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#uses-of-bayesflow",
-    "href": "slides/amortized-inference.html#uses-of-bayesflow",
-    "title": "Amortized Bayesian Inference",
-    "section": "Uses of BayesFlow",
-    "text": "Uses of BayesFlow\nIn addition to learning \\(p(\\theta \\mid x)\\):\n\nGenerative modeling tasks\nSurrogate likelihood: \\(p(x \\mid \\theta)\\) (Radev, Schmitt, Pratz, et al., 2023)\nModel comparison: \\(p(\\mathcal{M} \\mid x)\\) (Elsemüller et al., 2024; Radev et al., 2021)\nAmortized point estimation: \\(\\hat{\\theta}\\) (Sainsbury-Dale et al., 2024)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#complex-models",
-    "href": "slides/amortized-inference.html#complex-models",
-    "title": "Amortized Bayesian Inference",
-    "section": "Complex models",
-    "text": "Complex models\n\nThink about possible factorizations of the model\n\nSplit the problem into multiple smaller pieces\n\nExamples:\n\nMultilevel models (Habermann et al., 2024)\nMixture models (Kucharský & Bürkner, 2025)"
-  },
-  {
-    "objectID": "slides/amortized-inference.html#references",
-    "href": "slides/amortized-inference.html#references",
+    "objectID": "slides/intro.html#references",
+    "href": "slides/intro.html#references",
     "title": "Amortized Bayesian Inference",
     "section": "References",
-    "text": "References\n\n\n\n\nElsemüller, L., Schnuerch, M., Bürkner, P.-C., & Radev, S. T. (2024). A deep learning method for comparing bayesian hierarchical models. Psychological Methods, Advance online publication. https://doi.org/10.1037/met0000645\n\n\nHabermann, D., Schmitt, M., Kühmichel, L., Bulling, A., Radev, S. T., & Bürkner, P.-C. (2024). Amortized bayesian multilevel models. arXiv Preprint arXiv:2408.13230.\n\n\nKucharský, Š., & Bürkner, P. C. (2025). Amortized bayesian mixture models. arXiv Preprint arXiv:2501.10229.\n\n\nRadev, S. T., D’Alessandro, M., Mertens, U. K., Voss, A., Köthe, U., & Bürkner, P.-C. (2021). Amortized bayesian model comparison with evidential deep learning. IEEE Transactions on Neural Networks and Learning Systems, 34(8), 4903–4917.\n\n\nRadev, S. T., Mertens, U. K., Voss, A., Ardizzone, L., & Köthe, U. (2020). BayesFlow: Learning complex stochastic models with invertible neural networks. IEEE Transactions on Neural Networks and Learning Systems, 33(4), 1452–1466.\n\n\nRadev, S. T., Schmitt, M., Pratz, V., Picchini, U., Koethe, U., & Bürkner, P.-C. (2023). JANA: Jointly amortized neural approximation of complex bayesian models. The 39th Conference on Uncertainty in Artificial Intelligence. https://openreview.net/forum?id=dS3wVICQrU0\n\n\nRadev, S. T., Schmitt, M., Schumacher, L., Elsemüller, L., Pratz, V., Schälte, Y., Köthe, U., & Bürkner, P.-C. (2023). BayesFlow: Amortized bayesian workflows with neural networks. arXiv. https://arxiv.org/abs/2306.16015\n\n\nSainsbury-Dale, M., Zammit-Mangion, A., & Huser, R. (2024). Likelihood-free parameter estimation with neural bayes estimators. The American Statistician, 78(1), 1–14.\n\n\nSchad, D. J., Betancourt, M., & Vasishth, S. (2021). Toward a principled Bayesian workflow in cognitive science. Psychological Methods, 26(1), 103.\n\n\nSchmitt, M., Bürkner, P.-C., Köthe, U., & Radev, S. T. (2023). Detecting model misspecification in amortized Bayesian inference with neural networks. DAGM German Conference on Pattern Recognition, 541–557.\n\n\nTalts, S., Betancourt, M., Simpson, D., Vehtari, A., & Gelman, A. (2018). Validating bayesian inference algorithms with simulation-based calibration. arXiv Preprint arXiv:1804.06788."
-  },
-  {
-    "objectID": "exercises.html",
-    "href": "exercises.html",
-    "title": "Exercises",
-    "section": "",
-    "text": "To run the exercise notebooks, download them first: Open the notebook on this website, then click on “Other formats” \\(\\rightarrow\\) “Jupyter” on the right side of the page."
-  },
-  {
-    "objectID": "exercises.html#generative-neural-networks",
-    "href": "exercises.html#generative-neural-networks",
-    "title": "Exercises",
-    "section": "Generative neural networks",
-    "text": "Generative neural networks\nHere you can download example notebooks related to creating your own generative neural network architectures.\n\nNormalizing flow\n\nNotebook here\n\nIn this exercise, you will build a normalizing flow based on affine coupling from scratch using keras, that will learn to transform the moons distribution into a standard normal.\n\n\n\n\n\n\n\nVideo\nForward direction\n\n\n\n\n\n\nVideo\nBackward direction\n\n\n\n\n\n\nFigure 1: Normalizing flow\n\n\n\n\n\nFlow matching - Datasaurus\n\nNotebook here\nDownload data: here\n\nIn this exercise, you will build a flow matching model using keras that transports a standard normal distribution into a distribution based on the datasaurus.\n\n\n\nVideo\n\n\nFigure 2: Flow matching\n\n\n\n\n\nFlow matching - mirroring the Swiss roll\n\nNotebook here\nDownload notebook: here\n\nIn this exercise, you will expand the flow matching model so that you can condition the distribution on contextual variables. This will enable you to learn a flow that transports a doghnut distribution into the swiss roll distribution, mirrored along horizontal and vertical axes, depending on the context.\n\n\n\n\n\n\nFigure 3: Swiss roll mirrored along vertical or horizontal axes"
-  },
-  {
-    "objectID": "exercises.html#bayesflow",
-    "href": "exercises.html#bayesflow",
-    "title": "Exercises",
-    "section": "BayesFlow",
-    "text": "BayesFlow\nPlease visit the BayesFlow repository to find a bunch of examples that can help you with BayesFlow. In addition, below are two exercise notebooks you can use to familiarize yourself with BayesFlow.\n\nEstimating parameters of a normal distribution\n\nNotebook here\n\nThis notebook provides you with the very basics of the BayesFlow workflow - starting with defining simulators, through defining and training the neural approximators, and ending with network validation and inference.\n\n\nWald response times, Racing diffusion model\n\nNotebook here\nDownload data: here\n\nThis notebook provides you with a basic application of BayesFlow in the context of models of decision making - the Wald model of simple response times, and the racing diffusion model.\n\n\nRacing diffusion model with covariate on decision threshold\n\nNotebook here\nDownload data: here\n\nIn this notebook (courtesy of Leendert van Maanen), you can fit a Racing diffusion model where the decision threshold decreases as a function of trial number, modeling behavior of a participant who is becoming more and more impatient the longer the experiment keeps going."
-  },
-  {
-    "objectID": "index.html",
-    "href": "index.html",
-    "title": "Welcome to the seminar!",
-    "section": "",
-    "text": "You can use this website to access materials related to the workshop."
-  },
-  {
-    "objectID": "index.html#schedule",
-    "href": "index.html#schedule",
-    "title": "Welcome to the seminar!",
-    "section": "Schedule",
-    "text": "Schedule\n\n\n\nDay\nTime\nTopic\n\n\n\n\nWed\n9:00-10:30\nIntroduction, Deep Learning\n\n\nWed\n11:00-12:30\nDeep Learning, Generative Neural Networks\n\n\nWed\n14:00-15:30\nPractical exercise\n\n\nWed\n16:00-17:30\nAmortized Bayesian Inference with BayesFlow\n\n\nThu\n9:00-10:30\nBayesFlow demonstration\n\n\nThu\n11:00-12:30\nPractical exercise"
-  },
-  {
-    "objectID": "index.html#slides",
-    "href": "index.html#slides",
-    "title": "Welcome to the seminar!",
-    "section": "Slides",
-    "text": "Slides\nHere you can access the presentation slides\n\nIntroduction\nDeep Learning\nGenerative Neural Networks\nAmortized Bayesian Inference with BayesFlow"
-  },
-  {
-    "objectID": "index.html#exercises",
-    "href": "index.html#exercises",
-    "title": "Welcome to the seminar!",
-    "section": "Exercises",
-    "text": "Exercises\nUse the Exercises tab in the navigation bar to access exercise notebooks."
-  },
-  {
-    "objectID": "index.html#projects",
-    "href": "index.html#projects",
-    "title": "Welcome to the seminar!",
-    "section": "Projects",
-    "text": "Projects\nUse the Projects tab in the navigation bar to access the project descriptions. See https://quantitative-thinking.eu/mobilities/seminar-2025/ for all projects."
-  },
-  {
-    "objectID": "index.html#environment",
-    "href": "index.html#environment",
-    "title": "Welcome to the seminar!",
-    "section": "Environment",
-    "text": "Environment\nThe exercises and projects require Python 3.10 – 3.12, and installing necessary libraries. The recommended steps using conda:\n\n\nTerminal\n\n# create a \"bayesflow-seminar\" conda environment with Python 3.11\nconda create --name bayesflow-seminar python=3.11.11\n\n# activate the environment\nconda activate bayesflow-seminar\n\n# kernel for running the jupyter notebooks\nconda install ipykernel --update-deps --force-reinstall\n\n# install packages\npip install tensorflow\npip install git+https://github.com/bayesflow-org/bayesflow@main\n\nWhen running the exercise notebooks, remember to use the correct environment!\nNote: bayesflow can run with jax or pytorch instead of tensorflow. If you prefer to use those as a backend, you can install them as well. Remember to set the correct environment before loading keras, e.g., os.environ[\"KERAS_BACKEND\"] = \"jax\". Note that the examples of generative neural networks do require tensorflow regardless."
+    "text": "References\n\n\n\n\nCranmer, K., Brehmer, J., & Louppe, G. (2020). The frontier of simulation-based inference. Proceedings of the National Academy of Sciences, 117(48), 30055–30062.\n\n\nSimon, H. A. (1983). Why should machines learn? In Machine learning (pp. 25–37). Elsevier.\n\n\nvan Rooij, I., Guest, O., Adolfi, F., Haan, R. de, Kolokolova, A., & Rich, P. (2024). Reclaiming AI as a theoretical tool for cognitive science. Computational Brain & Behavior, 7(4), 616–636."
   },
   {
     "objectID": "slides/deep-learning.html#section-1",
@@ -1351,123 +714,774 @@
     "text": "References\n\n\n\n\nChollet, F. (2021). Deep learning with Python. Manning Publications.\n\n\nKingma, D. P., & Ba, J. (2014). Adam: A method for stochastic optimization. arXiv Preprint arXiv:1412.6980.\n\n\nKunc, V., & Kléma, J. (2024). Three decades of activations: A comprehensive survey of 400 activation functions for neural networks. arXiv Preprint arXiv:2402.09092.\n\n\nShahab, O., El Kurdi, B., Shaukat, A., Nadkarni, G., & Soroush, A. (2024). Large language models: A primer and gastroenterology applications. Therapeutic Advances in Gastroenterology, 17, 17562848241227031.\n\n\nUrban, C. J., & Gates, K. M. (2021). Deep learning: A primer for psychologists. Psychological Methods, 26(6), 743.\n\n\nVaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., Kaiser, Ł., & Polosukhin, I. (2017). Attention is all you need. Advances in Neural Information Processing Systems, 30.\n\n\nZaheer, M., Kottur, S., Ravanbakhsh, S., Poczos, B., Salakhutdinov, R. R., & Smola, A. J. (2017). Deep Sets. Advances in Neural Information Processing Systems, 30."
   },
   {
-    "objectID": "slides/intro.html#section",
-    "href": "slides/intro.html#section",
-    "title": "Amortized Bayesian Inference",
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Welcome to the seminar!",
     "section": "",
-    "text": "Artificial Intelligence has two goals. First, AI is directed toward getting computers to be smart and do smart things so that human beings don’t have to do them. And second, AI […] is also directed at using computers to simulate human beings, so that we can find out how humans work.\n\nSimon (1983, p. 27), van Rooij et al. (2024)"
+    "text": "You can use this website to access materials related to the workshop."
   },
   {
-    "objectID": "slides/intro.html#parameter-estimation",
-    "href": "slides/intro.html#parameter-estimation",
+    "objectID": "index.html#schedule",
+    "href": "index.html#schedule",
+    "title": "Welcome to the seminar!",
+    "section": "Schedule",
+    "text": "Schedule\n\n\n\nDay\nTime\nTopic\n\n\n\n\nWed\n9:00-10:30\nIntroduction, Deep Learning\n\n\nWed\n11:00-12:30\nDeep Learning, Generative Neural Networks\n\n\nWed\n14:00-15:30\nPractical exercise\n\n\nWed\n16:00-17:30\nAmortized Bayesian Inference with BayesFlow\n\n\nThu\n9:00-10:30\nBayesFlow demonstration\n\n\nThu\n11:00-12:30\nPractical exercise"
+  },
+  {
+    "objectID": "index.html#slides",
+    "href": "index.html#slides",
+    "title": "Welcome to the seminar!",
+    "section": "Slides",
+    "text": "Slides\nHere you can access the presentation slides\n\nIntroduction\nDeep Learning\nGenerative Neural Networks\nAmortized Bayesian Inference with BayesFlow"
+  },
+  {
+    "objectID": "index.html#exercises",
+    "href": "index.html#exercises",
+    "title": "Welcome to the seminar!",
+    "section": "Exercises",
+    "text": "Exercises\nUse the Exercises tab in the navigation bar to access exercise notebooks."
+  },
+  {
+    "objectID": "index.html#projects",
+    "href": "index.html#projects",
+    "title": "Welcome to the seminar!",
+    "section": "Projects",
+    "text": "Projects\nUse the Projects tab in the navigation bar to access the project descriptions. See https://quantitative-thinking.eu/mobilities/seminar-2025/ for all projects."
+  },
+  {
+    "objectID": "index.html#environment",
+    "href": "index.html#environment",
+    "title": "Welcome to the seminar!",
+    "section": "Environment",
+    "text": "Environment\nThe exercises and projects require Python 3.10 – 3.12, and installing necessary libraries. The recommended steps using conda:\n\n\nTerminal\n\n# create a \"bayesflow-seminar\" conda environment with Python 3.11\nconda create --name bayesflow-seminar python=3.11.11\n\n# activate the environment\nconda activate bayesflow-seminar\n\n# kernel for running the jupyter notebooks\nconda install ipykernel --update-deps --force-reinstall\n\n# install packages\npip install tensorflow\npip install git+https://github.com/bayesflow-org/bayesflow@main\n\nWhen running the exercise notebooks, remember to use the correct environment!\nNote: bayesflow can run with jax or pytorch instead of tensorflow. If you prefer to use those as a backend, you can install them as well. Remember to set the correct environment before loading keras, e.g., os.environ[\"KERAS_BACKEND\"] = \"jax\". Note that the examples of generative neural networks do require tensorflow regardless."
+  },
+  {
+    "objectID": "LICENSE-CODE.html",
+    "href": "LICENSE-CODE.html",
+    "title": "Seminar in Amortized Bayesian Inference",
+    "section": "",
+    "text": "Copyright 2025 Šimon Kucharský\nRedistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:\n\nRedistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.\nRedistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.\nNeither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+  },
+  {
+    "objectID": "exercises.html",
+    "href": "exercises.html",
+    "title": "Exercises",
+    "section": "",
+    "text": "To run the exercise notebooks, download them first: Open the notebook on this website, then click on “Other formats” \\(\\rightarrow\\) “Jupyter” on the right side of the page."
+  },
+  {
+    "objectID": "exercises.html#generative-neural-networks",
+    "href": "exercises.html#generative-neural-networks",
+    "title": "Exercises",
+    "section": "Generative neural networks",
+    "text": "Generative neural networks\nHere you can download example notebooks related to creating your own generative neural network architectures.\n\nNormalizing flow\n\nNotebook here\n\nIn this exercise, you will build a normalizing flow based on affine coupling from scratch using keras, that will learn to transform the moons distribution into a standard normal.\n\n\n\n\n\n\n\nVideo\nForward direction\n\n\n\n\n\n\nVideo\nBackward direction\n\n\n\n\n\n\nFigure 1: Normalizing flow\n\n\n\n\n\nFlow matching - Datasaurus\n\nNotebook here\nDownload data: here\n\nIn this exercise, you will build a flow matching model using keras that transports a standard normal distribution into a distribution based on the datasaurus.\n\n\n\nVideo\n\n\nFigure 2: Flow matching\n\n\n\n\n\nFlow matching - mirroring the Swiss roll\n\nNotebook here\nDownload notebook: here\n\nIn this exercise, you will expand the flow matching model so that you can condition the distribution on contextual variables. This will enable you to learn a flow that transports a doghnut distribution into the swiss roll distribution, mirrored along horizontal and vertical axes, depending on the context.\n\n\n\n\n\n\nFigure 3: Swiss roll mirrored along vertical or horizontal axes"
+  },
+  {
+    "objectID": "exercises.html#bayesflow",
+    "href": "exercises.html#bayesflow",
+    "title": "Exercises",
+    "section": "BayesFlow",
+    "text": "BayesFlow\nPlease visit the BayesFlow repository to find a bunch of examples that can help you with BayesFlow. In addition, below are two exercise notebooks you can use to familiarize yourself with BayesFlow.\n\nEstimating parameters of a normal distribution\n\nNotebook here\n\nThis notebook provides you with the very basics of the BayesFlow workflow - starting with defining simulators, through defining and training the neural approximators, and ending with network validation and inference.\n\n\nWald response times, Racing diffusion model\n\nNotebook here\nDownload data: here\n\nThis notebook provides you with a basic application of BayesFlow in the context of models of decision making - the Wald model of simple response times, and the racing diffusion model.\n\n\nRacing diffusion model with covariate on decision threshold\n\nNotebook here\nDownload data: here\n\nIn this notebook (courtesy of Leendert van Maanen), you can fit a Racing diffusion model where the decision threshold decreases as a function of trial number, modeling behavior of a participant who is becoming more and more impatient the longer the experiment keeps going."
+  },
+  {
+    "objectID": "slides/amortized-inference.html#recap",
+    "href": "slides/amortized-inference.html#recap",
     "title": "Amortized Bayesian Inference",
-    "section": "Parameter estimation",
-    "text": "Parameter estimation\nWhat are the values of the model parameters \\(\\theta\\), given observed data \\(x\\)?\nBayes’ theorem\n\\[\n\\begin{aligned}\np(\\theta \\mid x) & = \\frac{p(\\theta, x)}{p(x)} \\\\\n& = \\frac{p(\\theta) \\times p(x \\mid \\theta)}{\\int p(\\theta) \\times p(x \\mid \\theta) d\\theta}\n\\end{aligned}\n\\]"
+    "section": "Recap",
+    "text": "Recap\nProblem\nWe want to approximate \\(p(\\theta \\mid x)\\) or \\(p(x \\mid \\theta)\\)\n\\[\np(\\theta \\mid x) = \\frac{p(\\theta) \\times p(x \\mid \\theta)}{p(x)}\n\\]\n\nEvaluating \\(p(\\theta)\\), \\(p(x \\mid \\theta)\\) and \\(p(x)\\) may not be tractable\nBut we are able to sample \\((x^{(s)}, \\theta^{(s)}) \\sim p(x, \\theta)\\)\n\nSolution\nUse generative neural networks"
   },
   {
-    "objectID": "slides/intro.html#marginal-likelihood",
-    "href": "slides/intro.html#marginal-likelihood",
+    "objectID": "slides/amortized-inference.html#inference-network",
+    "href": "slides/amortized-inference.html#inference-network",
     "title": "Amortized Bayesian Inference",
-    "section": "Marginal likelihood",
-    "text": "Marginal likelihood\n\\[\np(x) = \\int p(\\theta) \\times p(x \\mid \\theta) d\\theta\n\\]\n\ndifficult to evaluate\noften intractable"
+    "section": "Inference network",
+    "text": "Inference network\n\nA generative neural network \\(q_\\phi(\\theta \\mid x)\\)\n\nNormalizing flow, flow matching, …\nModel the distribution of parameters, conditioned on data\n\n\nGoal:\n\\[p(\\theta \\mid x) \\approx q_\\phi(\\theta \\mid x)\\]"
   },
   {
-    "objectID": "slides/intro.html#classic-alternatives",
-    "href": "slides/intro.html#classic-alternatives",
+    "objectID": "slides/amortized-inference.html#role-of-data",
+    "href": "slides/amortized-inference.html#role-of-data",
     "title": "Amortized Bayesian Inference",
-    "section": "Classic alternatives",
-    "text": "Classic alternatives\n\nApproximate \\(p(\\theta \\mid x)\\)\n\nMarkov Chain Monte Carlo (MCMC): \\(\\theta \\propto p(\\theta) \\times p(x \\mid \\theta)\\)\n\nObtain point estimates:\n\nMaximum likelihood: \\(\\hat{\\theta} = \\operatorname*{argmax}_{\\theta} p(x \\mid \\theta)\\)\nMaximum aposteriori: \\(\\hat{\\theta} = \\operatorname*{argmax}_{\\theta} p(\\theta) \\times p(x \\mid \\theta)\\)\n\nNone of the methods require \\(p(x)\\)\nBut all require evaluating \\(p(x \\mid \\theta)\\)"
+    "section": "Role of “data”",
+    "text": "Role of “data”\n\n\\(x\\) conditions the generative network\n\nNormalizing flows: Input to coupling network (usually MLP)\nFlow matching: Input to the vector field network (usually MLP)\n\n\n\\(\\rightarrow\\) Must be of fixed dimensions"
   },
   {
-    "objectID": "slides/intro.html#simulation-based-inference-sbi",
-    "href": "slides/intro.html#simulation-based-inference-sbi",
+    "objectID": "slides/amortized-inference.html#data-of-varying-dimensions",
+    "href": "slides/amortized-inference.html#data-of-varying-dimensions",
     "title": "Amortized Bayesian Inference",
-    "section": "Simulation-based inference (SBI)",
-    "text": "Simulation-based inference (SBI)\n\n“Likelihood-free”\nCannot evaluate \\(p(x \\mid \\theta)\\) or \\(p(\\theta)\\)\nApproximate using sampling\n\nExamples\n\nSurrogate Likelihood\nRejection Sampling\nApproximate Bayesian Computation\n\nModern overview: Cranmer et al. (2020)"
+    "section": "Data of varying dimensions",
+    "text": "Data of varying dimensions\n\nSample sizes, study design, resolution, …\n\n\\(\\rightarrow\\) Summary statistics\n\nHandcrafted: Mean, SD, Correlation,…\nSummary networks"
   },
   {
-    "objectID": "slides/intro.html#surrogate-likelihood",
-    "href": "slides/intro.html#surrogate-likelihood",
+    "objectID": "slides/amortized-inference.html#summary-network-h_psi",
+    "href": "slides/amortized-inference.html#summary-network-h_psi",
     "title": "Amortized Bayesian Inference",
-    "section": "Surrogate likelihood",
-    "text": "Surrogate likelihood\n\nFor a given parameter value \\(\\theta\\), simulate many samples of \\(x\\)\nEstimate the density \\(p(x\\mid\\theta)\\) (e.g., kernel density estimation)\n\nUsed for approximate MLE/MAP, or within MCMC"
+    "section": "Summary network \\(h_\\psi\\)",
+    "text": "Summary network \\(h_\\psi\\)\n\nTakes input of variable size\nOutputs fixed size embedding\n\n\n\\(\\rightarrow\\) Condition the inference network on the output of the summary network\n\\[p(\\theta \\mid x) \\approx q_\\phi(\\theta \\mid h_\\psi(x))\\]"
   },
   {
-    "objectID": "slides/intro.html#rejection-sampling",
-    "href": "slides/intro.html#rejection-sampling",
+    "objectID": "slides/amortized-inference.html#learning-the-posterior",
+    "href": "slides/amortized-inference.html#learning-the-posterior",
     "title": "Amortized Bayesian Inference",
-    "section": "Rejection sampling",
-    "text": "Rejection sampling\n\\[\n\\begin{aligned}\np(\\theta, x) & = p(\\theta) p(x \\mid \\theta)\\\\\n\\end{aligned}\n\\]"
+    "section": "Learning the posterior",
+    "text": "Learning the posterior\n\\[\n\\begin{aligned}\n\\hat{\\phi}, \\hat{\\psi} = \\operatorname*{argmin}_{\\phi, \\psi} & \\mathbb{E}_{x \\sim p(x)} \\mathbb{KL}\\big[p(\\theta \\mid x) || q_\\phi(\\theta \\mid h_\\psi(x))\\big] = \\\\\n= \\operatorname*{argmin}_{\\phi, \\psi} & \\mathbb{E}_{x \\sim p(x)} \\mathbb{E}_{\\theta \\sim p(\\theta \\mid x)} \\log \\frac{p(\\theta \\mid x)}{q_\\phi(\\theta \\mid h_\\psi(x))} \\propto \\\\\n\\propto \\operatorname*{argmin}_{\\phi, \\psi} & - \\mathbb{E}_{(x, \\theta) \\sim p(x, \\theta)} \\log q_\\phi(\\theta \\mid h_\\psi(x)) \\approx\\\\\n\\approx \\operatorname*{argmin}_{\\phi, \\psi} & - \\frac{1}{S}\\sum_{s=1}^S \\log q_\\phi(\\theta^{(s)} \\mid h_\\psi(x^{(s)}))\n\\end{aligned}\n\\]\n\\(\\rightarrow\\) must be able to generate samples \\((x^{(s)}, \\theta^{(s)}) \\sim p(x, \\theta)\\)"
   },
   {
-    "objectID": "slides/intro.html#rejection-sampling-1",
-    "href": "slides/intro.html#rejection-sampling-1",
+    "objectID": "slides/amortized-inference.html#training-the-networks",
+    "href": "slides/amortized-inference.html#training-the-networks",
     "title": "Amortized Bayesian Inference",
-    "section": "Rejection sampling",
-    "text": "Rejection sampling\n\\[\n\\begin{aligned}\np(\\theta, x) & = p(\\theta) p(x \\mid \\theta)\\\\\n\\end{aligned}\n\\]"
+    "section": "Training the networks",
+    "text": "Training the networks\n\nDefine a generative statistical model\n\n\\(p(x, \\theta)\\), typically \\(p(\\theta) \\times p(x \\mid \\theta)\\)\n\nDefine inference and (optional) summary networks\n\n\\(q_\\phi(x \\mid h_\\psi(x))\\)\n\nTrain the networks\n\nSample from \\((x^{(s)}, \\theta^{(s)}) \\sim p(x, \\theta)\\)\nOptimize weights \\(\\phi\\) and \\(\\psi\\) so that \\(p(\\theta \\mid x) \\approx q_\\phi(\\theta \\mid h_\\psi(x))\\)"
   },
   {
-    "objectID": "slides/intro.html#rejection-sampling-2",
-    "href": "slides/intro.html#rejection-sampling-2",
+    "objectID": "slides/amortized-inference.html#inference",
+    "href": "slides/amortized-inference.html#inference",
     "title": "Amortized Bayesian Inference",
-    "section": "Rejection sampling",
-    "text": "Rejection sampling\n\\[\n\\begin{aligned}\n\\theta^{(s)} & \\sim \\text{Beta}(1, 1)\\\\\nx^{(s)} &\\sim \\text{Binomial}(\\theta^{(s)}, 10)\\\\\n\\\\[0.1em]\n\\theta \\mid x^{\\text{obs}}=7 & \\approx \\text{Samples from } \\theta^{(s)} \\text{ where } x^{(s)} = 7\n\\end{aligned}\n\\]\n\n\nPython\n\nprior = np.random.beta(1, 1, size=5000)\nx = np.random.binomial(n=10, p=prior)\n\nobserved = 7\nposterior = prior[x == observed]"
+    "section": "Inference",
+    "text": "Inference\n\nOnce the networks are trained, they can be used for inference\nMost of computational resources are used during training\nInference is fast (only requires a simple pass through the network)\n\n\\(\\rightarrow\\) Amortized inference: Pay upfront the cost of inference during training, making subsequent inference effective"
   },
   {
-    "objectID": "slides/intro.html#approximate-bayesian-computation-abc",
-    "href": "slides/intro.html#approximate-bayesian-computation-abc",
+    "objectID": "slides/amortized-inference.html#amortized-bayesian-inference",
+    "href": "slides/amortized-inference.html#amortized-bayesian-inference",
     "title": "Amortized Bayesian Inference",
-    "section": "Approximate Bayesian Computation (ABC)",
-    "text": "Approximate Bayesian Computation (ABC)\n\nGeneralization of rejection sampling\nGiven a sampled parameter value \\(\\theta\\), generate a data set \\(x\\)\nCompare the simulated data set to observed \\(x^{\\text{obs}}\\)\nRetain the parameter if the data sets are not too dissimilar\n\n\\[\n\\rho(s(x), s(x^{\\text{obs}})) \\leq \\epsilon\n\\]"
+    "section": "Amortized Bayesian Inference",
+    "text": "Amortized Bayesian Inference\n \nFor more info, see Radev et al. (2020)"
   },
   {
-    "objectID": "slides/intro.html#issues",
-    "href": "slides/intro.html#issues",
+    "objectID": "slides/amortized-inference.html#bayesflow-radev2023bayesflow",
+    "href": "slides/amortized-inference.html#bayesflow-radev2023bayesflow",
     "title": "Amortized Bayesian Inference",
-    "section": "Issues",
-    "text": "Issues\n\nCurse of dimensionality\nComputationally expensive\nHandcrafted summary statistics"
+    "section": "BayesFlow (Radev, Schmitt, Schumacher, et al., 2023)",
+    "text": "BayesFlow (Radev, Schmitt, Schumacher, et al., 2023)\n\nPython library\nImplementation of common neural architectures to make ABI easier\nHelper functions for simulation, configuration, training, validation, diagnostics,…"
   },
   {
-    "objectID": "slides/intro.html#neural-estimation",
-    "href": "slides/intro.html#neural-estimation",
+    "objectID": "slides/amortized-inference.html#old-version",
+    "href": "slides/amortized-inference.html#old-version",
     "title": "Amortized Bayesian Inference",
-    "section": "Neural estimation",
-    "text": "Neural estimation\n\nApproximate using generative neural networks\n\nDeep learning architecture that approximates a probability distribution\n\n\n\n\n\nNeural likelihood estimation (NLE)\n\nLearn \\(p(x \\mid \\theta)\\)\nSurrogate likelihood\n\n\nNeural posterior estimation (NPE)\n\nLearn \\(p(\\theta \\mid x)\\)\nObtain posterior directly"
+    "section": "Old version",
+    "text": "Old version\n\nBuild on TensorFlow\nPrevious projects build with it\nBespoke syntax, not that transparent\nStale development (no new features), being deprecated\nstable legacy branch on GitHub\npip install git+https://github.com/bayesflow-org/bayesflow@stable-legacy"
   },
   {
-    "objectID": "slides/intro.html#amortized-bayesian-inference-abi",
-    "href": "slides/intro.html#amortized-bayesian-inference-abi",
+    "objectID": "slides/amortized-inference.html#new-version",
+    "href": "slides/amortized-inference.html#new-version",
     "title": "Amortized Bayesian Inference",
-    "section": "Amortized Bayesian Inference (ABI)",
-    "text": "Amortized Bayesian Inference (ABI)\n\nGenerative neural networks\n\nProduce a distribution \\(q(\\theta \\mid x)\\)\n\nTrain them on simulated pairs \\((\\theta^{(s)}, x^{(s)}) \\sim p(\\theta, x)\\)\n\nLearn \\(q(\\theta \\mid x) \\approx p(\\theta \\mid x)\\)\n\nOnce trained, can be used on observed data \\(x^\\text{obs}\\)\n\n\\(q(\\theta \\mid x^\\text{obs}) \\approx p(\\theta \\mid x^\\text{obs})\\)"
+    "section": "New version",
+    "text": "New version\n\nBuilt on keras\n\nTensorFlow, JAX, or PyTorch as a backend\n\nModern interface, more transparent, faster\nReleased very recently\nActive development, future standard\nmain branch on GitHub\npip install git+https://github.com/bayesflow-org/bayesflow@main"
   },
   {
-    "objectID": "slides/intro.html#amortized-bayesian-inference-abi-1",
-    "href": "slides/intro.html#amortized-bayesian-inference-abi-1",
+    "objectID": "slides/amortized-inference.html#general-workflow",
+    "href": "slides/amortized-inference.html#general-workflow",
     "title": "Amortized Bayesian Inference",
-    "section": "Amortized Bayesian Inference (ABI)",
-    "text": "Amortized Bayesian Inference (ABI)\nPay the cost of inference upfront during training, receive benefits later\n\n\nTraining\n\nTrain neural networks\nSimulated data and parameters\nLearn the maping between data and parameters\nSlow, resource consuming process\n\n\nInference\n\nApply pretrained networks\nObserved data\nPosterior distribution of parameters\nFast, cheap process"
+    "section": "General workflow",
+    "text": "General workflow"
   },
   {
-    "objectID": "slides/intro.html#amortized-bayesian-inference-abi-2",
-    "href": "slides/intro.html#amortized-bayesian-inference-abi-2",
+    "objectID": "slides/amortized-inference.html#ingredients",
+    "href": "slides/amortized-inference.html#ingredients",
     "title": "Amortized Bayesian Inference",
-    "section": "Amortized Bayesian Inference (ABI)",
-    "text": "Amortized Bayesian Inference (ABI)\nUsing deep learning generative neural networks to make Bayesian inference.\n\n\n\nAdvantages\n\nFast inference\nSimulation based – intractable models\n\n\nDisatvantages\n\nNeed for training\nSimulation based – weaker guarantees"
+    "section": "Ingredients",
+    "text": "Ingredients\n\nSimulator\n\nSimulate data from the statistical model\n\nAdapter\n\nConfigure the data\n\nSummary network (optional)\n\nGet summary embeddings\n\nInference network\n\nApproximate the posterior"
   },
   {
-    "objectID": "slides/intro.html#references",
-    "href": "slides/intro.html#references",
+    "objectID": "slides/amortized-inference.html#quality-of-life",
+    "href": "slides/amortized-inference.html#quality-of-life",
+    "title": "Amortized Bayesian Inference",
+    "section": "Quality of life",
+    "text": "Quality of life\n\nDiagnostics\n\nPlots and statistics to evaluate the approximation\n\nApproximator\n\nHold ingredients necessary for approximation together\nAdapter, Summary network, Inference network\n\nWorkflow\n\nHold ingredients for the entire pipeline together\nSimulator, Adapter, Summary network Inference network, Diagnostics"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#general-pipeline",
+    "href": "slides/amortized-inference.html#general-pipeline",
+    "title": "Amortized Bayesian Inference",
+    "section": "General pipeline",
+    "text": "General pipeline\n\nDefine the statistical model (through simulator)\nDefine the approximator (through neural networks)\nTrain the neural networks\nValidate the approximator\nInference and diagnostics"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#define-the-simulator",
+    "href": "slides/amortized-inference.html#define-the-simulator",
+    "title": "Amortized Bayesian Inference",
+    "section": "Define the simulator",
+    "text": "Define the simulator\n\nDefine the “statistical” model in terms of a simulator\nbayesflow expects “batched” simulations\n\n\n\nPython\n\nclass Simulator(bf.simulators.Simulator):\n    def sample(self, batch_size):\n        theta = np.random.beta(1, 1, size=batch_size)\n        x = np.random.binomial(n=10, p=theta)\n        return dict(theta=theta, x=x)\n\nsimulator = Simulator()\ndataset = simulator.sample(100)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#define-the-simulator-1",
+    "href": "slides/amortized-inference.html#define-the-simulator-1",
+    "title": "Amortized Bayesian Inference",
+    "section": "Define the simulator",
+    "text": "Define the simulator\n\nDefine the “statistical” model in terms of a simulator\nbayesflow expects “batched” simulations\nmake_simulator: Convenient interface for “auto batching”\n\n\n\nPython\n\ndef prior():\n    return dict(mu = np.random.normal(0, 1))\n\ndef likelihood(mu):\n    return dict(x = np.random.normal(mu, 1, size=20))\n\nsimulator = bf.make_simulator([prior, likelihood])\n\nsimulator.sample(10)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#simulator-data-of-varying-size",
+    "href": "slides/amortized-inference.html#simulator-data-of-varying-size",
+    "title": "Amortized Bayesian Inference",
+    "section": "Simulator: Data of varying size",
+    "text": "Simulator: Data of varying size\n\nThe shape of data must be the same within each batch\n\nStrategies:\n\nPad vectors to be the same length\nVary data shapes between batches"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#padmask-vectors",
+    "href": "slides/amortized-inference.html#padmask-vectors",
+    "title": "Amortized Bayesian Inference",
+    "section": "Pad/mask vectors",
+    "text": "Pad/mask vectors\n\n\nPython\n\ndef context():\n    return dict(n = np.random.randint(10, 101))\n\ndef prior():\n    return dict(mu = np.random.normal(0, 1))\n\ndef likelihood(mu, n):\n    observed = np.zeros(0)\n    observed[:n] = 1\n\n    x = np.zeros(100)\n    x[:n] = np.random.normal(mu, 1, size=n)\n    return dict(observed=observed, x=x)\n\nsimulator = bf.make_simulator([context, prior, likelihood])\n\nsimulator.sample(10)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#vary-data-shape-between-batches",
+    "href": "slides/amortized-inference.html#vary-data-shape-between-batches",
+    "title": "Amortized Bayesian Inference",
+    "section": "Vary data shape between batches",
+    "text": "Vary data shape between batches\n\n\nPython\n\ndef context(batch_size):\n    return dict(n = np.random.randint(10, 101))\n\ndef prior():\n    return dict(mu = np.random.normal(0, 1))\n\ndef likelihood(mu, n):\n    x = np.random.normal(mu, 1, size=n)\n    return dict(x=x)\n\nsimulator = bf.make_simulator([prior, likelihood], meta_fn=context)\n\nsimulator.sample(10)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#padding-vs-batched-context",
+    "href": "slides/amortized-inference.html#padding-vs-batched-context",
+    "title": "Amortized Bayesian Inference",
+    "section": "Padding vs batched context",
+    "text": "Padding vs batched context\n\nBoth approaches work\nBatched context is a bit cleaner\n\nDo not have to fiddle with masking\nLimited useability (cannot effectivelly use in offline mode)\n\nPadding\n\nMore verbose\nMore general"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#approximator",
+    "href": "slides/amortized-inference.html#approximator",
+    "title": "Amortized Bayesian Inference",
+    "section": "Approximator",
+    "text": "Approximator\n\nInference network\n\nGenerates distributions\n\n(Optional) summary network\n\nGenerates summary embeddings\n\nAdapter\n\nReshapes data to be passed into networks"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#inference-network-1",
+    "href": "slides/amortized-inference.html#inference-network-1",
+    "title": "Amortized Bayesian Inference",
+    "section": "Inference network",
+    "text": "Inference network\n\n\nPython\n\ninference_network = bf.networks.CouplingFlow()\n\n\n\n\nPython\n\ninference_network = bf.networks.FlowMatching()\n\n\nVarious options available, see the Two Moons Example."
+  },
+  {
+    "objectID": "slides/amortized-inference.html#what-architecture-to-pick",
+    "href": "slides/amortized-inference.html#what-architecture-to-pick",
+    "title": "Amortized Bayesian Inference",
+    "section": "What architecture to pick?",
+    "text": "What architecture to pick?\n\n\n\nCoupling flow\n\nSlow training\nLess expressive\nFaster during inference\n\n\nFlow matching\n\nFast training\nMore expressive\nSlow inference on CPU"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#what-architecture-to-pick-1",
+    "href": "slides/amortized-inference.html#what-architecture-to-pick-1",
+    "title": "Amortized Bayesian Inference",
+    "section": "What architecture to pick?",
+    "text": "What architecture to pick?\n\nAffine coupling for low-dimensional, uni-modal posteriors\nSpline coupling for harder posteriors, including multi-modal\nFlow matching for highly complex posteriors\n\nor when inference speed is not of concern\nor if GPUs available"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#summary-network",
+    "href": "slides/amortized-inference.html#summary-network",
+    "title": "Amortized Bayesian Inference",
+    "section": "Summary network",
+    "text": "Summary network\n\nExtract all relevant information from the variable-sized data\nOutput fixed sized embeddings\n“Sufficient statistics”\nRule of thumb: output size should be at least \\(2\\times\\) the number of parameters"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#what-architecture-to-pick-2",
+    "href": "slides/amortized-inference.html#what-architecture-to-pick-2",
+    "title": "Amortized Bayesian Inference",
+    "section": "What architecture to pick?",
+    "text": "What architecture to pick?\nReflect symmetries in the data\nExchangeable data\n\nDeep Sets, Set Transformers,…\n\n\n\nPython\n\nsummary_network = bf.networks.DeepSet()\n\nTime series, Sequences, …\n\nRNNs, CNNs, Transformers, …\n\n\n\nPython\n\nsummary_network = bf.networks.LSTNet()"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#adapter-main-purpose",
+    "href": "slides/amortized-inference.html#adapter-main-purpose",
+    "title": "Amortized Bayesian Inference",
+    "section": "Adapter: Main purpose",
+    "text": "Adapter: Main purpose\n\nReshapes data to be passed into networks\nA hub that handles what is passed into what network\n\nMain keywords:\n\n\"inference_variables\": What are the variables that the inference network should learn about?\n\n\\(q(\\theta \\mid x) \\rightarrow\\) parameters \\(\\theta\\)\n\n\"inference_conditions\": What are the variables that the inference network should be directly conditioned on?\n\n\\(q(\\theta \\mid x) \\rightarrow\\) data \\(x\\)\n\n\"summary_variables\": What are the variables that are supposed to be passed into the summary network?\n\n\\(q(\\theta \\mid f(x)) \\rightarrow\\) data \\(x\\)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#adapter",
+    "href": "slides/amortized-inference.html#adapter",
+    "title": "Amortized Bayesian Inference",
+    "section": "Adapter",
+    "text": "Adapter\n\n\nPython\n\nadapter = (bf.Adapter()\n  .concatenate([\"mu\", \"sigma\"], into = \"inference_variables\")\n  .rename([\"n\"], \"inference_conditions\")\n  .concatenate([\"x\", \"observed\"], into = \"summary_variables\")\n)\n\n\nTransform variables\n\n.standardize\n.sqrt, .log\n.constrain\n\nReshape variables\n\n.as_set, .as_time_series\n.broadcast\n.one_hot\n\n… and many more operations"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#approximator-1",
+    "href": "slides/amortized-inference.html#approximator-1",
+    "title": "Amortized Bayesian Inference",
+    "section": "Approximator",
+    "text": "Approximator\n\nHolds ingredients used for inference\n\n\n\nPython\n\napproximator = bf.approximators.ContinuousApproximator(\n    inference_network=inference_network,\n    summary_network=summary_network\n    adapter=adapter\n)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#workflow-optional",
+    "href": "slides/amortized-inference.html#workflow-optional",
+    "title": "Amortized Bayesian Inference",
+    "section": "Workflow (optional)",
+    "text": "Workflow (optional)\n\nHold all ingredients used for training, inference, and diagnostics\n\n\n\nPython\n\nworkflow = bf.BasicWorkflow(\n    inference_network=inference_network,\n    summary_network=summary_network\n    adapter=adapter,\n    simulator=simulator\n)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#network-training",
+    "href": "slides/amortized-inference.html#network-training",
+    "title": "Amortized Bayesian Inference",
+    "section": "Network training",
+    "text": "Network training\n\nIn principle, training as any other model in keras\n\napproximator.fit\n\nDefine optimizer (e.g., keras.optimizers.Adam)\n\n(optional) define schedule, early stopping,…\n\nDefine training budget and regime\n\nNumber of epochs\nBatch size, Number of batches\nSimulate data or supply simulator\n\nCompile and train the model until convergence\nBasicWorkflow makes fitting easier, comes with some predefined reasonable settings\n\ne.g. workflow.fit_online"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#training-regimes",
+    "href": "slides/amortized-inference.html#training-regimes",
+    "title": "Amortized Bayesian Inference",
+    "section": "Training regimes",
+    "text": "Training regimes\n\n\nOnline\n\nGenerate data during training\nSlower to train\nPrevents overfitting\n\n\nOffline\n\nTrain on fixed data\nFaster to train\nRisk of overfitting\n\n\nFrom disk\n\nOffline training\nLarge data that does not fit into memory\nRead data on demand during training"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#goals",
+    "href": "slides/amortized-inference.html#goals",
+    "title": "Amortized Bayesian Inference",
+    "section": "Goals",
+    "text": "Goals\n\nIs the neural approximator doing a good job at approximating the true posterior?\n\n“Computational faithfulness”\nAssesses the quality of approximator\n\nHow much can we expect to learn given data?\n\nParameter recovery, posterior contraction, posterior z-score\nAssesses how the statistical model interacts with data\n\n\nFor general discussion, see Schad et al. (2021)."
+  },
+  {
+    "objectID": "slides/amortized-inference.html#procedure",
+    "href": "slides/amortized-inference.html#procedure",
+    "title": "Amortized Bayesian Inference",
+    "section": "Procedure",
+    "text": "Procedure\n\nDraw fresh validation data from the simulator\nExtract the parameter samples from the prior\nSample from the posterior\n\n\n\nPython\n\ndataset = simulator.sample(1_000)\nprior = {k: v if k in param_keys for k, v in dataset.items()}\nposterior = approximator.sample(500, conditions = dataset)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#simulation-based-calibration-sbc-talts2018validating",
+    "href": "slides/amortized-inference.html#simulation-based-calibration-sbc-talts2018validating",
+    "title": "Amortized Bayesian Inference",
+    "section": "Simulation-based calibration (SBC, Talts et al., 2018)",
+    "text": "Simulation-based calibration (SBC, Talts et al., 2018)\n\nTesting computational faithfulness of a posterior approximator\nPosterior distribution averaged over prior predictive distribution is the same as the prior distribution\n\n\\[\np(\\theta) = \\int \\int p(\\theta \\mid \\tilde{y}) \\underbrace{p(\\tilde{y} \\mid \\tilde{\\theta}) p(\\tilde{\\theta})}_{\\text{Prior predictives}} d\\tilde{\\theta} d \\tilde{y}\n\\]"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#simulation-based-calibration",
+    "href": "slides/amortized-inference.html#simulation-based-calibration",
+    "title": "Amortized Bayesian Inference",
+    "section": "Simulation-based calibration",
+    "text": "Simulation-based calibration\n\nDraw \\(N\\) prior predictive datasets \\((\\theta_i^{\\text{sim}}, y_i^{\\text{sim}}) \\sim p(\\theta, y)\\)\nFor each data set \\(y_i\\), draw \\(M\\) samples from the approximate posterior: \\(\\theta_{ij} \\sim q(\\theta \\mid y_i^{\\text{sim}})\\)\nCalculate rank statistic \\(r_i = \\sum_{j=1}^M \\text{I}\\big(\\theta_{ij} &lt; \\theta_i^{\\text{sim}}\\big)\\)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#simulation-based-calibration-1",
+    "href": "slides/amortized-inference.html#simulation-based-calibration-1",
+    "title": "Amortized Bayesian Inference",
+    "section": "Simulation-based calibration",
+    "text": "Simulation-based calibration\n\n\nSimulate\n\\[\n\\begin{aligned}\n\\theta^{\\text{sim}} & \\sim p(\\theta) \\\\\ny^{\\text{sim}} &\\sim p(y \\mid \\theta^{\\text{sim}})\n\\end{aligned}\n\\]\n\nBy symmetry\n\\[\n\\begin{aligned}\n(\\theta^{\\text{sim}}, y^{\\text{sim}}) & \\sim p(\\theta, y) \\\\\n\\theta^{\\text{sim}} &\\sim p(\\theta \\mid y^{\\text{sim}})\n\\end{aligned}\n\\]\n\nCompute\n\\[\n\\begin{aligned}\n\\theta_1, \\dots, \\theta_M & \\sim q(\\theta \\mid y^{\\text{sim}}) \\\\\n\\end{aligned}\n\\]\nIf \\(q(\\theta \\mid y^{\\text{sim}}) = p(\\theta \\mid y^{\\text{sim}})\\), then the rank statistic of \\(\\theta^{\\text{sim}}\\) is uniform."
+  },
+  {
+    "objectID": "slides/amortized-inference.html#visualizing-sbc",
+    "href": "slides/amortized-inference.html#visualizing-sbc",
+    "title": "Amortized Bayesian Inference",
+    "section": "Visualizing SBC",
+    "text": "Visualizing SBC\n\nHistograms\nECDF\nECDF difference"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#sbc-histograms",
+    "href": "slides/amortized-inference.html#sbc-histograms",
+    "title": "Amortized Bayesian Inference",
+    "section": "SBC Histograms",
+    "text": "SBC Histograms\n\n\nPython\n\nfig=bf.diagnostics.calibration_histogram(\n    estimates=posterior, \n    targets=prior)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#sbc-ecdf",
+    "href": "slides/amortized-inference.html#sbc-ecdf",
+    "title": "Amortized Bayesian Inference",
+    "section": "SBC ECDF",
+    "text": "SBC ECDF\n\n\nPython\n\nfig=bf.diagnostics.calibration_ecdf(\n    estimates=posterior, \n    targets=prior)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#sbc-ecdf-difference",
+    "href": "slides/amortized-inference.html#sbc-ecdf-difference",
+    "title": "Amortized Bayesian Inference",
+    "section": "SBC ECDF Difference",
+    "text": "SBC ECDF Difference\n\n\nPython\n\nfig=bf.diagnostics.calibration_ecdf(\n    estimates=posterior, \n    targets=prior,\n    difference=True)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#sbc-interpretation",
+    "href": "slides/amortized-inference.html#sbc-interpretation",
+    "title": "Amortized Bayesian Inference",
+    "section": "SBC interpretation",
+    "text": "SBC interpretation\n\nNecessary but not sufficient condition\n\n✅ All faithful approximators should pass the SBC check\n⚠️ An unfaithful approximator may pass the SBC check\n\nDepends on\n\nSimulation budget (how many datasets)\nApproximation precision (how many posterior draws per data set)\n\\(\\rightarrow\\) degree/ways of miscalibration, rather than ok/not ok"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#what-if-sbc-check-fails",
+    "href": "slides/amortized-inference.html#what-if-sbc-check-fails",
+    "title": "Amortized Bayesian Inference",
+    "section": "What if SBC check fails?",
+    "text": "What if SBC check fails?\n\nPossible causes:\n\nUnderfitting \\(\\rightarrow\\) increase expresiveness of inference or summary network, increase training budget\nOverfitting \\(\\rightarrow\\) decrease expressiveness of inference or summary network, increase training budget\nCoding error \\(\\rightarrow\\) check for errors in the simulator, setting up the approximator\nFundamental problem with the statistical model \\(\\rightarrow\\) change the statistical model"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#posterior-z-score",
+    "href": "slides/amortized-inference.html#posterior-z-score",
+    "title": "Amortized Bayesian Inference",
+    "section": "Posterior z-score",
+    "text": "Posterior z-score\n\nHow well does the estimated posterior mean match the true parameter used for simulating the data?\n\n\\[\nz = \\frac{\\text{mean}(\\theta_i) - \\theta^{\\text{sim}}}{\\text{sd}(\\theta_i)}\n\\]"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#posterior-contraction",
+    "href": "slides/amortized-inference.html#posterior-contraction",
+    "title": "Amortized Bayesian Inference",
+    "section": "Posterior contraction",
+    "text": "Posterior contraction\n\nHow much uncertainty is removed after updating the prior to posterior?\n\n\\[\n\\text{contraction} = 1 - \\frac{\\text{sd}(\\theta_i)}{\\text{sd}(\\theta^{\\text{sim}})}\n\\]"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#z-score-vs.-contraction-plot",
+    "href": "slides/amortized-inference.html#z-score-vs.-contraction-plot",
+    "title": "Amortized Bayesian Inference",
+    "section": "Z-score vs. contraction plot",
+    "text": "Z-score vs. contraction plot\n\n\nPython\n\nfig=bf.diagnostics.plots.z_score_contraction(\n    estimates=posterior, \n    targets=prior)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#parameter-recovery",
+    "href": "slides/amortized-inference.html#parameter-recovery",
+    "title": "Amortized Bayesian Inference",
+    "section": "Parameter recovery",
+    "text": "Parameter recovery\n\nPlot the true parameter values \\(\\theta^{\\text{sim}}\\) against a posterior point estimate (mean, median)\n\n\n\nPython\n\nfig=bf.diagnostics.plots.recovery(estimates=posterior, targets=prior)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#what-if-i-get-poor-results",
+    "href": "slides/amortized-inference.html#what-if-i-get-poor-results",
+    "title": "Amortized Bayesian Inference",
+    "section": "What if I get poor results",
+    "text": "What if I get poor results\n\nPossible causes:\n\nPoor calibration of the approximator \\(\\rightarrow\\) see SBC\nPoor identification of the parameters\n\nUse more informative priors\nChange the model\nAdd more data (sample size, additional variables)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#obtain-posterior-samples",
+    "href": "slides/amortized-inference.html#obtain-posterior-samples",
+    "title": "Amortized Bayesian Inference",
+    "section": "Obtain posterior samples",
+    "text": "Obtain posterior samples\n\n\n\nPython\n\ndata = dict(y = ...)\nposterior = approximator.sample(1000, conditions=data)\n\nfig=bf.diagnostics.plots.pairs_posterior(estimates=posterior)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#model-misspecification",
+    "href": "slides/amortized-inference.html#model-misspecification",
+    "title": "Amortized Bayesian Inference",
+    "section": "Model misspecification",
+    "text": "Model misspecification\n\nPrior misspecification\nLikelihood misspecification\n\n\\(\\rightarrow\\) Approximator may not be trusted"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#posterior-predictive-checks",
+    "href": "slides/amortized-inference.html#posterior-predictive-checks",
+    "title": "Amortized Bayesian Inference",
+    "section": "Posterior predictive checks",
+    "text": "Posterior predictive checks\n\nUse posterior parameter posterior to simulate data from the simulator\nCompare simulated data to observed data\n\nVisual checks - histograms, ecdf plots, scatter plots, …\nComparing summary statistics - means, variances, …"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#use-summary-space",
+    "href": "slides/amortized-inference.html#use-summary-space",
+    "title": "Amortized Bayesian Inference",
+    "section": "Use summary space",
+    "text": "Use summary space\n\nAdd a base distribution to the summary network, e.g.\n\n\n\nPython\n\nsummary_network = bf.networks.Deepset(base_distribution=\"normal\")\n\n\nSchmitt et al. (2023)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#uses-of-bayesflow",
+    "href": "slides/amortized-inference.html#uses-of-bayesflow",
+    "title": "Amortized Bayesian Inference",
+    "section": "Uses of BayesFlow",
+    "text": "Uses of BayesFlow\nIn addition to learning \\(p(\\theta \\mid x)\\):\n\nGenerative modeling tasks\nSurrogate likelihood: \\(p(x \\mid \\theta)\\) (Radev, Schmitt, Pratz, et al., 2023)\nModel comparison: \\(p(\\mathcal{M} \\mid x)\\) (Elsemüller et al., 2024; Radev et al., 2021)\nAmortized point estimation: \\(\\hat{\\theta}\\) (Sainsbury-Dale et al., 2024)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#complex-models",
+    "href": "slides/amortized-inference.html#complex-models",
+    "title": "Amortized Bayesian Inference",
+    "section": "Complex models",
+    "text": "Complex models\n\nThink about possible factorizations of the model\n\nSplit the problem into multiple smaller pieces\n\nExamples:\n\nMultilevel models (Habermann et al., 2024)\nMixture models (Kucharský & Bürkner, 2025)"
+  },
+  {
+    "objectID": "slides/amortized-inference.html#references",
+    "href": "slides/amortized-inference.html#references",
     "title": "Amortized Bayesian Inference",
     "section": "References",
-    "text": "References\n\n\n\n\nCranmer, K., Brehmer, J., & Louppe, G. (2020). The frontier of simulation-based inference. Proceedings of the National Academy of Sciences, 117(48), 30055–30062.\n\n\nSimon, H. A. (1983). Why should machines learn? In Machine learning (pp. 25–37). Elsevier.\n\n\nvan Rooij, I., Guest, O., Adolfi, F., Haan, R. de, Kolokolova, A., & Rich, P. (2024). Reclaiming AI as a theoretical tool for cognitive science. Computational Brain & Behavior, 7(4), 616–636."
+    "text": "References\n\n\n\n\nElsemüller, L., Schnuerch, M., Bürkner, P.-C., & Radev, S. T. (2024). A deep learning method for comparing bayesian hierarchical models. Psychological Methods, Advance online publication. https://doi.org/10.1037/met0000645\n\n\nHabermann, D., Schmitt, M., Kühmichel, L., Bulling, A., Radev, S. T., & Bürkner, P.-C. (2024). Amortized bayesian multilevel models. arXiv Preprint arXiv:2408.13230.\n\n\nKucharský, Š., & Bürkner, P. C. (2025). Amortized bayesian mixture models. arXiv Preprint arXiv:2501.10229.\n\n\nRadev, S. T., D’Alessandro, M., Mertens, U. K., Voss, A., Köthe, U., & Bürkner, P.-C. (2021). Amortized bayesian model comparison with evidential deep learning. IEEE Transactions on Neural Networks and Learning Systems, 34(8), 4903–4917.\n\n\nRadev, S. T., Mertens, U. K., Voss, A., Ardizzone, L., & Köthe, U. (2020). BayesFlow: Learning complex stochastic models with invertible neural networks. IEEE Transactions on Neural Networks and Learning Systems, 33(4), 1452–1466.\n\n\nRadev, S. T., Schmitt, M., Pratz, V., Picchini, U., Koethe, U., & Bürkner, P.-C. (2023). JANA: Jointly amortized neural approximation of complex bayesian models. The 39th Conference on Uncertainty in Artificial Intelligence. https://openreview.net/forum?id=dS3wVICQrU0\n\n\nRadev, S. T., Schmitt, M., Schumacher, L., Elsemüller, L., Pratz, V., Schälte, Y., Köthe, U., & Bürkner, P.-C. (2023). BayesFlow: Amortized bayesian workflows with neural networks. arXiv. https://arxiv.org/abs/2306.16015\n\n\nSainsbury-Dale, M., Zammit-Mangion, A., & Huser, R. (2024). Likelihood-free parameter estimation with neural bayes estimators. The American Statistician, 78(1), 1–14.\n\n\nSchad, D. J., Betancourt, M., & Vasishth, S. (2021). Toward a principled Bayesian workflow in cognitive science. Psychological Methods, 26(1), 103.\n\n\nSchmitt, M., Bürkner, P.-C., Köthe, U., & Radev, S. T. (2023). Detecting model misspecification in amortized Bayesian inference with neural networks. DAGM German Conference on Pattern Recognition, 541–557.\n\n\nTalts, S., Betancourt, M., Simpson, D., Vehtari, A., & Gelman, A. (2018). Validating bayesian inference algorithms with simulation-based calibration. arXiv Preprint arXiv:1804.06788."
   },
   {
-    "objectID": "about.html",
-    "href": "about.html",
-    "title": "About",
+    "objectID": "slides/generative-architectures.html#generative-models",
+    "href": "slides/generative-architectures.html#generative-models",
+    "title": "Generative Neural Networks",
+    "section": "Generative models",
+    "text": "Generative models\nLearn \\(p_X\\) given a set of training data \\(x_i, \\dots, x_n\\)\n\n\nSampling \\(x \\sim p_X\\)\nDensity evaluation \\(p_X(x)\\)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#mixture-model",
+    "href": "slides/generative-architectures.html#mixture-model",
+    "title": "Generative Neural Networks",
+    "section": "Mixture model",
+    "text": "Mixture model\nWeighted sum of multiple simpler distributions, e.g., Normal \\[p_X(X) = \\sum_k^K w_k \\times \\text{Normal}(X; \\mu_k, \\sigma_k)\\]\n\nSampling and evaluating straightforward\nTheoretically can represent any distribution\nPractically, does not scale well"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#many-architectures",
+    "href": "slides/generative-architectures.html#many-architectures",
+    "title": "Generative Neural Networks",
+    "section": "Many architectures",
+    "text": "Many architectures\n\nMarkov random fields (Li, 2009)\nGenerative adversarial networks (GAN, Goodfellow et al., 2014)\nVariational autoencoders (VAE, Kingma et al., 2013)\nDiffusion models (Song et al., 2020)\nConsistency models (Song et al., 2023)\nNormalizing flows (Kobyzev et al., 2020; Papamakarios et al., 2021)\nFlow matching (Lipman et al., 2022)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#common-idea",
+    "href": "slides/generative-architectures.html#common-idea",
+    "title": "Generative Neural Networks",
+    "section": "Common idea",
+    "text": "Common idea\nMap \\(p_X\\) to a base distribution \\(p_Z\\) through some operation \\(g\\)\n\\[\nx \\sim g(z) \\text{ where } z \\sim p_Z\n\\]\n\nSource: learnopencv.com"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#normalizing-flows-1",
+    "href": "slides/generative-architectures.html#normalizing-flows-1",
+    "title": "Generative Neural Networks",
+    "section": "Normalizing flows",
+    "text": "Normalizing flows\nBuilt on invertible transformations of random variables\n\nFind \\(f\\) such that \\(f(X) = Z \\sim \\text{Normal}(0, I)\\)\n\n\\(f\\) normalizes \\(X\\)\n\n\n\n\n\n\n\n \n\n\n\\(f\\)\n\n\n \n\n\n\n\n\n\n\n\\[\\rightarrow\\]\n\n\n\n\n\n\n\nFigure 1: Forward direction"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#sampling",
+    "href": "slides/generative-architectures.html#sampling",
+    "title": "Generative Neural Networks",
+    "section": "Sampling",
+    "text": "Sampling\n\nSample \\(z \\sim p_Z\\) (e.g., Normal)\nObtain \\(x = f^{-1}(z)\\)\n\n\n\n\n\n\n\n \n\n\n\\(f^{-1}\\)\n\n\n \n\n\n\n\n\n\n\n\\[\\leftarrow\\]\n\n\n\n\n\n\n\nFigure 2: Backward direction"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#density-evaluation",
+    "href": "slides/generative-architectures.html#density-evaluation",
+    "title": "Generative Neural Networks",
+    "section": "Density evaluation",
+    "text": "Density evaluation\nChange of variables formula\n\\[\np_X(x) = p_Z(f(x)) \\left| \\det{J}_f(x) \\right|\n\\]\n\nExpress \\(p_X\\) using \\(p_Z\\) and the transform \\(f\\)\n\\(\\left| \\det{J}_f(x) \\right|\\): Absolute value of the determinant of the Jacobian matrix\n\n“Jacobian” for short\nVolume correction term"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#change-of-variables---intuition",
+    "href": "slides/generative-architectures.html#change-of-variables---intuition",
+    "title": "Generative Neural Networks",
+    "section": "Change of variables - intuition",
+    "text": "Change of variables - intuition\n\n\n\\[Z \\sim \\text{Uniform}(0, 1)\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#change-of-variables---intuition-1",
+    "href": "slides/generative-architectures.html#change-of-variables---intuition-1",
+    "title": "Generative Neural Networks",
+    "section": "Change of variables - intuition",
+    "text": "Change of variables - intuition\n\n\n\\[Z \\sim \\text{Uniform}(0, 1)\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#change-of-variables---intuition-2",
+    "href": "slides/generative-architectures.html#change-of-variables---intuition-2",
+    "title": "Generative Neural Networks",
+    "section": "Change of variables - intuition",
+    "text": "Change of variables - intuition\n\n\n\\[Z \\sim \\text{Uniform}(0, 1)\\]\n\n\n\\[X = 2Z - 1\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#change-of-variables---intuition-3",
+    "href": "slides/generative-architectures.html#change-of-variables---intuition-3",
+    "title": "Generative Neural Networks",
+    "section": "Change of variables - intuition",
+    "text": "Change of variables - intuition\n\n\n\\[Z \\sim \\text{Uniform}(0, 1)\\]\n\n\n\\[X = 2Z - 1\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#change-of-variables---affine-transform",
+    "href": "slides/generative-architectures.html#change-of-variables---affine-transform",
+    "title": "Generative Neural Networks",
+    "section": "Change of variables - affine transform",
+    "text": "Change of variables - affine transform\n\\[f: Z = a X + b\\]\n\nshift by \\(b\\): no effect\nscale by a constant \\(a\\): multiply by \\(a\\)\n\n\\[p_X(x) = p_Z(f(x)) \\times a\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#change-of-variables---affine-transform-1",
+    "href": "slides/generative-architectures.html#change-of-variables---affine-transform-1",
+    "title": "Generative Neural Networks",
+    "section": "Change of variables - affine transform",
+    "text": "Change of variables - affine transform\n\nExample\n\n\n\\[\n\\scriptsize\n\\begin{aligned}\np_Z(z) & = \\frac{1}{\\sqrt{2\\pi}} \\exp\\left(-\\frac{1}{2} z^2 \\right) \\\\[10pt]\nf: Z & = \\frac{(X - \\mu)}{\\sigma} \\\\\n\\end{aligned}\n\\]\n\n\\[\n\\scriptsize\n\\begin{aligned}\np_X(x) & = p_Z(f(x)) \\times a \\\\[10pt]\n& = \\frac{1}{\\sqrt{2\\pi}} \\exp\\left(-\\frac{1}{2} f(x)^2 \\right) \\times a \\\\[10pt]\n& = \\frac{1}{\\sigma\\sqrt{2\\pi}} \\exp\\left(-\\frac{1}{2} \\left(\\frac{x-\\mu}{\\sigma}\\right)^2 \\right)\n\\end{aligned}\n\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#change-of-variables---more-formally",
+    "href": "slides/generative-architectures.html#change-of-variables---more-formally",
+    "title": "Generative Neural Networks",
+    "section": "Change of variables - more formally",
+    "text": "Change of variables - more formally\n\\[\np_X(x) = p_Z(f(x))  \\left| \\frac{d}{dx} f(x) \\right|\n\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#change-of-variables---more-formally-1",
+    "href": "slides/generative-architectures.html#change-of-variables---more-formally-1",
+    "title": "Generative Neural Networks",
+    "section": "Change of variables - more formally",
+    "text": "Change of variables - more formally\n\\[\np_X(x) = p_Z(f(x))  \\left| \\frac{d}{dx} f(x) \\right|\n\\]\nExample\n\n\n\\[\n\\scriptsize\n\\begin{align}\nf: Z & = \\log(X) \\\\[10pt]\np_Z(z) & = \\frac{1}{\\sqrt{2\\pi}} \\exp\\left(-\\frac{1}{2} z^2 \\right)\n\\end{align}\n\\]\n\n\\[\n\\scriptsize\n\\begin{align}\n\\frac{d}{dx} f(x) & = \\frac{d}{dx} \\log(x) = \\frac{1}{x} \\\\[10pt]\np_X(x) & = \\frac{1}{x\\sqrt{2\\pi}} \\exp\\left(-\\frac{1}{2} \\log(x)^2\\right)\n\\end{align}\n\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#change-of-variables---multivariate",
+    "href": "slides/generative-architectures.html#change-of-variables---multivariate",
+    "title": "Generative Neural Networks",
+    "section": "Change of variables - multivariate",
+    "text": "Change of variables - multivariate\n\\[\np_X(x) = p_Z(f(x)) \\left| \\det{J}_f(x) \\right|\n\\]\n\n\\[\nJ_f(x) = \\begin{bmatrix}\n\\frac{\\partial z_1}{\\partial x_1} & \\dots & \\frac{\\partial z_1}{\\partial x_K} \\\\\n\\vdots & \\ddots & \\vdots \\\\\n\\frac{\\partial z_K}{\\partial x_1} & \\dots & \\frac{\\partial z_K}{\\partial x_K}\n\\end{bmatrix}\n\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#change-of-variables---multivariate-1",
+    "href": "slides/generative-architectures.html#change-of-variables---multivariate-1",
+    "title": "Generative Neural Networks",
+    "section": "Change of variables - multivariate",
+    "text": "Change of variables - multivariate\n\\[f\\left(\\begin{bmatrix}x_1 \\\\ x_2\\end{bmatrix}\\right) = \\begin{bmatrix} x_1^2 x_2 \\\\ 3x_1 + \\sin x_2 \\end{bmatrix} = \\begin{bmatrix}z_1 \\\\ z_2\\end{bmatrix}\\]\n\n\\[J_f(x) = \\begin{bmatrix}\n\\frac{\\partial z_1}{\\partial x_1} & \\frac{\\partial z_1}{\\partial x_2} \\\\\n\\frac{\\partial z_2}{\\partial x_1} & \\frac{\\partial z_2}{\\partial x_2}\n\\end{bmatrix} = \\begin{bmatrix} 2x_1x_2 & x_1^2 \\\\ 3 & \\cos x_2 \\end{bmatrix}\n\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#normalizing-flow",
+    "href": "slides/generative-architectures.html#normalizing-flow",
+    "title": "Generative Neural Networks",
+    "section": "Normalizing flow",
+    "text": "Normalizing flow\n\\[\np_X(x) = p_Z(f(x)) \\left| \\det{J}_f(x) \\right|\n\\]\nDefine a \\(f\\) as a neural network with trainable weights \\(\\phi\\)\n\nTraining\nMaximum likelihood (or rather: negative log likelihood)\n\\[\n\\arg \\min_\\phi - \\sum_{i=1}^n \\log p_Z(f(x_i \\mid \\phi)) + \\log \\left| \\det{J}_f(x_i \\mid \\phi) \\right|\n\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#flow-f",
+    "href": "slides/generative-architectures.html#flow-f",
+    "title": "Generative Neural Networks",
+    "section": "Flow \\(f\\)",
+    "text": "Flow \\(f\\)\n\nChallenge\n\nSampling: Invertible (\\(f^{-1}\\))\nTraining:\n\nDifferentiable\nComputationally efficient jacobian\n\nExpressive to represent non-trivial distributions"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#flow-composition",
+    "href": "slides/generative-architectures.html#flow-composition",
+    "title": "Generative Neural Networks",
+    "section": "Flow composition",
+    "text": "Flow composition\nInvertible and differentiable functions are “closed” under composition\n\\[\nf = f_L \\circ f_{L-1} \\circ \\dots \\circ f_1 \\\\\n\\]\n\n\n\n\n\n \n\n\n\\(f_1\\)\n\n\n \n\n\n\\(f_2\\)\n\n\n \n\n\n\\(f_3\\)\n\n\n \n\n\n\n\n\n\n\n\\(\\rightarrow\\)\n\n\n\n\n\n\\(\\rightarrow\\)\n\n\n\n\n\n\\(\\rightarrow\\)\n\n\n\n\n\n\n\nFigure 3: Flow composition in forward direction"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#flow-composition---inverse",
+    "href": "slides/generative-architectures.html#flow-composition---inverse",
+    "title": "Generative Neural Networks",
+    "section": "Flow composition - inverse",
+    "text": "Flow composition - inverse\nTo invert a flow composition, we invert individual flows and run them in the opposite order\n\\[\nf^{-1} = f_1^{-1} \\circ f_2 ^{-1} \\circ \\dots \\circ f_L^{-1} \\\\\n\\]\n\n\n\n\n\n \n\n\n\\(f_1^{-1}\\)\n\n\n \n\n\n\\(f_2^{-1}\\)\n\n\n \n\n\n\\(f_3^{-1}\\)\n\n\n \n\n\n\n\n\n\n\n\\(\\leftarrow\\)\n\n\n\n\n\n\\(\\leftarrow\\)\n\n\n\n\n\n\\(\\leftarrow\\)\n\n\n\n\n\n\n\nFigure 4: Flow composition in backward (inverse) direction"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#flow-composition---jacobian",
+    "href": "slides/generative-architectures.html#flow-composition---jacobian",
+    "title": "Generative Neural Networks",
+    "section": "Flow composition - Jacobian",
+    "text": "Flow composition - Jacobian\n\nChain rule \\[\n\\left| \\det{J}_f(x) \\right| = \\left| \\det \\prod_{l=1}^L J_{f_l}(x)\\right| = \\prod_{l=1}^L \\left| \\det{J}_{f_l}(x)\\right|\n\\]\nif we have a Jacobian for each individual transformation, then we have a Jacobian for their composition \\[\n\\arg \\min_\\phi \\sum_{i=1}^n \\log p_Z(f(x_i \\mid \\phi)) + \\sum_{l=1}^L \\log \\left| \\det{J}_{f_l}(x_i \\mid \\phi) \\right|\n\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#linear-flow",
+    "href": "slides/generative-architectures.html#linear-flow",
+    "title": "Generative Neural Networks",
+    "section": "Linear flow",
+    "text": "Linear flow\n\n\\[\nf(x) = Ax + b\n\\]\n\ninverse: \\(f^{-1}(z) = A^{-1}(x - b)\\)\nJacobian: \\(\\left| \\det{J}_f(x) \\right| = \\left| \\det{A} \\right|\\)\nLimitations:\n\nNot expressive (composition of linear functions is a linear function)\nJacobian/inverse may be in \\(\\mathcal{O}(p^3)\\)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#coupling-flows",
+    "href": "slides/generative-architectures.html#coupling-flows",
+    "title": "Generative Neural Networks",
+    "section": "Coupling flows",
+    "text": "Coupling flows\n\nIncreasing expresiveness while potentially decreasing computational costs\nA coupling flow is a way to construct non-linear flows\n\n\nSplit the data in two disjoint subsets: \\(x = (x_A, x_B)\\)\nCompute parameters conditionally on one subset: \\(\\theta(x_A)\\)\nApply transformation to the other subset: \\(z_B = f(x_B \\mid \\theta(x_A))\\)\nConcatenate \\(z = (x_A, z_B)\\)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#coupling-flow-forward",
+    "href": "slides/generative-architectures.html#coupling-flow-forward",
+    "title": "Generative Neural Networks",
+    "section": "Coupling flow: Forward",
+    "text": "Coupling flow: Forward"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#coupling-flow-inverse",
+    "href": "slides/generative-architectures.html#coupling-flow-inverse",
+    "title": "Generative Neural Networks",
+    "section": "Coupling flow: Inverse",
+    "text": "Coupling flow: Inverse"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#coupling-flow-trick",
+    "href": "slides/generative-architectures.html#coupling-flow-trick",
+    "title": "Generative Neural Networks",
+    "section": "Coupling flow trick",
+    "text": "Coupling flow trick\n\nJacobian\n\n\\[ J_f =\n\\begin{bmatrix}\n\\text{I} & 0 \\\\\n\\frac{\\partial}{\\partial x_A}f(x_B \\mid \\theta(x_A)) & J_f(x_B \\mid \\theta(x_A))\n\\end{bmatrix}\n\\]\n\nDeterminant\n\n\\[\n\\det{J}_f = \\det(\\text{I}) \\times \\det{J}_f(x_B \\mid \\theta(x_A)) = \\det{J}_f(x_B \\mid \\theta(x_A))\n\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#coupling-flow-trick-1",
+    "href": "slides/generative-architectures.html#coupling-flow-trick-1",
+    "title": "Generative Neural Networks",
+    "section": "Coupling flow trick",
+    "text": "Coupling flow trick\n\n\\(f(x_B\\mid\\theta(x_A))\\) needs to be differentiable and invertible\n\neasy to calculate determinant Jacobian…\n\n\\(\\theta(x_A)\\) can be arbitrarily complex\n\nnon-linear,\nnon-invertible\n\\(\\rightarrow\\) neural network\n\n\n\n\nStack multiple coupling blocks and permute \\(x_{A}\\) and \\(x_{B}\\)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#affine-coupling-dinh2016density",
+    "href": "slides/generative-architectures.html#affine-coupling-dinh2016density",
+    "title": "Generative Neural Networks",
+    "section": "Affine coupling (Dinh et al., 2016)",
+    "text": "Affine coupling (Dinh et al., 2016)\n\n\\(\\theta(x_A)\\): Trainable coupling networks, e.g., MLP\n\nOutput: Shift \\(\\mu\\) and scale \\(\\sigma\\)\n\nLinear (affine) transform function \\(f(x_B\\mid\\theta(x_A)) = \\frac{x_B - \\mu(x_A)}{\\sigma(x_A)}\\)\nJacobian: \\(-\\log{\\sigma(x_A)}\\)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#spline-coupling-muller2019neural",
+    "href": "slides/generative-architectures.html#spline-coupling-muller2019neural",
+    "title": "Generative Neural Networks",
+    "section": "Spline coupling (Müller et al., 2019)",
+    "text": "Spline coupling (Müller et al., 2019)\n\n\n\nTransformation: Splines\n\n“Piecewise polynomials”\n\nMore expressive\nEasier to overfit\nSlower at training and inference\n\n\n\n\n\nFigure from Durkan et al. (2019)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#exercise---moons",
+    "href": "slides/generative-architectures.html#exercise---moons",
+    "title": "Generative Neural Networks",
+    "section": "Exercise - Moons",
+    "text": "Exercise - Moons\nBuild your own affine coupling normalizing flow!\n\n\n\nForward\n\n\nBackward"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#idea",
+    "href": "slides/generative-architectures.html#idea",
+    "title": "Generative Neural Networks",
+    "section": "Idea",
+    "text": "Idea\n\nNormalizing flows transform X into Z in a set of discrete steps\nBut why not take one smooth/continuous transformation?"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#flow-matching",
+    "href": "slides/generative-architectures.html#flow-matching",
+    "title": "Generative Neural Networks",
+    "section": "Flow matching",
+    "text": "Flow matching\n\nDefines a flow that transforms a distribution over time\n\n\\(p_{t=0} = p_z\\) - Base distribution\n\\(p_{t=1} = q = p_x\\) - Data distribution\n\n\n\n\nLipman et al. (2024)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#flow-and-velocity",
+    "href": "slides/generative-architectures.html#flow-and-velocity",
+    "title": "Generative Neural Networks",
+    "section": "Flow and velocity",
+    "text": "Flow and velocity\n\nFlow defines \\(X_t = \\phi_t(X_0)\\)\nTime dependent vector field: \\(\\frac{d}{dt} \\phi_t(x) = u_t(\\phi_t(x))\\)\nModel \\(u_t\\) with a neural network\n\n\n\nLipman et al. (2024)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#flow-matching-1",
+    "href": "slides/generative-architectures.html#flow-matching-1",
+    "title": "Generative Neural Networks",
+    "section": "Flow matching",
+    "text": "Flow matching\n\\[\n\\begin{aligned}\n\\mathbb{E}_{t, X_t}|| u_{t,\\theta}(X_t) - u_t(X_t) ||^2 \\\\ t\\sim\\text{Uniform}(0,1) \\\\ X_t \\sim p_t(X_t)\n\\end{aligned}\n\\]\n\nLipman et al. (2024)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#conditional-flow-matching",
+    "href": "slides/generative-architectures.html#conditional-flow-matching",
+    "title": "Generative Neural Networks",
+    "section": "Conditional Flow Matching",
+    "text": "Conditional Flow Matching\nLinear probability path\n\\[X_t = (1-t) X_0 + t X_1\\]\nVelocity\n\\[u_t(X_t \\mid X_1, X_0) = X_1 - X_0\\]\n\nLipman et al. (2024)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#conditional-flow-matching-1",
+    "href": "slides/generative-architectures.html#conditional-flow-matching-1",
+    "title": "Generative Neural Networks",
+    "section": "Conditional Flow Matching",
+    "text": "Conditional Flow Matching\n \\[\n\\begin{aligned}\n\\mathbb{E}_{t, X_t}|| u_{t,\\theta}\\big(\\underbrace{(1-t) X_0 + t X_1)}_{X_t}\\big) - (\\underbrace{X_1-X_0}_{u_t}) ||^2 \\\\ t\\sim\\text{Uniform}(0,1) \\\\ X_0 \\sim p_0 \\\\ X_1 \\sim p_1\n\\end{aligned}\n\\]"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#conditional-vs-marginal-paths",
+    "href": "slides/generative-architectures.html#conditional-vs-marginal-paths",
+    "title": "Generative Neural Networks",
+    "section": "Conditional vs Marginal paths",
+    "text": "Conditional vs Marginal paths\n\n\n\n\n\n\n\n\nConditional path\n\n\n\n\n\n\n\nMarginal path\n\n\n\n\n\n\nFigure 5: Fjelde et al. (2024)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#optimal-transport",
+    "href": "slides/generative-architectures.html#optimal-transport",
+    "title": "Generative Neural Networks",
+    "section": "Optimal transport",
+    "text": "Optimal transport\n\nIndependent coupling \\(p(X_0, X_1) = p(X_0) p(X_1)\\)\nOptimal transport coupling \\(p(X_0, X_1) = \\pi(X_0, X_1)\\)\n\nMinimise transport cost (e.g., Wasserstein distance)\nFor batches (Pooladian et al., 2023)\n\n\n\n\nFigure 6: Fjelde et al. (2024)"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#exercise",
+    "href": "slides/generative-architectures.html#exercise",
+    "title": "Generative Neural Networks",
+    "section": "Exercise",
+    "text": "Exercise"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#exercise-1",
+    "href": "slides/generative-architectures.html#exercise-1",
+    "title": "Generative Neural Networks",
+    "section": "Exercise",
+    "text": "Exercise"
+  },
+  {
+    "objectID": "slides/generative-architectures.html#references",
+    "href": "slides/generative-architectures.html#references",
+    "title": "Generative Neural Networks",
+    "section": "References",
+    "text": "References\n\n\n\n\nDinh, L., Sohl-Dickstein, J., & Bengio, S. (2016). Density estimation using real nvp. arXiv Preprint arXiv:1605.08803.\n\n\nDurkan, C., Bekasov, A., Murray, I., & Papamakarios, G. (2019). Neural spline flows. Advances in Neural Information Processing Systems, 32.\n\n\nFjelde, T., Mathieu, E., & Dutordoir, V. (2024). An Introduction to Flow Matching. https://mlg.eng.cam.ac.uk/blog/2024/01/20/flow-matching.html\n\n\nGoodfellow, I. J., Pouget-Abadie, J., Mirza, M., Xu, B., Warde-Farley, D., Ozair, S., Courville, A., & Bengio, Y. (2014). Generative adversarial nets. Advances in Neural Information Processing Systems, 27.\n\n\nKingma, D. P., Welling, M., et al. (2013). Auto-encoding variational bayes. Banff, Canada.\n\n\nKobyzev, I., Prince, S. J., & Brubaker, M. A. (2020). Normalizing flows: An introduction and review of current methods. IEEE Transactions on Pattern Analysis and Machine Intelligence, 43(11), 3964–3979.\n\n\nLi, S. Z. (2009). Markov random field modeling in image analysis. Springer Science & Business Media.\n\n\nLipman, Y., Chen, R. T., Ben-Hamu, H., Nickel, M., & Le, M. (2022). Flow matching for generative modeling. arXiv Preprint arXiv:2210.02747.\n\n\nLipman, Y., Havasi, M., Holderrieth, P., Shaul, N., Le, M., Karrer, B., Chen, R. T. Q., Lopez-Paz, D., Ben-Hamu, H., & Gat, I. (2024). Flow matching guide and code. https://arxiv.org/abs/2412.06264\n\n\nMüller, T., McWilliams, B., Rousselle, F., Gross, M., & Novák, J. (2019). Neural importance sampling. ACM Transactions on Graphics (ToG), 38(5), 1–19.\n\n\nPapamakarios, G., Nalisnick, E., Rezende, D. J., Mohamed, S., & Lakshminarayanan, B. (2021). Normalizing flows for probabilistic modeling and inference. Journal of Machine Learning Research, 22(57), 1–64.\n\n\nPooladian, A.-A., Ben-Hamu, H., Domingo-Enrich, C., Amos, B., Lipman, Y., & Chen, R. T. (2023). Multisample flow matching: Straightening flows with minibatch couplings. arXiv Preprint arXiv:2304.14772.\n\n\nSong, Y., Dhariwal, P., Chen, M., & Sutskever, I. (2023). Consistency models.\n\n\nSong, Y., Sohl-Dickstein, J., Kingma, D. P., Kumar, A., Ermon, S., & Poole, B. (2020). Score-based generative modeling through stochastic differential equations. arXiv Preprint arXiv:2011.13456."
+  },
+  {
+    "objectID": "LICENSE.html",
+    "href": "LICENSE.html",
+    "title": "Seminar in Amortized Bayesian Inference",
     "section": "",
-    "text": "About this site"
+    "text": "Attribution-NonCommercial 4.0 International\n=======================================================================\nCreative Commons Corporation (“Creative Commons”) is not a law firm and does not provide legal services or legal advice. Distribution of Creative Commons public licenses does not create a lawyer-client or other relationship. Creative Commons makes its licenses and related information available on an “as-is” basis. Creative Commons gives no warranties regarding its licenses, any material licensed under their terms and conditions, or any related information. Creative Commons disclaims all liability for damages resulting from their use to the fullest extent possible.\nUsing Creative Commons Public Licenses\nCreative Commons public licenses provide a standard set of terms and conditions that creators and other rights holders may use to share original works of authorship and other material subject to copyright and certain other rights specified in the public license below. The following considerations are for informational purposes only, are not exhaustive, and do not form part of our licenses.\n Considerations for licensors: Our public licenses are\n intended for use by those authorized to give the public\n permission to use material in ways otherwise restricted by\n copyright and certain other rights. Our licenses are\n irrevocable. Licensors should read and understand the terms\n and conditions of the license they choose before applying it.\n Licensors should also secure all rights necessary before\n applying our licenses so that the public can reuse the\n material as expected. Licensors should clearly mark any\n material not subject to the license. This includes other CC-\n licensed material, or material used under an exception or\n limitation to copyright. More considerations for licensors:\nwiki.creativecommons.org/Considerations_for_licensors\n\n Considerations for the public: By using one of our public\n licenses, a licensor grants the public permission to use the\n licensed material under specified terms and conditions. If\n the licensor's permission is not necessary for any reason--for\n example, because of any applicable exception or limitation to\n copyright--then that use is not regulated by the license. Our\n licenses grant only permissions under copyright and certain\n other rights that a licensor has authority to grant. Use of\n the licensed material may still be restricted for other\n reasons, including because others have copyright or other\n rights in the material. A licensor may make special requests,\n such as asking that all changes be marked or described.\n Although not required by our licenses, you are encouraged to\n respect those requests where reasonable. More considerations\n for the public:\nwiki.creativecommons.org/Considerations_for_licensees\n=======================================================================\nCreative Commons Attribution-NonCommercial 4.0 International Public License\nBy exercising the Licensed Rights (defined below), You accept and agree to be bound by the terms and conditions of this Creative Commons Attribution-NonCommercial 4.0 International Public License (“Public License”). To the extent this Public License may be interpreted as a contract, You are granted the Licensed Rights in consideration of Your acceptance of these terms and conditions, and the Licensor grants You such rights in consideration of benefits the Licensor receives from making the Licensed Material available under these terms and conditions.\nSection 1 – Definitions.\n\nAdapted Material means material subject to Copyright and Similar Rights that is derived from or based upon the Licensed Material and in which the Licensed Material is translated, altered, arranged, transformed, or otherwise modified in a manner requiring permission under the Copyright and Similar Rights held by the Licensor. For purposes of this Public License, where the Licensed Material is a musical work, performance, or sound recording, Adapted Material is always produced where the Licensed Material is synched in timed relation with a moving image.\nAdapter’s License means the license You apply to Your Copyright and Similar Rights in Your contributions to Adapted Material in accordance with the terms and conditions of this Public License.\nCopyright and Similar Rights means copyright and/or similar rights closely related to copyright including, without limitation, performance, broadcast, sound recording, and Sui Generis Database Rights, without regard to how the rights are labeled or categorized. For purposes of this Public License, the rights specified in Section 2(b)(1)-(2) are not Copyright and Similar Rights.\nEffective Technological Measures means those measures that, in the absence of proper authority, may not be circumvented under laws fulfilling obligations under Article 11 of the WIPO Copyright Treaty adopted on December 20, 1996, and/or similar international agreements.\nExceptions and Limitations means fair use, fair dealing, and/or any other exception or limitation to Copyright and Similar Rights that applies to Your use of the Licensed Material.\nLicensed Material means the artistic or literary work, database, or other material to which the Licensor applied this Public License.\nLicensed Rights means the rights granted to You subject to the terms and conditions of this Public License, which are limited to all Copyright and Similar Rights that apply to Your use of the Licensed Material and that the Licensor has authority to license.\nLicensor means the individual(s) or entity(ies) granting rights under this Public License.\nNonCommercial means not primarily intended for or directed towards commercial advantage or monetary compensation. For purposes of this Public License, the exchange of the Licensed Material for other material subject to Copyright and Similar Rights by digital file-sharing or similar means is NonCommercial provided there is no payment of monetary compensation in connection with the exchange.\nShare means to provide material to the public by any means or process that requires permission under the Licensed Rights, such as reproduction, public display, public performance, distribution, dissemination, communication, or importation, and to make material available to the public including in ways that members of the public may access the material from a place and at a time individually chosen by them.\nSui Generis Database Rights means rights other than copyright resulting from Directive 96/9/EC of the European Parliament and of the Council of 11 March 1996 on the legal protection of databases, as amended and/or succeeded, as well as other essentially equivalent rights anywhere in the world.\nYou means the individual or entity exercising the Licensed Rights under this Public License. Your has a corresponding meaning.\n\nSection 2 – Scope.\n\nLicense grant.\n\nSubject to the terms and conditions of this Public License, the Licensor hereby grants You a worldwide, royalty-free, non-sublicensable, non-exclusive, irrevocable license to exercise the Licensed Rights in the Licensed Material to:\n\nreproduce and Share the Licensed Material, in whole or in part, for NonCommercial purposes only; and\nproduce, reproduce, and Share Adapted Material for NonCommercial purposes only.\n\nExceptions and Limitations. For the avoidance of doubt, where Exceptions and Limitations apply to Your use, this Public License does not apply, and You do not need to comply with its terms and conditions.\nTerm. The term of this Public License is specified in Section 6(a).\nMedia and formats; technical modifications allowed. The Licensor authorizes You to exercise the Licensed Rights in all media and formats whether now known or hereafter created, and to make technical modifications necessary to do so. The Licensor waives and/or agrees not to assert any right or authority to forbid You from making technical modifications necessary to exercise the Licensed Rights, including technical modifications necessary to circumvent Effective Technological Measures. For purposes of this Public License, simply making modifications authorized by this Section 2(a)\n\nnever produces Adapted Material.\n\nDownstream recipients.\n\nOffer from the Licensor – Licensed Material. Every recipient of the Licensed Material automatically receives an offer from the Licensor to exercise the Licensed Rights under the terms and conditions of this Public License.\nNo downstream restrictions. You may not offer or impose any additional or different terms or conditions on, or apply any Effective Technological Measures to, the Licensed Material if doing so restricts exercise of the Licensed Rights by any recipient of the Licensed Material.\n\nNo endorsement. Nothing in this Public License constitutes or may be construed as permission to assert or imply that You are, or that Your use of the Licensed Material is, connected with, or sponsored, endorsed, or granted official status by, the Licensor or others designated to receive attribution as provided in Section 3(a)(1)(A)(i).\n\nOther rights.\n\nMoral rights, such as the right of integrity, are not licensed under this Public License, nor are publicity, privacy, and/or other similar personality rights; however, to the extent possible, the Licensor waives and/or agrees not to assert any such rights held by the Licensor to the limited extent necessary to allow You to exercise the Licensed Rights, but not otherwise.\nPatent and trademark rights are not licensed under this Public License.\nTo the extent possible, the Licensor waives any right to collect royalties from You for the exercise of the Licensed Rights, whether directly or through a collecting society under any voluntary or waivable statutory or compulsory licensing scheme. In all other cases the Licensor expressly reserves any right to collect such royalties, including when the Licensed Material is used other than for NonCommercial purposes.\n\n\nSection 3 – License Conditions.\nYour exercise of the Licensed Rights is expressly made subject to the following conditions.\n\nAttribution.\n\nIf You Share the Licensed Material (including in modified form), You must:\n\nretain the following if it is supplied by the Licensor with the Licensed Material:\n\nidentification of the creator(s) of the Licensed Material and any others designated to receive attribution, in any reasonable manner requested by the Licensor (including by pseudonym if designated);\na copyright notice;\na notice that refers to this Public License;\na notice that refers to the disclaimer of warranties;\na URI or hyperlink to the Licensed Material to the extent reasonably practicable;\n\nindicate if You modified the Licensed Material and retain an indication of any previous modifications; and\nindicate the Licensed Material is licensed under this Public License, and include the text of, or the URI or hyperlink to, this Public License.\n\nYou may satisfy the conditions in Section 3(a)(1) in any reasonable manner based on the medium, means, and context in which You Share the Licensed Material. For example, it may be reasonable to satisfy the conditions by providing a URI or hyperlink to a resource that includes the required information.\nIf requested by the Licensor, You must remove any of the information required by Section 3(a)(1)(A) to the extent reasonably practicable.\nIf You Share Adapted Material You produce, the Adapter’s License You apply must not prevent recipients of the Adapted Material from complying with this Public License.\n\n\nSection 4 – Sui Generis Database Rights.\nWhere the Licensed Rights include Sui Generis Database Rights that apply to Your use of the Licensed Material:\n\nfor the avoidance of doubt, Section 2(a)(1) grants You the right to extract, reuse, reproduce, and Share all or a substantial portion of the contents of the database for NonCommercial purposes only;\nif You include all or a substantial portion of the database contents in a database in which You have Sui Generis Database Rights, then the database in which You have Sui Generis Database Rights (but not its individual contents) is Adapted Material; and\nYou must comply with the conditions in Section 3(a) if You Share all or a substantial portion of the contents of the database.\n\nFor the avoidance of doubt, this Section 4 supplements and does not replace Your obligations under this Public License where the Licensed Rights include other Copyright and Similar Rights.\nSection 5 – Disclaimer of Warranties and Limitation of Liability.\n\nUNLESS OTHERWISE SEPARATELY UNDERTAKEN BY THE LICENSOR, TO THE EXTENT POSSIBLE, THE LICENSOR OFFERS THE LICENSED MATERIAL AS-IS AND AS-AVAILABLE, AND MAKES NO REPRESENTATIONS OR WARRANTIES OF ANY KIND CONCERNING THE LICENSED MATERIAL, WHETHER EXPRESS, IMPLIED, STATUTORY, OR OTHER. THIS INCLUDES, WITHOUT LIMITATION, WARRANTIES OF TITLE, MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, ABSENCE OF LATENT OR OTHER DEFECTS, ACCURACY, OR THE PRESENCE OR ABSENCE OF ERRORS, WHETHER OR NOT KNOWN OR DISCOVERABLE. WHERE DISCLAIMERS OF WARRANTIES ARE NOT ALLOWED IN FULL OR IN PART, THIS DISCLAIMER MAY NOT APPLY TO YOU.\nTO THE EXTENT POSSIBLE, IN NO EVENT WILL THE LICENSOR BE LIABLE TO YOU ON ANY LEGAL THEORY (INCLUDING, WITHOUT LIMITATION, NEGLIGENCE) OR OTHERWISE FOR ANY DIRECT, SPECIAL, INDIRECT, INCIDENTAL, CONSEQUENTIAL, PUNITIVE, EXEMPLARY, OR OTHER LOSSES, COSTS, EXPENSES, OR DAMAGES ARISING OUT OF THIS PUBLIC LICENSE OR USE OF THE LICENSED MATERIAL, EVEN IF THE LICENSOR HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH LOSSES, COSTS, EXPENSES, OR DAMAGES. WHERE A LIMITATION OF LIABILITY IS NOT ALLOWED IN FULL OR IN PART, THIS LIMITATION MAY NOT APPLY TO YOU.\nThe disclaimer of warranties and limitation of liability provided above shall be interpreted in a manner that, to the extent possible, most closely approximates an absolute disclaimer and waiver of all liability.\n\nSection 6 – Term and Termination.\n\nThis Public License applies for the term of the Copyright and Similar Rights licensed here. However, if You fail to comply with this Public License, then Your rights under this Public License terminate automatically.\nWhere Your right to use the Licensed Material has terminated under Section 6(a), it reinstates:\n\nautomatically as of the date the violation is cured, provided it is cured within 30 days of Your discovery of the violation; or\nupon express reinstatement by the Licensor.\n\nFor the avoidance of doubt, this Section 6(b) does not affect any right the Licensor may have to seek remedies for Your violations of this Public License.\nFor the avoidance of doubt, the Licensor may also offer the Licensed Material under separate terms or conditions or stop distributing the Licensed Material at any time; however, doing so will not terminate this Public License.\nSections 1, 5, 6, 7, and 8 survive termination of this Public License.\n\nSection 7 – Other Terms and Conditions.\n\nThe Licensor shall not be bound by any additional or different terms or conditions communicated by You unless expressly agreed.\nAny arrangements, understandings, or agreements regarding the Licensed Material not stated herein are separate from and independent of the terms and conditions of this Public License.\n\nSection 8 – Interpretation.\n\nFor the avoidance of doubt, this Public License does not, and shall not be interpreted to, reduce, limit, restrict, or impose conditions on any use of the Licensed Material that could lawfully be made without permission under this Public License.\nTo the extent possible, if any provision of this Public License is deemed unenforceable, it shall be automatically reformed to the minimum extent necessary to make it enforceable. If the provision cannot be reformed, it shall be severed from this Public License without affecting the enforceability of the remaining terms and conditions.\nNo term or condition of this Public License will be waived and no failure to comply consented to unless expressly agreed to by the Licensor.\nNothing in this Public License constitutes or may be interpreted as a limitation upon, or waiver of, any privileges and immunities that apply to the Licensor or You, including from the legal processes of any jurisdiction or authority.\n\n=======================================================================\nCreative Commons is not a party to its public licenses. Notwithstanding, Creative Commons may elect to apply one of its public licenses to material it publishes and in those instances will be considered the “Licensor.” The text of the Creative Commons public licenses is dedicated to the public domain under the CC0 Public Domain Dedication. Except for the limited purpose of indicating that material is shared under a Creative Commons public license or as otherwise permitted by the Creative Commons policies published at creativecommons.org/policies, Creative Commons does not authorize the use of the trademark “Creative Commons” or any other trademark or logo of Creative Commons without its prior written consent including, without limitation, in connection with any unauthorized modifications to any of its public licenses or any other arrangements, understandings, or agreements concerning use of licensed material. For the avoidance of doubt, this paragraph does not form part of the public licenses.\nCreative Commons may be contacted at creativecommons.org."
   },
   {
     "objectID": "exercises/flow-matching-swiss-roll.html",
