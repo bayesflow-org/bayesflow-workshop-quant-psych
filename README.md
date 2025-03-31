@@ -4,8 +4,8 @@ This repository contains workshop materials (website, slides, exercises, project
 
 ## License
 
-Author of the original work Šimon Kucharský, partially based on previous materials created by various members of the BayesFlow team.
+Author of the original work is Šimon Kucharský. The materials are partially based on previous workshop and course contents created by various members of the BayesFlow team.
 
-The contents of this repository are shared under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/). Software elements are additionally licensed under the [3-Clause BSD License](https://opensource.org/license/bsd-3-clause).
+The contents of this repository are shared under the [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) license. Software elements are additionally licensed under the [3-Clause BSD License](https://opensource.org/license/bsd-3-clause).
 
-Some contents (data, figures) are reused from other sources (attributed in the materials). Make sure to appropriately attribute the original authors if reusing the materials.
+Some content (data, figures) are reused from other sources (attributed in the materials). Make sure to appropriately attribute the original authors if reusing these materials.

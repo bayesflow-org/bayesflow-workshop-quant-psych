@@ -5,7 +5,7 @@ website:
   title: "Seminar in Amortized Bayesian Inference"
   search: true
   description: "Materials for learning working with BayesFlow"
-  repo-url: https://github.com/Kucharssim/bayesflow-seminar
+  repo-url: https://github.com/bayesflow-org/bayesflow-workshop-quant-psych
   repo-actions: [edit, issue]
   navbar:
     logo: figures/bayesflow-logo.png
@@ -24,7 +24,7 @@ website:
       - icon: github
         menu:
           - text: This website
-            href: https://github.com/Kucharssim/bayesflow-seminar
+            href: https://github.com/bayesflow-org/bayesflow-workshop-quant-psych
           - text: BayesFlow
             href: https://github.com/bayesflow-org/bayesflow
   open-graph: true
