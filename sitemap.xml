@@ -2,58 +2,58 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/projects.html</loc>
-    <lastmod>2025-03-31T08:14:58.934Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.796Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/exercises/bayesflow-normal.html</loc>
-    <lastmod>2025-03-31T08:14:58.898Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.745Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/exercises/bayesflow-diffusion.html</loc>
-    <lastmod>2025-03-31T08:14:58.893Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.739Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/exercises/bayesflow-diffusion-covar.html</loc>
-    <lastmod>2025-03-31T08:14:58.884Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.727Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/slides/generative-architectures.html</loc>
-    <lastmod>2025-03-31T08:14:58.934Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.796Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/slides/amortized-inference.html</loc>
-    <lastmod>2025-03-31T08:14:58.934Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.796Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/exercises.html</loc>
-    <lastmod>2025-03-31T08:14:58.874Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.717Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/index.html</loc>
-    <lastmod>2025-03-31T08:14:58.933Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.796Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/slides/deep-learning.html</loc>
-    <lastmod>2025-03-31T08:14:58.934Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.796Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/slides/intro.html</loc>
-    <lastmod>2025-03-31T08:14:58.934Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.796Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/about.html</loc>
-    <lastmod>2025-03-31T08:14:58.868Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.711Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/exercises/flow-matching-swiss-roll.html</loc>
-    <lastmod>2025-03-31T08:14:58.903Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.753Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/exercises/normalizing-flow.html</loc>
-    <lastmod>2025-03-31T08:14:58.906Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.758Z</lastmod>
   </url>
   <url>
     <loc>https://Kucharssim.github.io/bayesflow-seminar/exercises/flow-matching-datasaurus.html</loc>
-    <lastmod>2025-03-31T08:14:58.901Z</lastmod>
+    <lastmod>2025-03-31T08:22:21.750Z</lastmod>
   </url>
 </urlset>
