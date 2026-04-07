@@ -7,3 +7,4 @@ sandbox.ipynb
 .Rproj.user
 todo.md
 .Rhistory
+__pycache__/
