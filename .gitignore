@@ -7,6 +7,3 @@ sandbox.ipynb
 .Rproj.user
 todo.md
 .Rhistory
-__pycache__/
-**/*.quarto_ipynb
-slides/*_files
