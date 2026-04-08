@@ -1,15 +1,25 @@
 ---
-title: "Amortized Bayesian Inference"
-subtitle: "Introduction"
-author: "Šimon Kucharský"
+title: "Introduction to Simulation-Based Inference"
+author: "Šimon Kucharský & Paul Bürkner"
 format:
-    revealjs: 
-        theme: default
-        slide-number: true
-        html-math-method: mathjax
-        highlight-style: github
-        footer: "Amortized Bayesian Inference"
-        logo: ../figures/bayesflow-logo.png
+  beamer:
+    theme: "metropolis"
+    fontsize: 10pt
+    include-in-header: 
+      text: |
+        \definecolor{tue_red}{RGB}{147,40,66}
+        \setbeamercolor{progress bar}{fg=tue_red}
+        \setbeamercolor{sectionpage}{bg=tue_red}
+        \usepackage{subcaption}
+        \setbeamertemplate{footline}
+        {\begin{beamercolorbox}[sep=1ex]{author in head/foot} \rlap{\textit{\insertshorttitle}}\hfill\insertauthor\hfill\llap{\insertframenumber}        \end{beamercolorbox}}
+  revealjs: 
+    theme: default
+    slide-number: true
+    html-math-method: mathjax
+    highlight-style: github
+    footer: "Amortized Bayesian Inference"
+    logo: ../figures/bayesflow-logo.png
 ---
 
 ## 
@@ -54,7 +64,7 @@ $$
 ## Simulation-based inference (SBI)
 
 - "Likelihood-free"
-- Cannot evaluate $p(x \mid \theta)$ or $p(\theta)$
+- When we cannot even evaluate $p(x \mid \theta)$
 - Approximate using sampling
 
 #### Examples
@@ -80,7 +90,7 @@ p(\theta, x) & = p(\theta) p(x \mid \theta)\\
 \end{aligned}
 $$
 
-![](../figures/joint-distribution.svg){fig-align="center"}
+![](../figures/joint-distribution.svg){fig-align="center" height=70%}
 
 ## Rejection sampling
 
@@ -90,7 +100,7 @@ p(\theta, x) & = p(\theta) p(x \mid \theta)\\
 \end{aligned}
 $$
 
-![](../figures/conditional-distribution.svg){fig-align="center"}
+![](../figures/conditional-distribution.svg){fig-align="center" height=70%}
 
 ## Rejection sampling
 
@@ -113,6 +123,11 @@ observed = 7
 posterior = prior[x == observed] 
 ```
 
+##
+
+\Large
+Time for exercise `rejection-sampling.ipynb`
+
 ## Approximate Bayesian Computation (ABC)
 
 - Generalization of rejection sampling
@@ -131,12 +146,12 @@ $$
 - Computationally expensive
 - Handcrafted summary statistics
 
+
 ## Neural estimation
 
 - Approximate using *generative neural networks*
   - Deep learning architecture that approximates a probability distribution 
 
-</br>
 
 ::::{.columns}
 
