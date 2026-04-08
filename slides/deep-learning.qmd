@@ -1,8 +1,18 @@
 ---
 title: "Deep Learning"
-subtitle: "Introduction"
-author: "Šimon Kucharský"
+author: "Šimon Kucharský & Paul Bürkner"
 format:
+    beamer:
+        theme: "metropolis"
+        fontsize: 10pt
+        include-in-header: 
+            text: |
+                \definecolor{tue_red}{RGB}{147,40,66}
+                \setbeamercolor{progress bar}{fg=tue_red}
+                \setbeamercolor{sectionpage}{bg=tue_red}
+                \usepackage{subcaption}
+                \setbeamertemplate{footline}
+                {\begin{beamercolorbox}[sep=1ex]{author in head/foot} \rlap{\textit{\insertshorttitle}}\hfill\insertauthor\hfill\llap{\insertframenumber}        \end{beamercolorbox}}
     revealjs: 
         theme: default
         slide-number: true
@@ -189,9 +199,9 @@ import keras
 
 network = keras.models.Sequential([
     keras.Input((3,)),
-    keras.layers.Dense(4, activation="relu"),   # 3 inputs, 4 outputs
-    keras.layers.Dense(4, activation="relu"),   # 4 inputs, 4 outputs
-    keras.layers.Dense(2, activation="softmax") # 4 inputs, 2 outputs
+    keras.layers.Dense(4, activation="relu"),   # 3 in, 4 out
+    keras.layers.Dense(4, activation="relu"),   # 4 in, 4 out
+    keras.layers.Dense(2, activation="softmax") # 4 in, 2 out
 ])
 network.summary()
 
@@ -209,9 +219,9 @@ import keras
 
 network = keras.models.Sequential([
     keras.Input((3,)),
-    keras.layers.Dense(4, activation="relu"),   # 3 inputs, 4 outputs
-    keras.layers.Dense(4, activation="relu"),   # 4 inputs, 4 outputs
-    keras.layers.Dense(2, activation="softmax") # 4 inputs, 2 outputs
+    keras.layers.Dense(4, activation="relu"),   # 3 in, 4 out
+    keras.layers.Dense(4, activation="relu"),   # 4 in, 4 out
+    keras.layers.Dense(2, activation="softmax") # 4 in, 2 out
 ])
 network.summary()
 
@@ -253,7 +263,7 @@ $$
 \tanh{(x)} = \frac{e^x - e^{-x}}{e^x + e^{-x}}
 $$
 
-![](../figures/activations/tanh.svg){fig-align="center"}
+![](../figures/activations/tanh.svg){fig-align="center" height=70%}
 
 
 ## Activation functions
@@ -262,7 +272,7 @@ $$
 \text{ReLU}(x) = \begin{cases} 0, x \leq 0 \\ x, x > 0\end{cases}
 $$
 
-![](../figures/activations/relu.svg){fig-align="center"}
+![](../figures/activations/relu.svg){fig-align="center" height=70%}
 
 ## Activation functions
 
@@ -279,7 +289,7 @@ $$
 \sigma(x) = \frac{1}{1 + e^{-x}}
 $$
 
-![](../figures/activations/sigma.svg){fig-align="center"}
+![](../figures/activations/sigma.svg){fig-align="center" height=70%}
 
 ## Activation functions
 
@@ -326,7 +336,7 @@ $$
 \operatorname*{argmin}_{\theta} \mathcal{L}(x; \theta)
 $$
 
-![](../figures/loss.svg){fig-align="center"}
+![](../figures/loss.svg){fig-align="center" height=50%}
 
 ## Optimization {.smaller}
 
@@ -594,7 +604,7 @@ Large networks tend to overfit
   
 ## Early stopping
 
-![](../figures/early-stopping.svg){fig-align="center"}
+![](../figures/early-stopping.svg){fig-align="center" height=90%}
 
 
 ## Early stopping
@@ -662,7 +672,11 @@ network = keras.Sequential([
 
 During training, "turn off" each activation with a probability $p$
 
+![Visualization of dropout](../figures/dropout.png){fig-align="center" width=60%}
+
+<!--
 ![[Image source: learnopencv.com](https://learnopencv.com/wp-content/uploads/2018/06/dropoutAnimation.gif)](https://learnopencv.com/wp-content/uploads/2018/06/dropoutAnimation.gif){fig-align="center" width=50%}
+-->
 
 - Better generalization
 - Reduced dependence on single neurons
