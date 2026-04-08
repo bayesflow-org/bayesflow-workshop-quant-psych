@@ -8,3 +8,4 @@ sandbox.ipynb
 todo.md
 .Rhistory
 __pycache__/
+**/*.quarto_ipynb
