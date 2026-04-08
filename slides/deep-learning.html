@@ -6,8 +6,8 @@
 <script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
 <link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
 <link href="../site_libs/quarto-html/light-border.css" rel="stylesheet">
-<link href="../site_libs/quarto-html/quarto-syntax-highlighting-de84f8d6bb715db06a919283c2d1e787.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.6.42">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-a06763021a52c43c40a351ac8b799b8f.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
+  <meta name="generator" content="quarto-1.9.36">
 
   <meta name="author" content="Šimon Kucharský">
   <title>Seminar in Amortized Bayesian Inference – Deep Learning</title>
@@ -17,6 +17,9 @@
   <link rel="stylesheet" href="../site_libs/revealjs/dist/reset.css">
   <link rel="stylesheet" href="../site_libs/revealjs/dist/reveal.css">
   <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
     code{white-space: pre-wrap;}
     span.smallcaps{font-variant: small-caps;}
     div.columns{display: flex; gap: min(4vw, 1.5em);}
@@ -29,8 +32,9 @@
       vertical-align: middle;
     }
     /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
     pre > code.sourceCode { white-space: pre; position: relative; }
-    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
     pre > code.sourceCode > span:empty { height: 1.2em; }
     .sourceCode { overflow: visible; }
     code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -41,7 +45,7 @@
     }
     @media print {
     pre > code.sourceCode { white-space: pre-wrap; }
-    pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
     }
     pre.numberSource code
       { counter-reset: source-line 0; }
@@ -114,7 +118,7 @@
     div.csl-indent {
       margin-left: 2em;
     }  </style>
-  <link rel="stylesheet" href="../site_libs/revealjs/dist/theme/quarto-2f366650f320edcfcf53d73c80250a32.css">
+  <link rel="stylesheet" href="../site_libs/revealjs/dist/theme/quarto-2740581606dc327e82f18f789b69d8a0.css">
   <link href="../site_libs/revealjs/plugin/quarto-line-highlight/line-highlight.css" rel="stylesheet">
   <link href="../site_libs/revealjs/plugin/reveal-menu/menu.css" rel="stylesheet">
   <link href="../site_libs/revealjs/plugin/reveal-menu/quarto-menu.css" rel="stylesheet">
@@ -288,9 +292,9 @@
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb1" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a><span class="im">import</span> os</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a></a><span class="im">import</span> os</span>
 <span id="cb1-2"><a></a>os.environ[<span class="st">"KERAS_BACKEND"</span>] <span class="op">=</span> <span class="st">"tensorflow"</span> <span class="co"># torch, jax</span></span>
-<span id="cb1-3"><a></a><span class="im">import</span> keras</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-3"><a></a><span class="im">import</span> keras</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="keras-1" class="slide level2">
@@ -304,14 +308,14 @@
 <div class="code-with-filename-file">
 <pre><strong>Terminal</strong></pre>
 </div>
-<div class="sourceCode" id="cb2" data-filename="Terminal"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a></a><span class="ex">conda</span> env config vars set KERAS_BACKEND=jax</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2" data-filename="Terminal"><pre class="sourceCode numberSource bash number-lines code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a></a><span class="ex">conda</span> env config vars set KERAS_BACKEND=jax</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p><br></p>
 <div class="code-with-filename">
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb3" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a><span class="im">import</span> keras</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a></a><span class="im">import</span> keras</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="tensors" class="slide level2">
@@ -332,13 +336,13 @@
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb4" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a></a><span class="im">import</span> os</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a></a><span class="im">import</span> os</span>
 <span id="cb4-2"><a></a>os.environ[<span class="st">"KERAS_BACKEND"</span>] <span class="op">=</span> <span class="st">"tensorflow"</span></span>
 <span id="cb4-3"><a></a><span class="im">import</span> keras</span>
 <span id="cb4-4"><a></a></span>
 <span id="cb4-5"><a></a>x <span class="op">=</span> keras.ops.zeros((<span class="dv">16</span>, <span class="dv">2</span>))</span>
 <span id="cb4-6"><a></a>x.shape <span class="co"># TensorShape([16, 2])</span></span>
-<span id="cb4-7"><a></a>x.device <span class="co"># device:CPU:0</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-7"><a></a>x.device <span class="co"># device:CPU:0</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <ul>
 <li>First axis almost always <code>batch_size</code> (think “sample size”)</li>
@@ -380,7 +384,7 @@ z &amp;= \sigma \Big(b + x W'\Big)
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb5" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a><span class="im">import</span> keras</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a></a><span class="im">import</span> keras</span>
 <span id="cb5-2"><a></a></span>
 <span id="cb5-3"><a></a>network <span class="op">=</span> keras.models.Sequential([</span>
 <span id="cb5-4"><a></a>    keras.Input((<span class="dv">3</span>,)),</span>
@@ -392,7 +396,7 @@ z &amp;= \sigma \Big(b + x W'\Big)
 <span id="cb5-10"><a></a>x.shape <span class="co"># TensorShape([100, 3])</span></span>
 <span id="cb5-11"><a></a></span>
 <span id="cb5-12"><a></a>z <span class="op">=</span> network(x)</span>
-<span id="cb5-13"><a></a>z.shape <span class="co"># TensorShape([100, 5])</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-13"><a></a>z.shape <span class="co"># TensorShape([100, 5])</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="multi-layer-perceptron" class="slide level2">
@@ -419,7 +423,7 @@ z &amp; = f_L(\dots(f_2(f_1(x)))) \\
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb6" data-filename="Python" data-code-line-numbers="3-9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a></a><span class="im">import</span> keras</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6" data-filename="Python" data-code-line-numbers="3-9"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a></a><span class="im">import</span> keras</span>
 <span id="cb6-2"><a></a></span>
 <span id="cb6-3"><a></a>network <span class="op">=</span> keras.models.Sequential([</span>
 <span id="cb6-4"><a></a>    keras.Input((<span class="dv">3</span>,)),</span>
@@ -433,7 +437,7 @@ z &amp; = f_L(\dots(f_2(f_1(x)))) \\
 <span id="cb6-12"><a></a>x.shape <span class="co"># TensorShape([100, 3])</span></span>
 <span id="cb6-13"><a></a></span>
 <span id="cb6-14"><a></a>z <span class="op">=</span> network(x)</span>
-<span id="cb6-15"><a></a>z.shape <span class="co"># TensorShape([100, 2])</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-15"><a></a>z.shape <span class="co"># TensorShape([100, 2])</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="multi-layer-perceptron-in-code-1" class="slide level2">
@@ -442,7 +446,7 @@ z &amp; = f_L(\dots(f_2(f_1(x)))) \\
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb7" data-filename="Python" data-code-line-numbers="11-16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a></a><span class="im">import</span> keras</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7" data-filename="Python" data-code-line-numbers="11-16"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a></a><span class="im">import</span> keras</span>
 <span id="cb7-2"><a></a></span>
 <span id="cb7-3"><a></a>network <span class="op">=</span> keras.models.Sequential([</span>
 <span id="cb7-4"><a></a>    keras.Input((<span class="dv">3</span>,)),</span>
@@ -456,7 +460,7 @@ z &amp; = f_L(\dots(f_2(f_1(x)))) \\
 <span id="cb7-12"><a></a>x.shape <span class="co"># TensorShape([100, 3])</span></span>
 <span id="cb7-13"><a></a></span>
 <span id="cb7-14"><a></a>z <span class="op">=</span> network(x) </span>
-<span id="cb7-15"><a></a>z.shape <span class="co"># TensorShape([100, 2])</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-15"><a></a>z.shape <span class="co"># TensorShape([100, 2])</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section></section>
 <section>
@@ -475,7 +479,6 @@ z &amp; = f_L(\dots(f_2(f_1(x)))) \\
 </section>
 <section id="what-is-an-activation-function" class="slide level2">
 <h2>What is an activation function?</h2>
-<div>
 <ul>
 <li class="fragment">Basic idea: Neuron “firing activity” based on its internal state</li>
 <li class="fragment">Requirements:
@@ -489,7 +492,6 @@ z &amp; = f_L(\dots(f_2(f_1(x)))) \\
 <li class="fragment"><a href="https://keras.io/api/layers/activations/">https://keras.io/api/layers/activations/</a></li>
 </ul></li>
 </ul>
-</div>
 </section>
 <section id="activation-functions-1" class="slide level2">
 <h2>Activation functions</h2>
@@ -714,10 +716,10 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb8" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a></a>schedule <span class="op">=</span> keras.optimizers.schedules.CosineDecay(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a></a>schedule <span class="op">=</span> keras.optimizers.schedules.CosineDecay(</span>
 <span id="cb8-2"><a></a>  initial_learning_rate<span class="op">=</span><span class="fl">1e-3</span></span>
 <span id="cb8-3"><a></a>)</span>
-<span id="cb8-4"><a></a>optimizer <span class="op">=</span> keras.optimizers.Adam(learning_rate<span class="op">=</span>schedule)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-4"><a></a>optimizer <span class="op">=</span> keras.optimizers.Adam(learning_rate<span class="op">=</span>schedule)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="issues-with-gradients" class="slide level2">
@@ -758,7 +760,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb9" data-filename="Python" data-code-line-numbers="3-4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a></a>network <span class="op">=</span> keras.models.Sequential([</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9" data-filename="Python" data-code-line-numbers="3-4"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a></a>network <span class="op">=</span> keras.models.Sequential([</span>
 <span id="cb9-2"><a></a>    keras.Input((<span class="dv">3</span>,)),</span>
 <span id="cb9-3"><a></a>    keras.layers.Dense(<span class="dv">4</span>, activation<span class="op">=</span><span class="st">"relu"</span>),</span>
 <span id="cb9-4"><a></a>    keras.layers.BatchNormalization(),</span>
@@ -766,7 +768,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <span id="cb9-6"><a></a>    keras.layers.BatchNormalization(),</span>
 <span id="cb9-7"><a></a>    keras.layers.Activation(<span class="st">"relu"</span>),</span>
 <span id="cb9-8"><a></a>    keras.layers.Dense(<span class="dv">2</span>, activation<span class="op">=</span><span class="st">"softmax"</span>)</span>
-<span id="cb9-9"><a></a>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb9-9"><a></a>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="batch-normalization-1" class="slide level2">
@@ -778,7 +780,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb10" data-filename="Python" data-code-line-numbers="5-7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a></a>network <span class="op">=</span> keras.models.Sequential([</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10" data-filename="Python" data-code-line-numbers="5-7"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a></a>network <span class="op">=</span> keras.models.Sequential([</span>
 <span id="cb10-2"><a></a>    keras.Input((<span class="dv">3</span>,)),</span>
 <span id="cb10-3"><a></a>    keras.layers.Dense(<span class="dv">4</span>, activation<span class="op">=</span><span class="st">"relu"</span>),</span>
 <span id="cb10-4"><a></a>    keras.layers.BatchNormalization(),</span>
@@ -786,7 +788,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <span id="cb10-6"><a></a>    keras.layers.BatchNormalization(),</span>
 <span id="cb10-7"><a></a>    keras.layers.Activation(<span class="st">"relu"</span>),</span>
 <span id="cb10-8"><a></a>    keras.layers.Dense(<span class="dv">2</span>, activation<span class="op">=</span><span class="st">"softmax"</span>)</span>
-<span id="cb10-9"><a></a>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-9"><a></a>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="gradient-clipping" class="slide level2">
@@ -811,10 +813,10 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb11" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a></a>optimizer<span class="op">=</span>keras.optimizers.Adam(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a></a>optimizer<span class="op">=</span>keras.optimizers.Adam(</span>
 <span id="cb11-2"><a></a>  learning_rate<span class="op">=</span><span class="fl">1e-3</span>, </span>
 <span id="cb11-3"><a></a>  clipvalue<span class="op">=</span><span class="fl">0.5</span>,</span>
-<span id="cb11-4"><a></a>  clipnorm<span class="op">=</span><span class="fl">1.0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb11-4"><a></a>  clipnorm<span class="op">=</span><span class="fl">1.0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="residual-skip-connections" class="slide level2">
@@ -828,7 +830,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb12" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a></a>inputs <span class="op">=</span> keras.Input(shape<span class="op">=</span>(<span class="dv">64</span>,))</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a></a>inputs <span class="op">=</span> keras.Input(shape<span class="op">=</span>(<span class="dv">64</span>,))</span>
 <span id="cb12-2"><a></a></span>
 <span id="cb12-3"><a></a>residual <span class="op">=</span> keras.layers.Dense(<span class="dv">64</span>)(inputs)</span>
 <span id="cb12-4"><a></a>outputs <span class="op">=</span> keras.layers.Add()([residual, inputs])</span>
@@ -836,7 +838,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <span id="cb12-6"><a></a></span>
 <span id="cb12-7"><a></a>outputs <span class="op">=</span> keras.layers.Dense(<span class="dv">10</span>, activation<span class="op">=</span><span class="st">"softmax"</span>)(outputs)</span>
 <span id="cb12-8"><a></a></span>
-<span id="cb12-9"><a></a>model <span class="op">=</span> keras.Model(inputs, outputs)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb12-9"><a></a>model <span class="op">=</span> keras.Model(inputs, outputs)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="guards-against-overfiting" class="slide level2">
@@ -868,7 +870,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb13" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a></a>early_stopping <span class="op">=</span> keras.callbacks.EarlyStopping(</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb13" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a></a>early_stopping <span class="op">=</span> keras.callbacks.EarlyStopping(</span>
 <span id="cb13-2"><a></a>    monitor<span class="op">=</span><span class="st">"val_loss"</span>,</span>
 <span id="cb13-3"><a></a>    restore_best_weights<span class="op">=</span><span class="va">True</span> </span>
 <span id="cb13-4"><a></a>)</span>
@@ -878,7 +880,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <span id="cb13-8"><a></a>    validation_data<span class="op">=</span>(X_val, y_val),</span>
 <span id="cb13-9"><a></a>    epochs<span class="op">=</span><span class="dv">100</span>,</span>
 <span id="cb13-10"><a></a>    callbacks<span class="op">=</span>[early_stopping]</span>
-<span id="cb13-11"><a></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-11"><a></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="regularization" class="slide level2">
@@ -910,7 +912,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb14" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a>network <span class="op">=</span> keras.Sequential([</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb14" data-filename="Python"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a></a>network <span class="op">=</span> keras.Sequential([</span>
 <span id="cb14-2"><a></a>    keras.layers.Dense(<span class="dv">64</span>, </span>
 <span id="cb14-3"><a></a>        activation<span class="op">=</span><span class="st">"relu"</span>, </span>
 <span id="cb14-4"><a></a>        kernel_regularizer<span class="op">=</span>keras.regularizers.l1(<span class="fl">0.01</span>)),</span>
@@ -918,7 +920,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <span id="cb14-6"><a></a>        activation<span class="op">=</span><span class="st">"relu"</span>, </span>
 <span id="cb14-7"><a></a>        kernel_regularizer<span class="op">=</span>keras.regularizers.l2(<span class="fl">0.02</span>)),</span>
 <span id="cb14-8"><a></a>    keras.layers.Dense(<span class="dv">10</span>, activation<span class="op">=</span><span class="st">"softmax"</span>)</span>
-<span id="cb14-9"><a></a>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb14-9"><a></a>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <ul>
 <li>In <code>keras</code>
@@ -946,7 +948,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb15" data-filename="Python" data-code-line-numbers="3-6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a></a>network <span class="op">=</span> keras.Sequential([</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb15" data-filename="Python" data-code-line-numbers="3-6"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a></a>network <span class="op">=</span> keras.Sequential([</span>
 <span id="cb15-2"><a></a>    keras.Input((<span class="dv">2</span>,)),</span>
 <span id="cb15-3"><a></a>    keras.layers.Dense(<span class="dv">64</span>, activation<span class="op">=</span><span class="st">"relu"</span>),</span>
 <span id="cb15-4"><a></a>    keras.layers.Dropout(<span class="fl">0.1</span>),</span>
@@ -958,7 +960,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <span id="cb15-10"><a></a>x <span class="op">=</span> keras.random.normal((<span class="dv">100</span>, <span class="dv">2</span>))</span>
 <span id="cb15-11"><a></a></span>
 <span id="cb15-12"><a></a>network(x)</span>
-<span id="cb15-13"><a></a>network(x, training<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-13"><a></a>network(x, training<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="dropout-2" class="slide level2">
@@ -967,7 +969,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <div class="code-with-filename-file">
 <pre><strong>Python</strong></pre>
 </div>
-<div class="sourceCode" id="cb16" data-filename="Python" data-code-line-numbers="12-13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a></a>network <span class="op">=</span> keras.Sequential([</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb16" data-filename="Python" data-code-line-numbers="12-13"><pre class="sourceCode numberSource python number-lines code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a></a>network <span class="op">=</span> keras.Sequential([</span>
 <span id="cb16-2"><a></a>    keras.Input((<span class="dv">2</span>,)),</span>
 <span id="cb16-3"><a></a>    keras.layers.Dense(<span class="dv">64</span>, activation<span class="op">=</span><span class="st">"relu"</span>),</span>
 <span id="cb16-4"><a></a>    keras.layers.Dropout(<span class="fl">0.1</span>),</span>
@@ -979,7 +981,7 @@ v_n &amp; = \beta_2 v_{n-1} + (1-\beta_2) g_n^2; &amp; \hat{v}_n &amp; = \frac{v
 <span id="cb16-10"><a></a>x <span class="op">=</span> keras.random.normal((<span class="dv">100</span>, <span class="dv">2</span>))</span>
 <span id="cb16-11"><a></a></span>
 <span id="cb16-12"><a></a>network(x)</span>
-<span id="cb16-13"><a></a>network(x, training<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb16-13"><a></a>network(x, training<span class="op">=</span><span class="va">True</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section></section>
 <section>
@@ -1387,190 +1389,173 @@ Zaheer, M., Kottur, S., Ravanbakhsh, S., Poczos, B., Salakhutdinov, R. R., &amp;
       });
     </script>
     <script id="quarto-html-after-body" type="application/javascript">
-    window.document.addEventListener("DOMContentLoaded", function (event) {
-      const toggleBodyColorMode = (bsSheetEl) => {
-        const mode = bsSheetEl.getAttribute("data-mode");
-        const bodyEl = window.document.querySelector("body");
-        if (mode === "dark") {
-          bodyEl.classList.add("quarto-dark");
-          bodyEl.classList.remove("quarto-light");
-        } else {
-          bodyEl.classList.add("quarto-light");
-          bodyEl.classList.remove("quarto-dark");
-        }
-      }
-      const toggleBodyColorPrimary = () => {
-        const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
-        if (bsSheetEl) {
-          toggleBodyColorMode(bsSheetEl);
-        }
-      }
-      toggleBodyColorPrimary();  
-      const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
-      tabsets.forEach(function(tabset) {
-        const tabby = new Tabby('#' + tabset.id);
-      });
-      const isCodeAnnotation = (el) => {
-        for (const clz of el.classList) {
-          if (clz.startsWith('code-annotation-')) {                     
-            return true;
+      window.document.addEventListener("DOMContentLoaded", function (event) {
+        const tabsets =  window.document.querySelectorAll(".panel-tabset-tabby")
+        tabsets.forEach(function(tabset) {
+          const tabby = new Tabby('#' + tabset.id);
+        });
+        const isCodeAnnotation = (el) => {
+          for (const clz of el.classList) {
+            if (clz.startsWith('code-annotation-')) {                     
+              return true;
+            }
           }
+          return false;
         }
-        return false;
-      }
-      const onCopySuccess = function(e) {
-        // button target
-        const button = e.trigger;
-        // don't keep focus
-        button.blur();
-        // flash "checked"
-        button.classList.add('code-copy-button-checked');
-        var currentTitle = button.getAttribute("title");
-        button.setAttribute("title", "Copied!");
-        let tooltip;
-        if (window.bootstrap) {
-          button.setAttribute("data-bs-toggle", "tooltip");
-          button.setAttribute("data-bs-placement", "left");
-          button.setAttribute("data-bs-title", "Copied!");
-          tooltip = new bootstrap.Tooltip(button, 
-            { trigger: "manual", 
-              customClass: "code-copy-button-tooltip",
-              offset: [0, -8]});
-          tooltip.show();    
-        }
-        setTimeout(function() {
-          if (tooltip) {
-            tooltip.hide();
-            button.removeAttribute("data-bs-title");
-            button.removeAttribute("data-bs-toggle");
-            button.removeAttribute("data-bs-placement");
+        const onCopySuccess = function(e) {
+          // button target
+          const button = e.trigger;
+          // don't keep focus
+          button.blur();
+          // flash "checked"
+          button.classList.add('code-copy-button-checked');
+          var currentTitle = button.getAttribute("title");
+          button.setAttribute("title", "Copied!");
+          let tooltip;
+          if (window.bootstrap) {
+            button.setAttribute("data-bs-toggle", "tooltip");
+            button.setAttribute("data-bs-placement", "left");
+            button.setAttribute("data-bs-title", "Copied!");
+            tooltip = new bootstrap.Tooltip(button, 
+              { trigger: "manual", 
+                customClass: "code-copy-button-tooltip",
+                offset: [0, -8]});
+            tooltip.show();    
           }
-          button.setAttribute("title", currentTitle);
-          button.classList.remove('code-copy-button-checked');
-        }, 1000);
-        // clear code selection
-        e.clearSelection();
-      }
-      const getTextToCopy = function(trigger) {
-          const codeEl = trigger.previousElementSibling.cloneNode(true);
+          setTimeout(function() {
+            if (tooltip) {
+              tooltip.hide();
+              button.removeAttribute("data-bs-title");
+              button.removeAttribute("data-bs-toggle");
+              button.removeAttribute("data-bs-placement");
+            }
+            button.setAttribute("title", currentTitle);
+            button.classList.remove('code-copy-button-checked');
+          }, 1000);
+          // clear code selection
+          e.clearSelection();
+        }
+        const getTextToCopy = function(trigger) {
+          const outerScaffold = trigger.parentElement.cloneNode(true);
+          const codeEl = outerScaffold.querySelector('code');
           for (const childEl of codeEl.children) {
             if (isCodeAnnotation(childEl)) {
               childEl.remove();
             }
           }
           return codeEl.innerText;
-      }
-      const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
-        text: getTextToCopy
-      });
-      clipboard.on('success', onCopySuccess);
-      if (window.document.getElementById('quarto-embedded-source-code-modal')) {
-        const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
-          text: getTextToCopy,
-          container: window.document.getElementById('quarto-embedded-source-code-modal')
-        });
-        clipboardModal.on('success', onCopySuccess);
-      }
-        var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
-        var mailtoRegex = new RegExp(/^mailto:/);
-          var filterRegex = new RegExp("https:\/\/bayesflow-org\.github\.io\/bayesflow-workshop-quant-psych\/");
-        var isInternal = (href) => {
-            return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
         }
-        // Inspect non-navigation links and adorn them if external
-     	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
-        for (var i=0; i<links.length; i++) {
-          const link = links[i];
-          if (!isInternal(link.href)) {
-            // undo the damage that might have been done by quarto-nav.js in the case of
-            // links that we want to consider external
-            if (link.dataset.originalHref !== undefined) {
-              link.href = link.dataset.originalHref;
+        const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+          text: getTextToCopy
+        });
+        clipboard.on('success', onCopySuccess);
+        if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+          const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+            text: getTextToCopy,
+            container: window.document.getElementById('quarto-embedded-source-code-modal')
+          });
+          clipboardModal.on('success', onCopySuccess);
+        }
+          var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+          var mailtoRegex = new RegExp(/^mailto:/);
+            var filterRegex = new RegExp("https:\/\/bayesflow-org\.github\.io\/bayesflow-workshop-quant-psych\/");
+          var isInternal = (href) => {
+              return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+          }
+          // Inspect non-navigation links and adorn them if external
+         var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+          for (var i=0; i<links.length; i++) {
+            const link = links[i];
+            if (!isInternal(link.href)) {
+              // undo the damage that might have been done by quarto-nav.js in the case of
+              // links that we want to consider external
+              if (link.dataset.originalHref !== undefined) {
+                link.href = link.dataset.originalHref;
+              }
             }
           }
-        }
-      function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
-        const config = {
-          allowHTML: true,
-          maxWidth: 500,
-          delay: 100,
-          arrow: false,
-          appendTo: function(el) {
-              return el.closest('section.slide') || el.parentElement;
-          },
-          interactive: true,
-          interactiveBorder: 10,
-          theme: 'light-border',
-          placement: 'bottom-start',
-        };
-        if (contentFn) {
-          config.content = contentFn;
-        }
-        if (onTriggerFn) {
-          config.onTrigger = onTriggerFn;
-        }
-        if (onUntriggerFn) {
-          config.onUntrigger = onUntriggerFn;
-        }
-          config['offset'] = [0,0];
-          config['maxWidth'] = 700;
-        window.tippy(el, config); 
-      }
-      const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
-      for (var i=0; i<noterefs.length; i++) {
-        const ref = noterefs[i];
-        tippyHover(ref, function() {
-          // use id or data attribute instead here
-          let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
-          try { href = new URL(href).hash; } catch {}
-          const id = href.replace(/^#\/?/, "");
-          const note = window.document.getElementById(id);
-          if (note) {
-            return note.innerHTML;
-          } else {
-            return "";
+        function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+          const config = {
+            allowHTML: true,
+            maxWidth: 500,
+            delay: 100,
+            arrow: false,
+            appendTo: function(el) {
+                return el.closest('section.slide') || el.parentElement;
+            },
+            interactive: true,
+            interactiveBorder: 10,
+            theme: 'light-border',
+            placement: 'bottom-start',
+          };
+          if (contentFn) {
+            config.content = contentFn;
           }
-        });
-      }
-      const findCites = (el) => {
-        const parentEl = el.parentElement;
-        if (parentEl) {
-          const cites = parentEl.dataset.cites;
-          if (cites) {
-            return {
-              el,
-              cites: cites.split(' ')
-            };
-          } else {
-            return findCites(el.parentElement)
+          if (onTriggerFn) {
+            config.onTrigger = onTriggerFn;
           }
-        } else {
-          return undefined;
+          if (onUntriggerFn) {
+            config.onUntrigger = onUntriggerFn;
+          }
+            config['offset'] = [0,0];
+            config['maxWidth'] = 700;
+          window.tippy(el, config); 
         }
-      };
-      var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
-      for (var i=0; i<bibliorefs.length; i++) {
-        const ref = bibliorefs[i];
-        const citeInfo = findCites(ref);
-        if (citeInfo) {
-          tippyHover(citeInfo.el, function() {
-            var popup = window.document.createElement('div');
-            citeInfo.cites.forEach(function(cite) {
-              var citeDiv = window.document.createElement('div');
-              citeDiv.classList.add('hanging-indent');
-              citeDiv.classList.add('csl-entry');
-              var biblioDiv = window.document.getElementById('ref-' + cite);
-              if (biblioDiv) {
-                citeDiv.innerHTML = biblioDiv.innerHTML;
-              }
-              popup.appendChild(citeDiv);
-            });
-            return popup.innerHTML;
+        const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+        for (var i=0; i<noterefs.length; i++) {
+          const ref = noterefs[i];
+          tippyHover(ref, function() {
+            // use id or data attribute instead here
+            let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+            try { href = new URL(href).hash; } catch {}
+            const id = href.replace(/^#\/?/, "");
+            const note = window.document.getElementById(id);
+            if (note) {
+              return note.innerHTML;
+            } else {
+              return "";
+            }
           });
         }
-      }
-    });
-    </script>
+        const findCites = (el) => {
+          const parentEl = el.parentElement;
+          if (parentEl) {
+            const cites = parentEl.dataset.cites;
+            if (cites) {
+              return {
+                el,
+                cites: cites.split(' ')
+              };
+            } else {
+              return findCites(el.parentElement)
+            }
+          } else {
+            return undefined;
+          }
+        };
+        var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+        for (var i=0; i<bibliorefs.length; i++) {
+          const ref = bibliorefs[i];
+          const citeInfo = findCites(ref);
+          if (citeInfo) {
+            tippyHover(citeInfo.el, function() {
+              var popup = window.document.createElement('div');
+              citeInfo.cites.forEach(function(cite) {
+                var citeDiv = window.document.createElement('div');
+                citeDiv.classList.add('hanging-indent');
+                citeDiv.classList.add('csl-entry');
+                var biblioDiv = window.document.getElementById('ref-' + cite);
+                if (biblioDiv) {
+                  citeDiv.innerHTML = biblioDiv.innerHTML;
+                }
+                popup.appendChild(citeDiv);
+              });
+              return popup.innerHTML;
+            });
+          }
+        }
+      });
+      </script>
     
 
 </body></html>

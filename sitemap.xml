@@ -1,67 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/projects.html</loc>
-    <lastmod>2025-03-31T10:23:04.009Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/bayesflow-normal.html</loc>
-    <lastmod>2025-03-31T10:23:03.973Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/bayesflow-diffusion.html</loc>
-    <lastmod>2025-03-31T10:23:03.968Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/bayesflow-diffusion-covar.html</loc>
-    <lastmod>2025-03-31T10:23:03.959Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/about.html</loc>
-    <lastmod>2025-03-31T10:23:03.943Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/slides/intro.html</loc>
-    <lastmod>2025-03-31T10:23:04.009Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/slides/deep-learning.html</loc>
-    <lastmod>2025-03-31T10:23:04.009Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/index.html</loc>
-    <lastmod>2025-03-31T10:23:04.009Z</lastmod>
-  </url>
-  <url>
     <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/LICENSE-CODE.html</loc>
-    <lastmod>2025-03-31T10:23:03.942Z</lastmod>
+    <lastmod>2026-04-08T08:08:06.161Z</lastmod>
   </url>
   <url>
     <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises.html</loc>
-    <lastmod>2025-03-31T10:23:03.949Z</lastmod>
+    <lastmod>2026-04-08T08:08:06.167Z</lastmod>
   </url>
   <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/slides/amortized-inference.html</loc>
-    <lastmod>2025-03-31T10:23:04.009Z</lastmod>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/slides/deep-learning.html</loc>
+    <lastmod>2026-04-08T08:08:06.223Z</lastmod>
   </url>
   <url>
     <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/slides/generative-architectures.html</loc>
-    <lastmod>2025-03-31T10:23:04.009Z</lastmod>
+    <lastmod>2026-04-08T08:08:06.223Z</lastmod>
   </url>
   <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/LICENSE.html</loc>
-    <lastmod>2025-03-31T10:23:03.943Z</lastmod>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/index.html</loc>
+    <lastmod>2026-04-08T08:08:06.222Z</lastmod>
   </url>
   <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/flow-matching-swiss-roll.html</loc>
-    <lastmod>2025-03-31T10:23:03.978Z</lastmod>
-  </url>
-  <url>
-    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/normalizing-flow.html</loc>
-    <lastmod>2025-03-31T10:23:03.981Z</lastmod>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/bayesflow-normal.html</loc>
+    <lastmod>2026-04-08T08:08:06.189Z</lastmod>
   </url>
   <url>
     <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/flow-matching-datasaurus.html</loc>
-    <lastmod>2025-03-31T10:23:03.976Z</lastmod>
+    <lastmod>2026-04-08T08:08:06.192Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/bayesflow-diffusion-covar.html</loc>
+    <lastmod>2026-04-08T08:08:06.176Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/flow-matching-swiss-roll.html</loc>
+    <lastmod>2026-04-08T08:08:06.194Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/bayesflow-diffusion.html</loc>
+    <lastmod>2026-04-08T08:08:06.184Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/exercises/normalizing-flow.html</loc>
+    <lastmod>2026-04-08T08:08:06.197Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/about.html</loc>
+    <lastmod>2026-04-08T08:08:06.161Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/projects.html</loc>
+    <lastmod>2026-04-08T08:08:06.222Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/slides/intro.html</loc>
+    <lastmod>2026-04-08T08:08:06.223Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/slides/amortized-inference.html</loc>
+    <lastmod>2026-04-08T08:08:06.222Z</lastmod>
+  </url>
+  <url>
+    <loc>https://bayesflow-org.github.io/bayesflow-workshop-quant-psych/LICENSE.html</loc>
+    <lastmod>2026-04-08T08:08:06.161Z</lastmod>
   </url>
 </urlset>
